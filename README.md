@@ -1,5 +1,23 @@
 # pis-2026-gurises-unidos
 
+## Correr la app
+
+Next.js 16 + TypeScript + Tailwind. Requiere Node 24.
+
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
+
+Otros scripts: `npm run build`, `npm start` (sirve el build), `npm run lint`.
+
+### Con Docker
+
+```bash
+docker build -t pis-app .
+docker run -p 3000:3000 pis-app
+```
+
 ## Ramas
 
 ```
