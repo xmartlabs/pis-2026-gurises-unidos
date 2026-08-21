@@ -8,15 +8,47 @@ concurrency:
   group: deploy-${{ github.ref_name }}
   cancel-in-progress: false
 
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
 jobs:
   deploy:
     name: Deploy a la VM
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
+    permissions:
+      contents: read
+      packages: write
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # el build corre acá (runner con 4 cores y 16 GB), no en la VM, que se ahogaba con next build
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }},${{ env.IMAGE }}:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - uses: appleboy/ssh-action@v1
+        env:
+          BRANCH: ${{ github.ref_name }}
+          PORT: ${{ github.ref_name == 'main' && '3000' || '3001' }}
+          TAG: ${{ github.sha }}
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          username: ${{ vars.SSH_USER || 'deploy' }}
           key: ${{ secrets.SSH_KEY }}
-          script: /srv/pis-${{ github.ref_name }}/deploy.sh ${{ github.ref_name }} ${{ github.ref_name == 'main' && '3000' || '3001' }}
+          envs: BRANCH,PORT,TAG
+          script: |
+            set -euo pipefail
+            cd "/srv/pis-$BRANCH"
+            git fetch --prune origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            ./deploy.sh "$BRANCH" "$PORT" "$TAG"

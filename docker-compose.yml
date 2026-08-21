@@ -1,6 +1,7 @@
 services:
   web:
-    build: .
+    # la imagen la buildea GitHub Actions y la publica en GHCR; la VM solo la baja
+    image: ghcr.io/xmartlabs/pis-2026-gurises-unidos:${TAG:-main}
     ports:
       - "${PORT:-3000}:3000"
     restart: unless-stopped

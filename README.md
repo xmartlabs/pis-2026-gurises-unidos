@@ -24,8 +24,16 @@ Para usar otro puerto, cambiá el lado izquierdo: `-p 8080:3000` → http://loca
 
 ## Deploy
 
-Automático: mergear a `staging` o a `main` dispara el workflow `Deploy`, que entra por SSH a la VM,
-actualiza el clon de esa rama y levanta el contenedor con `docker compose up -d --build`.
+Automático: mergear a `staging` o a `main` dispara el workflow `Deploy`, que **buildea la imagen en
+GitHub Actions**, la publica en GHCR y después entra por SSH a la VM para bajarla y levantarla.
+
+```
+Actions (runner 4 cores / 16 GB):  docker build → push a ghcr.io/xmartlabs/pis-2026-gurises-unidos
+VM (159.89.90.10):                 docker compose pull → up -d
+```
+
+La VM no compila nada: el `next build` en el droplet lo dejaba sin RAM y tumbaba hasta sshd.
+Cada imagen se tagea con el SHA del commit y con el nombre de la rama.
 
 | Rama | URL | Directorio en la VM | Compose project |
 |---|---|---|---|
@@ -35,8 +43,13 @@ actualiza el clon de esa rama y levanta el contenedor con `docker compose up -d 
 Los dos entornos son clones y *compose projects* separados, así que un deploy de uno no toca al otro.
 El contenedor siempre escucha 3000 adentro; el puerto de afuera lo pasa el workflow.
 
-Requiere tres secrets en el repo (Settings → Secrets and variables → Actions): `SSH_HOST`,
-`SSH_USER`, `SSH_KEY`.
+El package de GHCR tiene que estar **público** (Packages → package → Package settings → Change
+visibility). Si no, la VM necesita un `docker login ghcr.io` con un PAT de `read:packages`.
+
+Requiere en el repo (Settings → Secrets and variables → Actions): los secrets `SSH_HOST` y
+`SSH_KEY`, y la variable `SSH_USER` (si no está, el workflow usa `deploy`). El usuario va como
+*variable* y no como secret a propósito: como secret, GitHub lo enmascara y los logs quedan con
+`/srv/pis-***` en vez de la ruta real.
 
 ### Ver logs y estado en la VM
 
@@ -48,17 +61,25 @@ COMPOSE_PROJECT_NAME=pis-staging docker compose ps
 
 ### Deploy a mano
 
+Como usuario `deploy` (si lo corrés como `root`, los archivos quedan de root y el deploy automático
+después falla):
+
 ```bash
-/srv/pis-staging/deploy.sh staging 3001
-/srv/pis-main/deploy.sh main 3000
+sudo -iu deploy
+cd /srv/pis-staging && git pull --ff-only && ./deploy.sh staging 3001 staging
 ```
+
+El tercer argumento es el tag de la imagen: un SHA de commit, o `staging`/`main` para la última de
+esa rama. `deploy.sh` no actualiza el clon — eso lo hace el workflow antes de invocarlo, así un clon
+viejo no puede hacer fallar el deploy con un `deploy.sh: No such file or directory`.
 
 ### Rollback
 
+Volver a una imagen anterior no requiere rebuildear: se levanta el tag de ese commit.
+
 ```bash
-cd /srv/pis-main
-git reset --hard <sha-anterior>
-COMPOSE_PROJECT_NAME=pis-main PORT=3000 docker compose up -d --build
+sudo -iu deploy
+/srv/pis-main/deploy.sh main 3000 <sha-anterior>
 ```
 
 Ojo: el próximo deploy automático vuelve a poner la punta de la rama. Para que el rollback quede,
