@@ -1,0 +1,22 @@
+name: Deploy
+
+on:
+  push:
+    branches: [staging, main]
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy a la VM
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: /srv/pis-${{ github.ref_name }}/deploy.sh ${{ github.ref_name }} ${{ github.ref_name == 'main' && '3000' || '3001' }}
