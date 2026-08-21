@@ -22,6 +22,48 @@ docker run -p 3000:3000 pis-app   # http://localhost:3000
 
 Para usar otro puerto, cambiá el lado izquierdo: `-p 8080:3000` → http://localhost:8080.
 
+## Deploy
+
+Automático: mergear a `staging` o a `main` dispara el workflow `Deploy`, que entra por SSH a la VM,
+actualiza el clon de esa rama y levanta el contenedor con `docker compose up -d --build`.
+
+| Rama | URL | Directorio en la VM | Compose project |
+|---|---|---|---|
+| `staging` | `http://<IP_VM>:3001` | `/srv/pis-staging` | `pis-staging` |
+| `main` | `http://<IP_VM>:3000` | `/srv/pis-main` | `pis-main` |
+
+Los dos entornos son clones y *compose projects* separados, así que un deploy de uno no toca al otro.
+El contenedor siempre escucha 3000 adentro; el puerto de afuera lo pasa el workflow.
+
+Requiere tres secrets en el repo (Settings → Secrets and variables → Actions): `SSH_HOST`,
+`SSH_USER`, `SSH_KEY`.
+
+### Ver logs y estado en la VM
+
+```bash
+cd /srv/pis-staging
+COMPOSE_PROJECT_NAME=pis-staging docker compose logs -f
+COMPOSE_PROJECT_NAME=pis-staging docker compose ps
+```
+
+### Deploy a mano
+
+```bash
+/srv/pis-staging/deploy.sh staging 3001
+/srv/pis-main/deploy.sh main 3000
+```
+
+### Rollback
+
+```bash
+cd /srv/pis-main
+git reset --hard <sha-anterior>
+COMPOSE_PROJECT_NAME=pis-main PORT=3000 docker compose up -d --build
+```
+
+Ojo: el próximo deploy automático vuelve a poner la punta de la rama. Para que el rollback quede,
+hay que revertir el commit en la rama.
+
 ## Ramas
 
 ```
