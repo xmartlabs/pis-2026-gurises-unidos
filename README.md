@@ -87,6 +87,64 @@ sudo -iu deploy
 Ojo: el próximo deploy automático vuelve a poner la punta de la rama. Para que el rollback quede,
 hay que revertir el commit en la rama.
 
+### Cuando agreguemos base de datos
+
+Nada de esto cambia el workflow: sigue siendo build en Actions → push a GHCR → `pull` + `up -d`.
+Los cambios son todos del lado del compose y de la VM.
+
+**1. Un servicio más en `docker-compose.yml`**, con volumen — sin volumen los datos se borran en cada
+deploy:
+
+```yaml
+services:
+  web:
+    image: ghcr.io/xmartlabs/pis-2026-gurises-unidos:${TAG:-main}
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file: .env
+    depends_on: [db]
+    restart: unless-stopped
+  db:
+    image: postgres:17-alpine
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+volumes:
+  pgdata:
+```
+
+El volumen queda prefijado por el compose project (`pis-staging_pgdata` vs `pis-main_pgdata`), así que
+staging y prod tienen bases separadas sin configurar nada. El puerto de Postgres **no** se expone:
+`web` le llega por el nombre `db` en la red interna del proyecto.
+
+**2. Un `.env` por entorno, a mano en la VM, nunca en el repo:**
+
+```bash
+# /srv/pis-staging/.env   (y otro, con otra password, en /srv/pis-main)
+POSTGRES_PASSWORD=<distinta por entorno>
+DATABASE_URL=postgresql://postgres:<pass>@db:5432/app
+```
+
+Sobrevive a los deploys: `git reset --hard` no toca archivos no trackeados. Agregar `.env` al
+`.gitignore` para que nadie lo comitee.
+
+**3. Migraciones.** Es la decisión de fondo, no el compose. Lo más simple es correrlas al arrancar el
+contenedor (`prisma migrate deploy && node server.js` como comando), así deploy y migración van
+juntos y no hay que acordarse. El costo: una migración que falla deja el contenedor reiniciándose en
+loop. La alternativa es un paso aparte en el workflow, antes del `up -d`.
+
+**4. RAM.** El droplet tiene 961 MiB. Postgres junto a Next entra, pero justo: conviene agregar swap
+antes, o subir el droplet.
+
+```bash
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+**5. Backups.** Un cron con `docker exec <contenedor-db> pg_dump` a un archivo fuera del volumen. Sin
+esto, un `docker volume rm` de más es pérdida total.
+
 ## Ramas
 
 ```
