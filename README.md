@@ -9,14 +9,18 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
-Otros scripts: `npm run build`, `npm start` (sirve el build), `npm run lint`.
+La app queda corriendo en **http://localhost:3000** (`dev`, `start` y Docker usan el mismo puerto).
+
+Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`.
 
 ### Con Docker
 
 ```bash
 docker build -t pis-app .
-docker run -p 3000:3000 pis-app
+docker run -p 3000:3000 pis-app   # http://localhost:3000
 ```
+
+Para usar otro puerto, cambiá el lado izquierdo: `-p 8080:3000` → http://localhost:8080.
 
 ## Ramas
 
