@@ -43,8 +43,10 @@ Cada imagen se tagea con el SHA del commit y con el nombre de la rama.
 Los dos entornos son clones y *compose projects* separados, así que un deploy de uno no toca al otro.
 El contenedor siempre escucha 3000 adentro; el puerto de afuera lo pasa el workflow.
 
-El package de GHCR tiene que estar **público** (Packages → package → Package settings → Change
-visibility). Si no, la VM necesita un `docker login ghcr.io` con un PAT de `read:packages`.
+El package de GHCR es privado (la org no permite hacerlo público), así que el workflow hace
+`docker login ghcr.io` en la VM con el `GITHUB_TOKEN` del run y un `docker logout` al terminar. Es
+efímero: no queda ningún PAT guardado en la VM. Para un `docker pull` a mano hay que loguearse con un
+PAT propio de `read:packages`.
 
 Requiere en el repo (Settings → Secrets and variables → Actions): los secrets `SSH_HOST` y
 `SSH_KEY`, y la variable `SSH_USER` (si no está, el workflow usa `deploy`). El usuario va como

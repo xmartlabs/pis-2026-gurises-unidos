@@ -44,13 +44,20 @@ jobs:
           BRANCH: ${{ github.ref_name }}
           PORT: ${{ github.ref_name == 'main' && '3000' || '3001' }}
           TAG: ${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ vars.SSH_USER || 'deploy' }}
           key: ${{ secrets.SSH_KEY }}
-          envs: BRANCH,PORT,TAG
+          envs: BRANCH,PORT,TAG,GHCR_USER,GHCR_TOKEN
+          # el package de GHCR es privado y no se puede hacer publico, asi que la VM se autentica.
+          # Se usa el GITHUB_TOKEN del run (efimero, expira al terminar) para no dejar un PAT
+          # guardado en el disco de la VM; el logout borra la credencial igual.
           script: |
             set -euo pipefail
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            trap 'docker logout ghcr.io' EXIT
             cd "/srv/pis-$BRANCH"
             git fetch --prune origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
