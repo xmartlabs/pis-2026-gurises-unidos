@@ -35,8 +35,10 @@ actualiza el clon de esa rama y levanta el contenedor con `docker compose up -d 
 Los dos entornos son clones y *compose projects* separados, así que un deploy de uno no toca al otro.
 El contenedor siempre escucha 3000 adentro; el puerto de afuera lo pasa el workflow.
 
-Requiere tres secrets en el repo (Settings → Secrets and variables → Actions): `SSH_HOST`,
-`SSH_USER`, `SSH_KEY`.
+Requiere en el repo (Settings → Secrets and variables → Actions): los secrets `SSH_HOST` y
+`SSH_KEY`, y la variable `SSH_USER` (si no está, el workflow usa `deploy`). El usuario va como
+*variable* y no como secret a propósito: como secret, GitHub lo enmascara y los logs quedan con
+`/srv/pis-***` en vez de la ruta real.
 
 ### Ver logs y estado en la VM
 
@@ -48,10 +50,16 @@ COMPOSE_PROJECT_NAME=pis-staging docker compose ps
 
 ### Deploy a mano
 
+Como usuario `deploy` (si lo corrés como `root`, los archivos quedan de root y el deploy automático
+después falla):
+
 ```bash
-/srv/pis-staging/deploy.sh staging 3001
-/srv/pis-main/deploy.sh main 3000
+sudo -iu deploy
+cd /srv/pis-staging && git pull --ff-only && ./deploy.sh staging 3001
 ```
+
+`deploy.sh` no actualiza el clon: eso lo hace el workflow antes de invocarlo, así un clon viejo no
+puede hacer fallar el deploy con un `deploy.sh: No such file or directory`.
 
 ### Rollback
 
