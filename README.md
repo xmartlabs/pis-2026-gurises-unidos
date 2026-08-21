@@ -254,6 +254,8 @@ Mergealas con **merge commit**, no squash.
 
 ## Notas
 
-- Las ramas se borran automáticamente al mergear.
+- El borrado automático de ramas al mergear está **desactivado**: en las PRs de promoción la rama
+  *head* es `staging`, y GitHub la borraba al mergear `staging → main`. Las ramas de feature se
+  borran a mano después de mergear.
 - El check de título corre con `pull_request_target`, así que se re-evalúa cuando editás el título
   de la PR (a diferencia de `pull_request`, que no se dispara con ese evento).
