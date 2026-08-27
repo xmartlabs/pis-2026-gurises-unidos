@@ -15,10 +15,10 @@ export function ProjectCarousel({
 }: {
   projects: (Project & { reach: number })[]
 }) {
-  const track_ref = useRef<HTMLUListElement>(null)
+  const trackRef = useRef<HTMLUListElement>(null)
 
   function scrollByCards(direction: number) {
-    const track = track_ref.current
+    const track = trackRef.current
     if (!track) {
       return
     }
@@ -51,7 +51,7 @@ export function ProjectCarousel({
         </div>
       </div>
       <ul
-        ref={track_ref}
+        ref={trackRef}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 [scrollbar-width:thin]"
       >
         {projects.map((project) => (
@@ -60,7 +60,7 @@ export function ProjectCarousel({
             className="flex w-72 shrink-0 snap-start flex-col rounded-xl border border-line bg-surface p-5"
           >
             <p className="font-mono text-[11px] text-ink-3">
-              {project.territory} · desde {project.start_year}
+              {project.territory} · desde {project.startYear}
             </p>
             <h3 className="mt-2 font-display text-lg font-semibold leading-tight">
               {project.name}

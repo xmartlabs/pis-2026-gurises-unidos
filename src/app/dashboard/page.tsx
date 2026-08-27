@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
-import { Sparkline } from "@/components/charts/Sparkline"
-import { StackedBar } from "@/components/charts/StackedBar"
+import { Sparkline } from "@/components/charts/sparkline"
+import { StackedBar } from "@/components/charts/stacked-bar"
 import { formatNumber } from "@/lib/format"
 import { getSession } from "@/lib/session"
 import {
@@ -22,7 +22,7 @@ const SERIES_COLORS = [
   "var(--series-7)",
 ]
 
-const INTERNAL_KEYS = ["nna_indirect", "youth", "other_adults"]
+const INTERNAL_KEYS = ["nnaIndirect", "youth", "otherAdults"]
 
 export default async function DashboardPage() {
   const session = await getSession()
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
     label: category.label,
     color: SERIES_COLORS[index],
   }))
-  const sorted_projects = [...PROJECTS].sort(
+  const sortedProjects = [...PROJECTS].sort(
     (a, b) => getProjectReach(b) - getProjectReach(a),
   )
 
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {sorted_projects.map((project) => (
+              {sortedProjects.map((project) => (
                 <tr key={project.slug} className="border-b border-line/60">
                   <td className="py-2.5 pr-4">{project.name}</td>
                   <td className="py-2.5 pr-4 text-ink-2">{project.territory}</td>

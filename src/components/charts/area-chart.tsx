@@ -12,15 +12,15 @@ export function AreaChart({
   data: { year: number; reach: number }[]
 }) {
   const max = Math.ceil(Math.max(...data.map((item) => item.reach)) / 5000) * 5000
-  const inner_w = WIDTH - PAD_X * 2
-  const inner_h = HEIGHT - PAD_TOP - PAD_BOTTOM
+  const innerW = WIDTH - PAD_X * 2
+  const innerH = HEIGHT - PAD_TOP - PAD_BOTTOM
 
   const points = data.map((item, index) => [
-    PAD_X + (index / (data.length - 1)) * inner_w,
-    PAD_TOP + inner_h - (item.reach / max) * inner_h,
+    PAD_X + (index / (data.length - 1)) * innerW,
+    PAD_TOP + innerH - (item.reach / max) * innerH,
   ])
   const line = points.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x} ${y}`).join(" ")
-  const area = `${line} L ${points[points.length - 1][0]} ${PAD_TOP + inner_h} L ${points[0][0]} ${PAD_TOP + inner_h} Z`
+  const area = `${line} L ${points[points.length - 1][0]} ${PAD_TOP + innerH} L ${points[0][0]} ${PAD_TOP + innerH} Z`
   const last = points[points.length - 1]
   const ticks = [0, max / 2, max]
 
@@ -32,7 +32,7 @@ export function AreaChart({
       className="w-full"
     >
       {ticks.map((tick) => {
-        const y = PAD_TOP + inner_h - (tick / max) * inner_h
+        const y = PAD_TOP + innerH - (tick / max) * innerH
         return (
           <g key={tick}>
             <line

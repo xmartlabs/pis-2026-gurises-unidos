@@ -25,7 +25,7 @@ export function BarChart({
       >
         {data.map((item, index) => {
           const y = index * ROW_H;
-          const bar_w = Math.max(3, (item.value / max) * TRACK_W);
+          const barW = Math.max(3, (item.value / max) * TRACK_W);
 
           return (
             <g key={item.label}>
@@ -41,7 +41,7 @@ export function BarChart({
               <rect
                 x={LABEL_W}
                 y={y}
-                width={bar_w}
+                width={barW}
                 height={BAR_H}
                 rx="4"
                 fill="var(--series-1)"
@@ -56,7 +56,7 @@ export function BarChart({
                 fill="var(--series-1)"
               />
               <text
-                x={LABEL_W + bar_w + 10}
+                x={LABEL_W + barW + 10}
                 y={y + BAR_H - 4}
                 fontSize="12"
                 fill="var(--ink)"

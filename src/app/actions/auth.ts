@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation"
 import { createSession, destroySession } from "@/lib/session"
 
-export async function login(form_data: FormData) {
-  const email = String(form_data.get("email") ?? "").trim()
+export async function login(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim()
 
   if (!email) {
     redirect("/login?error=1")
