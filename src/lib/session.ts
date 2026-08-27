@@ -3,8 +3,6 @@ import { cookies } from "next/headers"
 
 const COOKIE_NAME = "session"
 
-// ponytail: sesión falsa para el POC — guarda el email en texto plano, sin JWT ni cifrado.
-// Reemplazar por auth real (verificación de credenciales + sesión firmada) cuando exista backend.
 export async function createSession(email: string) {
   const cookie_store = await cookies()
   cookie_store.set(COOKIE_NAME, email, {
