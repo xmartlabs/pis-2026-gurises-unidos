@@ -145,6 +145,19 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 **5. Backups.** Un cron con `docker exec <contenedor-db> pg_dump` a un archivo fuera del volumen. Sin
 esto, un `docker volume rm` de más es pérdida total.
 
+## Estilo de código
+
+- Todo el código en **inglés**: nombres de variables, funciones, tipos, archivos y strings internos.
+- **Sin comentarios largos.** El código se explica solo; si hace falta un párrafo, el problema es el
+  código. Un comentario corto solo cuando explica un *por qué* que no se lee en el código.
+- Convenciones de nombres:
+
+| Qué | Convención | Ejemplo |
+|---|---|---|
+| Funciones y métodos | `camelCase` | `getUserById`, `sendInvite` |
+| Variables | `snake_case` | `user_id`, `pending_items` |
+| Constantes | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL` |
+
 ## Ramas
 
 ```
@@ -275,7 +288,7 @@ chore: promover staging a main
 
 Los tres cumplen lo mismo:
 
-- 1 approval de otra persona (no podés auto-aprobarte)
+- 2 approvals de otras personas (no podés auto-aprobarte)
 - El check `Conventional commit` en verde
 - Todas las conversaciones resueltas
 - Tu rama actualizada respecto de la base (ver más abajo)
@@ -328,7 +341,7 @@ Mergealas con **merge commit**, no squash.
 
 ## Reviews
 
-- Toda PR necesita 1 approval.
+- Toda PR necesita 2 approvals.
 - Los approvals se invalidan al pushear commits nuevos.
 - Hay que resolver todas las conversaciones antes de mergear.
 - Si pedís cambios, dejá claro qué es bloqueante y qué es sugerencia.
