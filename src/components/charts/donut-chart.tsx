@@ -13,8 +13,8 @@ function polarPoint(angle: number) {
 function arcPath(from: number, to: number) {
   const [x1, y1] = polarPoint(from)
   const [x2, y2] = polarPoint(to)
-  const large_arc = to - from > 180 ? 1 : 0
-  return `M ${x1} ${y1} A ${RADIUS} ${RADIUS} 0 ${large_arc} 1 ${x2} ${y2}`
+  const largeArc = to - from > 180 ? 1 : 0
+  return `M ${x1} ${y1} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${x2} ${y2}`
 }
 
 export function DonutChart({

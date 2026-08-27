@@ -41,24 +41,24 @@ export function StackedBar({
               >
                 {row.label}
               </text>
-              {row.values.map((value, series_index) => {
-                const raw_w = (value / max) * TRACK_W;
+              {row.values.map((value, seriesIndex) => {
+                const rawW = (value / max) * TRACK_W;
                 const x = cursor;
-                cursor += raw_w;
-                if (raw_w < 0.5) {
+                cursor += rawW;
+                if (rawW < 0.5) {
                   return null;
                 }
                 return (
                   <rect
-                    key={series[series_index].label}
+                    key={series[seriesIndex].label}
                     x={x}
                     y={y}
-                    width={Math.max(1, raw_w - SEGMENT_GAP)}
+                    width={Math.max(1, rawW - SEGMENT_GAP)}
                     height={BAR_H}
-                    rx={series_index === row.values.length - 1 ? 4 : 0}
-                    fill={series[series_index].color}
+                    rx={seriesIndex === row.values.length - 1 ? 4 : 0}
+                    fill={series[seriesIndex].color}
                   >
-                    <title>{`${row.label} · ${series[series_index].label}: ${formatNumber(value)}`}</title>
+                    <title>{`${row.label} · ${series[seriesIndex].label}: ${formatNumber(value)}`}</title>
                   </rect>
                 );
               })}

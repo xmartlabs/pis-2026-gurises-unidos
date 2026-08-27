@@ -155,8 +155,9 @@ esto, un `docker volume rm` de más es pérdida total.
 | Qué | Convención | Ejemplo |
 |---|---|---|
 | Funciones y métodos | `camelCase` | `getUserById`, `sendInvite` |
-| Variables | `snake_case` | `user_id`, `pending_items` |
+| Variables | `camelCase` | `userId`, `pendingItems` |
 | Constantes | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL` |
+| Archivos | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
 
 ## Ramas
 

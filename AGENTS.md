@@ -23,8 +23,10 @@ No borres los comentarios que ya existen si no estás tocando ese código.
 
 - Todo el código en **inglés**: variables, funciones, tipos, nombres de archivo, strings internos.
 - Funciones y métodos: `camelCase` (`getUserById`).
-- Variables: `snake_case` (`user_id`).
+- Variables: `camelCase` (`userId`).
 - Constantes: `MAYUSCULAS_CON_UNDERSCORE` (`MAX_RETRIES`).
+- Archivos: `kebab-case` (`project-carousel.tsx`). El componente exportado sigue en
+  `PascalCase`; los archivos especiales de Next (`page.tsx`, `layout.tsx`) los fija el framework.
 
 ## Commits
 

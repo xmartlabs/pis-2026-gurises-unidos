@@ -1,9 +1,9 @@
 import Link from "next/link"
-import { AreaChart } from "@/components/charts/AreaChart"
-import { BarChart } from "@/components/charts/BarChart"
-import { DonutChart } from "@/components/charts/DonutChart"
-import { ReachGrid } from "@/components/charts/ReachGrid"
-import { ProjectCarousel } from "@/components/ProjectCarousel"
+import { AreaChart } from "@/components/charts/area-chart"
+import { BarChart } from "@/components/charts/bar-chart"
+import { DonutChart } from "@/components/charts/donut-chart"
+import { ReachGrid } from "@/components/charts/reach-grid"
+import { ProjectCarousel } from "@/components/project-carousel"
 import { formatNumber } from "@/lib/format"
 import {
   ANNUAL_REACH,
@@ -27,11 +27,11 @@ const HEADLINE_KEYS = ["nna", "families", "teachers", "institutions"]
 
 export default function Home() {
   const totals = getTotals()
-  const total_reach = ANNUAL_REACH[ANNUAL_REACH.length - 1].reach
+  const totalReach = ANNUAL_REACH[ANNUAL_REACH.length - 1].reach
   const headline = HEADLINE_KEYS.map(
     (key) => totals.find((item) => item.key === key)!,
   )
-  const carousel_projects = PROJECTS.map((project) => ({
+  const carouselProjects = PROJECTS.map((project) => ({
     ...project,
     reach: getProjectReach(project),
   }))
@@ -44,7 +44,7 @@ export default function Home() {
             {PROJECTS.length} proyectos · cierre 2025
           </p>
           <h1 className="mt-5 max-w-2xl font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-            {formatNumber(total_reach)} personas
+            {formatNumber(totalReach)} personas
             <span className="block text-accent-soft">alcanzadas en 2025.</span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-on-deep/80">
@@ -81,7 +81,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-14">
-        <ProjectCarousel projects={carousel_projects} />
+        <ProjectCarousel projects={carouselProjects} />
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-14 lg:grid-cols-2">
