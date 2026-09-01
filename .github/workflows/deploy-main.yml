@@ -1,11 +1,10 @@
-name: Deploy
+name: Deploy main
 
 on:
-  push:
-    branches: [staging, main]
+  workflow_dispatch:
 
 concurrency:
-  group: deploy-${{ github.ref_name }}
+  group: deploy-main
   cancel-in-progress: false
 
 env:
@@ -15,7 +14,7 @@ jobs:
   deploy:
     name: Deploy a la VM
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    environment: main
     permissions:
       contents: read
       packages: write
@@ -35,14 +34,14 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ env.IMAGE }}:${{ github.sha }},${{ env.IMAGE }}:${{ github.ref_name }}
+          tags: ${{ env.IMAGE }}:${{ github.sha }},${{ env.IMAGE }}:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - uses: appleboy/ssh-action@v1
         env:
-          BRANCH: ${{ github.ref_name }}
-          PORT: ${{ github.ref_name == 'main' && '3000' || '3001' }}
+          BRANCH: main
+          PORT: '3000'
           TAG: ${{ github.sha }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -21,7 +21,8 @@ No borres los comentarios que ya existen si no estás tocando ese código.
 
 ## Estilo de código
 
-- Todo el código en **inglés**: variables, funciones, tipos, nombres de archivo, strings internos.
+- Todo en **inglés**: variables, funciones, tipos, nombres de archivo, strings internos, mensajes de
+  commit, títulos de PR y nombres de rama.
 - Funciones y métodos: `camelCase` (`getUserById`).
 - Variables: `camelCase` (`userId`).
 - Constantes: `MAYUSCULAS_CON_UNDERSCORE` (`MAX_RETRIES`).
@@ -34,7 +35,7 @@ No borres los comentarios que ya existen si no estás tocando ese código.
 versión y el CHANGELOG.
 
 ```
-<tipo>(<scope opcional>): <descripción en minúscula, imperativo, sin punto final>
+<tipo>(<scope opcional>): <descripción en inglés, minúscula, imperativo, sin punto final>
 ```
 
 Tipos: `feat` (minor), `fix`/`perf` (patch), `refactor`, `docs`, `test`, `chore`, `style` (ninguno).
@@ -44,7 +45,7 @@ No agregues `Co-Authored-By` ni menciones de IA en los mensajes de commit.
 
 ## Ramas
 
-`<tipo>/<descripcion-corta-en-kebab-case>` — por ejemplo `feat/login-con-google`. Se parte siempre
+`<tipo>/<descripcion-corta-en-kebab-case>` — por ejemplo `feat/google-login`. Se parte siempre
 de `development` actualizado.
 
 ## Pull Requests
@@ -66,9 +67,12 @@ feature/*  →  development  →  staging  →  main  →  release-please (tag +
 Nadie pushea directo a `development`, `staging` ni `main`: siempre PR.
 
 ```bash
-gh pr create --base staging --head development --title "chore: promover development a staging"
-gh pr create --base main    --head staging     --title "chore: promover staging a main"
+gh pr create --base staging --head development --title "chore: promote development to staging"
+gh pr create --base main    --head staging     --title "chore: promote staging to main"
 ```
+
+Mergear a `main` no deploya: producción sale corriendo el workflow `Deploy main` a mano
+(`gh workflow run deploy-main.yml --ref main`).
 
 - `development`: merge con **squash**, historial lineal obligatorio.
 - `staging` y `main`: merge con **merge commit**, nunca squash — un squash colapsaría todas las
