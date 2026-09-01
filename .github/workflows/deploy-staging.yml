@@ -1,0 +1,64 @@
+name: Deploy staging
+
+on:
+  push:
+    branches: [staging]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  deploy:
+    name: Deploy to the VM
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # sin esto el runner usa el driver "docker", que no soporta cache-to: type=gha
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # el build corre acá (runner con 4 cores y 16 GB), no en la VM, que se ahogaba con next build
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }},${{ env.IMAGE }}:staging
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: appleboy/ssh-action@v1
+        env:
+          BRANCH: staging
+          PORT: '3001'
+          TAG: ${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ vars.SSH_USER || 'deploy' }}
+          key: ${{ secrets.SSH_KEY }}
+          envs: BRANCH,PORT,TAG,GHCR_USER,GHCR_TOKEN
+          # el package de GHCR es privado y no se puede hacer publico, asi que la VM se autentica.
+          # Se usa el GITHUB_TOKEN del run (efimero, expira al terminar) para no dejar un PAT
+          # guardado en el disco de la VM; el logout borra la credencial igual.
+          script: |
+            set -euo pipefail
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            trap 'docker logout ghcr.io' EXIT
+            cd "/srv/pis-$BRANCH"
+            git fetch --prune origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            ./deploy.sh "$BRANCH" "$PORT" "$TAG"

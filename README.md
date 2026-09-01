@@ -24,8 +24,13 @@ Para usar otro puerto, cambiá el lado izquierdo: `-p 8080:3000` → http://loca
 
 ## Deploy
 
-Automático: mergear a `staging` o a `main` dispara el workflow `Deploy`, que **buildea la imagen en
-GitHub Actions**, la publica en GHCR y después entra por SSH a la VM para bajarla y levantarla.
+Hay dos workflows, los dos **buildean la imagen en GitHub Actions**, la publican en GHCR y después
+entran por SSH a la VM para bajarla y levantarla:
+
+- `Deploy staging`: automático, se dispara al mergear a `staging`.
+- `Deploy main`: **manual**. Producción se deploya cuando el equipo decide, no como efecto colateral
+  de mergear la PR de promoción. Actions → *Deploy main* → *Run workflow* (rama `main`), o
+  `gh workflow run deploy-main.yml --ref main`.
 
 ```
 Actions (runner 4 cores / 16 GB):  docker build → push a ghcr.io/xmartlabs/pis-2026-gurises-unidos
@@ -87,6 +92,79 @@ sudo -iu deploy
 Ojo: el próximo deploy automático vuelve a poner la punta de la rama. Para que el rollback quede,
 hay que revertir el commit en la rama.
 
+### Cuando agreguemos base de datos
+
+Nada de esto cambia el workflow: sigue siendo build en Actions → push a GHCR → `pull` + `up -d`.
+Los cambios son todos del lado del compose y de la VM.
+
+**1. Un servicio más en `docker-compose.yml`**, con volumen — sin volumen los datos se borran en cada
+deploy:
+
+```yaml
+services:
+  web:
+    image: ghcr.io/xmartlabs/pis-2026-gurises-unidos:${TAG:-main}
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file: .env
+    depends_on: [db]
+    restart: unless-stopped
+  db:
+    image: postgres:17-alpine
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+volumes:
+  pgdata:
+```
+
+El volumen queda prefijado por el compose project (`pis-staging_pgdata` vs `pis-main_pgdata`), así que
+staging y prod tienen bases separadas sin configurar nada. El puerto de Postgres **no** se expone:
+`web` le llega por el nombre `db` en la red interna del proyecto.
+
+**2. Un `.env` por entorno, a mano en la VM, nunca en el repo:**
+
+```bash
+# /srv/pis-staging/.env   (y otro, con otra password, en /srv/pis-main)
+POSTGRES_PASSWORD=<distinta por entorno>
+DATABASE_URL=postgresql://postgres:<pass>@db:5432/app
+```
+
+Sobrevive a los deploys: `git reset --hard` no toca archivos no trackeados. Agregar `.env` al
+`.gitignore` para que nadie lo comitee.
+
+**3. Migraciones.** Es la decisión de fondo, no el compose. Lo más simple es correrlas al arrancar el
+contenedor (`prisma migrate deploy && node server.js` como comando), así deploy y migración van
+juntos y no hay que acordarse. El costo: una migración que falla deja el contenedor reiniciándose en
+loop. La alternativa es un paso aparte en el workflow, antes del `up -d`.
+
+**4. RAM.** El droplet tiene 961 MiB. Postgres junto a Next entra, pero justo: conviene agregar swap
+antes, o subir el droplet.
+
+```bash
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+**5. Backups.** Un cron con `docker exec <contenedor-db> pg_dump` a un archivo fuera del volumen. Sin
+esto, un `docker volume rm` de más es pérdida total.
+
+## Estilo de código
+
+- Todo en **inglés**: nombres de variables, funciones, tipos, archivos y strings internos, y también
+  los mensajes de commit, los títulos de PR y los nombres de rama.
+- **Sin comentarios largos.** El código se explica solo; si hace falta un párrafo, el problema es el
+  código. Un comentario corto solo cuando explica un *por qué* que no se lee en el código.
+- Convenciones de nombres:
+
+| Qué | Convención | Ejemplo |
+|---|---|---|
+| Funciones y métodos | `camelCase` | `getUserById`, `sendInvite` |
+| Variables | `camelCase` | `userId`, `pendingItems` |
+| Constantes | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL` |
+| Archivos | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
+
 ## Ramas
 
 ```
@@ -112,14 +190,14 @@ git checkout development
 git pull
 
 # 2. Rama nueva
-git checkout -b feat/login-con-google
+git checkout -b feat/google-login
 
 # 3. Commitear
 git add .
-git commit -m "feat(auth): agregar login con Google"
+git commit -m "feat(auth): add google login"
 
 # 4. Pushear y abrir la PR
-git push -u origin feat/login-con-google
+git push -u origin feat/google-login
 gh pr create --base development
 ```
 
@@ -128,11 +206,11 @@ gh pr create --base development
 `<tipo>/<descripcion-corta-en-kebab-case>`
 
 ```
-feat/login-con-google
-fix/timeout-en-listado
-chore/actualizar-deps
-docs/guia-de-contribucion
-refactor/extraer-cliente-http
+feat/google-login
+fix/user-list-timeout
+chore/update-deps
+docs/contributing-guide
+refactor/extract-http-client
 ```
 
 ## Commits
@@ -142,7 +220,7 @@ lee el historial de `main` para decidir el número de versión y generar el CHAN
 escrito es una línea que falta en el changelog.
 
 ```
-<tipo>(<scope opcional>): <descripción en minúscula, imperativo, sin punto final>
+<tipo>(<scope opcional>): <descripción en inglés, minúscula, imperativo, sin punto final>
 ```
 
 | Tipo | Cuándo | Efecto en la versión |
@@ -159,13 +237,13 @@ escrito es una línea que falta en el changelog.
 ### Ejemplos válidos
 
 ```
-feat(auth): agregar login con Google
-fix(api): corregir timeout en el listado de usuarios
-docs: documentar el flujo de ramas
-chore(deps): actualizar dependencias
-refactor(db): extraer la lógica de conexión a un módulo
-test(auth): cubrir el caso de token expirado
-perf(listado): paginar la consulta de usuarios
+feat(auth): add google login
+fix(api): fix timeout on the user list
+docs: document the branching flow
+chore(deps): update dependencies
+refactor(db): extract connection logic into a module
+test(auth): cover the expired token case
+perf(users): paginate the user query
 ```
 
 ### Breaking changes
@@ -173,26 +251,27 @@ perf(listado): paginar la consulta de usuarios
 Dos formas, ambas suben la **major** (1.2.0 → 2.0.0):
 
 ```
-feat(api)!: renombrar el campo `user_id` a `userId`
+feat(api)!: rename `user_id` to `userId`
 ```
 
 o con footer:
 
 ```
-feat(api): renombrar el campo user_id
+feat(api): rename the user_id field
 
-BREAKING CHANGE: los clientes que lean `user_id` dejan de funcionar.
+BREAKING CHANGE: clients reading `user_id` stop working.
 ```
 
 ### Ejemplos inválidos
 
 | Mal | Por qué | Bien |
 |---|---|---|
-| `Agregar login` | Sin tipo | `feat(auth): agregar login` |
-| `fix: Corregir el bug.` | Mayúscula y punto final | `fix: corregir el timeout del listado` |
-| `feat: cambios` | No dice nada | `feat(auth): agregar refresh token` |
+| `Add login` | Sin tipo | `feat(auth): add login` |
+| `fix: Fix the bug.` | Mayúscula y punto final | `fix: fix the user list timeout` |
+| `feat: agregar login` | En español | `feat(auth): add login` |
+| `feat: changes` | No dice nada | `feat(auth): add refresh token` |
 | `WIP` | No es un commit publicable | Squashealo antes de la PR |
-| `Feat: algo` | Tipo capitalizado | `feat: algo` |
+| `Feat: something` | Tipo capitalizado | `feat: something` |
 
 ## Pull Requests
 
@@ -203,21 +282,21 @@ check automático (`Conventional commit`) que lo valida y bloquea el merge si es
 El título sigue exactamente las mismas reglas que un commit:
 
 ```
-feat(auth): agregar login con Google
+feat(auth): add google login
 ```
 
 Las PRs de promoción también:
 
 ```
-chore: promover development a staging
-chore: promover staging a main
+chore: promote development to staging
+chore: promote staging to main
 ```
 
 ### Requisitos para mergear
 
 Los tres cumplen lo mismo:
 
-- 1 approval de otra persona (no podés auto-aprobarte)
+- 2 approvals de otras personas (no podés auto-aprobarte)
 - El check `Conventional commit` en verde
 - Todas las conversaciones resueltas
 - Tu rama actualizada respecto de la base (ver más abajo)
@@ -241,11 +320,11 @@ exigen historial lineal: un merge commit es, por definición, no lineal.
 
 ### "Require branches to be up to date" (strict)
 
-Está activo en las tres ramas. Significa que si la base avanzó desde que abriste tu PR, GitHub no te
+Está activo en `development` y `staging`. Significa que si la base avanzó desde que abriste tu PR, GitHub no te
 deja mergear hasta que la actualices:
 
 ```bash
-git checkout feat/mi-rama
+git checkout feat/my-branch
 git fetch origin
 git rebase origin/development
 git push --force-with-lease
@@ -262,15 +341,42 @@ Con el equipo laburando en paralelo, es la única forma de que "el check está v
 ## Promover a staging y main
 
 ```bash
-gh pr create --base staging --head development --title "chore: promover development a staging"
-gh pr create --base main    --head staging     --title "chore: promover staging a main"
+gh pr create --base staging --head development --title "chore: promote development to staging"
+gh pr create --base main    --head staging     --title "chore: promote staging to main"
 ```
 
-Mergealas con **merge commit**, no squash.
+Mergealas con **merge commit**, no squash. Mergear a `main` no deploya: producción sale corriendo el
+workflow `Deploy main` a mano.
+
+## Releases
+
+Los hace [release-please](https://github.com/googleapis/release-please) leyendo los commits de
+`main`. El ciclo:
+
+1. Mergeás `staging → main`. El workflow `Release Please` abre (o actualiza) una PR
+   `chore(main): release X.Y.Z` con el `CHANGELOG.md` y el bump de `version` en `package.json`.
+   El número sale de los tipos de commit: un `feat` sube la minor, un `fix`/`perf` la patch.
+2. Esa PR se revisa como cualquier otra — 2 approvals. Se puede editar el CHANGELOG antes de mergear.
+3. Al mergearla, release-please crea el tag `vX.Y.Z` y el GitHub Release.
+
+Mergear la PR de release tampoco deploya: producción sigue saliendo con `Deploy main` a mano.
+
+La config vive en `release-please-config.json` y la versión actual en `.release-please-manifest.json`
+(la fuente de verdad; `package.json` la sigue).
+
+### Por qué `main` no tiene status checks required
+
+El workflow usa el `GITHUB_TOKEN` del run, y las PRs creadas con ese token no disparan otros
+workflows: el check `Conventional commit` nunca correría sobre la PR de release y la dejaría
+bloqueada para siempre. Como era el único check, en el ruleset de `main` está apagada la regla
+*Require status checks to pass* entera (GitHub no acepta la lista vacía), y con ella el *strict* de
+ramas actualizadas. `main` solo recibe la PR de promoción desde `staging` y la de release-please, y
+sigue exigiendo 2 approvals, conversaciones resueltas y merge commit. En `development` y `staging`
+no cambia nada: ahí se validan los títulos que arman el CHANGELOG.
 
 ## Reviews
 
-- Toda PR necesita 1 approval.
+- Toda PR necesita 2 approvals.
 - Los approvals se invalidan al pushear commits nuevos.
 - Hay que resolver todas las conversaciones antes de mergear.
 - Si pedís cambios, dejá claro qué es bloqueante y qué es sugerencia.
