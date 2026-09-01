@@ -24,8 +24,13 @@ Para usar otro puerto, cambiá el lado izquierdo: `-p 8080:3000` → http://loca
 
 ## Deploy
 
-Automático: mergear a `staging` o a `main` dispara el workflow `Deploy`, que **buildea la imagen en
-GitHub Actions**, la publica en GHCR y después entra por SSH a la VM para bajarla y levantarla.
+Hay dos workflows, los dos **buildean la imagen en GitHub Actions**, la publican en GHCR y después
+entran por SSH a la VM para bajarla y levantarla:
+
+- `Deploy staging`: automático, se dispara al mergear a `staging`.
+- `Deploy main`: **manual**. Producción se deploya cuando el equipo decide, no como efecto colateral
+  de mergear la PR de promoción. Actions → *Deploy main* → *Run workflow* (rama `main`), o
+  `gh workflow run deploy-main.yml --ref main`.
 
 ```
 Actions (runner 4 cores / 16 GB):  docker build → push a ghcr.io/xmartlabs/pis-2026-gurises-unidos
@@ -147,7 +152,8 @@ esto, un `docker volume rm` de más es pérdida total.
 
 ## Estilo de código
 
-- Todo el código en **inglés**: nombres de variables, funciones, tipos, archivos y strings internos.
+- Todo en **inglés**: nombres de variables, funciones, tipos, archivos y strings internos, y también
+  los mensajes de commit, los títulos de PR y los nombres de rama.
 - **Sin comentarios largos.** El código se explica solo; si hace falta un párrafo, el problema es el
   código. Un comentario corto solo cuando explica un *por qué* que no se lee en el código.
 - Convenciones de nombres:
@@ -184,14 +190,14 @@ git checkout development
 git pull
 
 # 2. Rama nueva
-git checkout -b feat/login-con-google
+git checkout -b feat/google-login
 
 # 3. Commitear
 git add .
-git commit -m "feat(auth): agregar login con Google"
+git commit -m "feat(auth): add google login"
 
 # 4. Pushear y abrir la PR
-git push -u origin feat/login-con-google
+git push -u origin feat/google-login
 gh pr create --base development
 ```
 
@@ -200,11 +206,11 @@ gh pr create --base development
 `<tipo>/<descripcion-corta-en-kebab-case>`
 
 ```
-feat/login-con-google
-fix/timeout-en-listado
-chore/actualizar-deps
-docs/guia-de-contribucion
-refactor/extraer-cliente-http
+feat/google-login
+fix/user-list-timeout
+chore/update-deps
+docs/contributing-guide
+refactor/extract-http-client
 ```
 
 ## Commits
@@ -214,7 +220,7 @@ lee el historial de `main` para decidir el número de versión y generar el CHAN
 escrito es una línea que falta en el changelog.
 
 ```
-<tipo>(<scope opcional>): <descripción en minúscula, imperativo, sin punto final>
+<tipo>(<scope opcional>): <descripción en inglés, minúscula, imperativo, sin punto final>
 ```
 
 | Tipo | Cuándo | Efecto en la versión |
@@ -231,13 +237,13 @@ escrito es una línea que falta en el changelog.
 ### Ejemplos válidos
 
 ```
-feat(auth): agregar login con Google
-fix(api): corregir timeout en el listado de usuarios
-docs: documentar el flujo de ramas
-chore(deps): actualizar dependencias
-refactor(db): extraer la lógica de conexión a un módulo
-test(auth): cubrir el caso de token expirado
-perf(listado): paginar la consulta de usuarios
+feat(auth): add google login
+fix(api): fix timeout on the user list
+docs: document the branching flow
+chore(deps): update dependencies
+refactor(db): extract connection logic into a module
+test(auth): cover the expired token case
+perf(users): paginate the user query
 ```
 
 ### Breaking changes
@@ -245,26 +251,27 @@ perf(listado): paginar la consulta de usuarios
 Dos formas, ambas suben la **major** (1.2.0 → 2.0.0):
 
 ```
-feat(api)!: renombrar el campo `user_id` a `userId`
+feat(api)!: rename `user_id` to `userId`
 ```
 
 o con footer:
 
 ```
-feat(api): renombrar el campo user_id
+feat(api): rename the user_id field
 
-BREAKING CHANGE: los clientes que lean `user_id` dejan de funcionar.
+BREAKING CHANGE: clients reading `user_id` stop working.
 ```
 
 ### Ejemplos inválidos
 
 | Mal | Por qué | Bien |
 |---|---|---|
-| `Agregar login` | Sin tipo | `feat(auth): agregar login` |
-| `fix: Corregir el bug.` | Mayúscula y punto final | `fix: corregir el timeout del listado` |
-| `feat: cambios` | No dice nada | `feat(auth): agregar refresh token` |
+| `Add login` | Sin tipo | `feat(auth): add login` |
+| `fix: Fix the bug.` | Mayúscula y punto final | `fix: fix the user list timeout` |
+| `feat: agregar login` | En español | `feat(auth): add login` |
+| `feat: changes` | No dice nada | `feat(auth): add refresh token` |
 | `WIP` | No es un commit publicable | Squashealo antes de la PR |
-| `Feat: algo` | Tipo capitalizado | `feat: algo` |
+| `Feat: something` | Tipo capitalizado | `feat: something` |
 
 ## Pull Requests
 
@@ -275,14 +282,14 @@ check automático (`Conventional commit`) que lo valida y bloquea el merge si es
 El título sigue exactamente las mismas reglas que un commit:
 
 ```
-feat(auth): agregar login con Google
+feat(auth): add google login
 ```
 
 Las PRs de promoción también:
 
 ```
-chore: promover development a staging
-chore: promover staging a main
+chore: promote development to staging
+chore: promote staging to main
 ```
 
 ### Requisitos para mergear
@@ -317,7 +324,7 @@ Está activo en las tres ramas. Significa que si la base avanzó desde que abris
 deja mergear hasta que la actualices:
 
 ```bash
-git checkout feat/mi-rama
+git checkout feat/my-branch
 git fetch origin
 git rebase origin/development
 git push --force-with-lease
@@ -334,11 +341,12 @@ Con el equipo laburando en paralelo, es la única forma de que "el check está v
 ## Promover a staging y main
 
 ```bash
-gh pr create --base staging --head development --title "chore: promover development a staging"
-gh pr create --base main    --head staging     --title "chore: promover staging a main"
+gh pr create --base staging --head development --title "chore: promote development to staging"
+gh pr create --base main    --head staging     --title "chore: promote staging to main"
 ```
 
-Mergealas con **merge commit**, no squash.
+Mergealas con **merge commit**, no squash. Mergear a `main` no deploya: producción sale corriendo el
+workflow `Deploy main` a mano.
 
 ## Reviews
 
