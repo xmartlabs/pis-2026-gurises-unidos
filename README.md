@@ -320,7 +320,7 @@ exigen historial lineal: un merge commit es, por definición, no lineal.
 
 ### "Require branches to be up to date" (strict)
 
-Está activo en las tres ramas. Significa que si la base avanzó desde que abriste tu PR, GitHub no te
+Está activo en `development` y `staging`. Significa que si la base avanzó desde que abriste tu PR, GitHub no te
 deja mergear hasta que la actualices:
 
 ```bash
@@ -347,6 +347,32 @@ gh pr create --base main    --head staging     --title "chore: promote staging t
 
 Mergealas con **merge commit**, no squash. Mergear a `main` no deploya: producción sale corriendo el
 workflow `Deploy main` a mano.
+
+## Releases
+
+Los hace [release-please](https://github.com/googleapis/release-please) leyendo los commits de
+`main`. El ciclo:
+
+1. Mergeás `staging → main`. El workflow `Release Please` abre (o actualiza) una PR
+   `chore(main): release X.Y.Z` con el `CHANGELOG.md` y el bump de `version` en `package.json`.
+   El número sale de los tipos de commit: un `feat` sube la minor, un `fix`/`perf` la patch.
+2. Esa PR se revisa como cualquier otra — 2 approvals. Se puede editar el CHANGELOG antes de mergear.
+3. Al mergearla, release-please crea el tag `vX.Y.Z` y el GitHub Release.
+
+Mergear la PR de release tampoco deploya: producción sigue saliendo con `Deploy main` a mano.
+
+La config vive en `release-please-config.json` y la versión actual en `.release-please-manifest.json`
+(la fuente de verdad; `package.json` la sigue).
+
+### Por qué `main` no tiene status checks required
+
+El workflow usa el `GITHUB_TOKEN` del run, y las PRs creadas con ese token no disparan otros
+workflows: el check `Conventional commit` nunca correría sobre la PR de release y la dejaría
+bloqueada para siempre. Como era el único check, en el ruleset de `main` está apagada la regla
+*Require status checks to pass* entera (GitHub no acepta la lista vacía), y con ella el *strict* de
+ramas actualizadas. `main` solo recibe la PR de promoción desde `staging` y la de release-please, y
+sigue exigiendo 2 approvals, conversaciones resueltas y merge commit. En `development` y `staging`
+no cambia nada: ahí se validan los títulos que arman el CHANGELOG.
 
 ## Reviews
 
