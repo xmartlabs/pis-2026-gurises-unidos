@@ -12,7 +12,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy a la VM
+    name: Deploy to the VM
     runs-on: ubuntu-latest
     environment: main
     permissions:

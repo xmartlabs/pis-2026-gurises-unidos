@@ -74,6 +74,9 @@ gh pr create --base main    --head staging     --title "chore: promote staging t
 Mergear a `main` no deploya: producción sale corriendo el workflow `Deploy main` a mano
 (`gh workflow run deploy-main.yml --ref main`).
 
+Mergear a `main` abre la PR `chore(main): release X.Y.Z` de release-please; mergear *esa* PR crea el
+tag y el CHANGELOG.
+
 - `development`: merge con **squash**, historial lineal obligatorio.
 - `staging` y `main`: merge con **merge commit**, nunca squash — un squash colapsaría todas las
   features del ciclo y el CHANGELOG saldría vacío.
