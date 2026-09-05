@@ -11,7 +11,7 @@ CREATE TYPE "project_status" AS ENUM ('active', 'in_progress', 'completed', 'arc
 CREATE TYPE "intensity" AS ENUM ('high', 'medium', 'low');
 
 -- CreateEnum
-CREATE TYPE "zone" AS ENUM ('montevideo', 'inland', 'border', 'rural');
+CREATE TYPE "zone" AS ENUM ('city', 'inland', 'border', 'rural');
 
 -- CreateEnum
 CREATE TYPE "audit_action" AS ENUM ('creation', 'update', 'deletion');
@@ -22,7 +22,7 @@ CREATE TYPE "audit_entity" AS ENUM ('user', 'project', 'beneficiary', 'metric');
 -- CreateTable
 CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
+    "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
     "document_id" TEXT NOT NULL,
     "email" TEXT NOT NULL,

@@ -35,7 +35,7 @@ enum intensity {
 }
 
 enum zone {
-  montevideo
+  city
   inland
   border
   rural
@@ -58,7 +58,7 @@ enum audit_entity {
 
 model users {
   id             Int          @id @default(autoincrement())
-  name           String
+  first_name     String
   last_name      String
   document_id    String       @unique
   email          String       @unique

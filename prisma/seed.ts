@@ -14,7 +14,7 @@ async function main() {
   // --- Usuarios ---
   const admin = await prisma.users.create({
     data: {
-      name: 'Ana',
+      first_name: 'Ana',
       last_name: 'Admin',
       document_id: '11111111',
       email: 'admin@gurisesunidos.test',
@@ -26,7 +26,7 @@ async function main() {
 
   const coordinator = await prisma.users.create({
     data: {
-      name: 'Carlos',
+      first_name: 'Carlos',
       last_name: 'Coordinator',
       document_id: '22222222',
       email: 'coordinator@gurisesunidos.test',
@@ -46,7 +46,7 @@ async function main() {
       start_year: 2025,
       lead_coordinator_id: coordinator.id,
       department_id: montevideo.id,
-      zone: 'montevideo',
+      zone: 'city',
       created_by: admin.id,
       project_topics: {
         create: [{ topic_id: education.id }, { topic_id: health.id }],
