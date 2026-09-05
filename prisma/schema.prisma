@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+
+enum UserRole {
+  admin
+  coordinator
+}
+
+enum UserStatus {
+  active
+  pendingInvitation
+  disabled
+}
+
+enum ProjectStatus {
+  active
+  inProgress
+  completed
+  archived
+}
+
+enum Intensity {
+  high
+  medium
+  low
+}
+
+enum Zone {
+  city
+  inland
+  border
+  rural
+}
+
+enum AuditAction {
+  creation
+  update
+  deletion
+}
+
+enum AuditEntity {
+  user
+  project
+  beneficiary
+  metric
+}
+
+// ---------- TABLES ----------
+
+model User {
+  id           Int        @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  documentId   String     @unique
+  email        String     @unique
+  role         UserRole
+  status       UserStatus
+  passwordHash String
+  lastAccess   DateTime?
+  createdAt    DateTime   @default(now())
+  createdBy    Int?
+  updatedAt    DateTime?  @updatedAt
+  deletedAt    DateTime?
+
+  creator              User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  createdUsers         User[]               @relation("UserCreatedBy")
+  ledProjects          Project[]            @relation("ProjectLeadCoordinator")
+  createdProjects      Project[]            @relation("ProjectCreatedBy")
+  projectCoordinators  ProjectCoordinator[]
+  projectBeneficiaries ProjectBeneficiary[]
+  metricsUpdated       Metric[]
+  reportsGenerated     Report[]
+  auditLogs            AuditLog[]
+}
+
+model Topic {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  projectTopics ProjectTopic[]
+}
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  projects Project[]
+}
+
+model Project {
+  id                   Int           @id @default(autoincrement())
+  name                 String
+  status               ProjectStatus
+  intensity            Intensity
+  startYear            Int
+  leadCoordinatorId    Int
+  departmentId         Int
+  localityNeighborhood String?
+  zone                 Zone
+  generalObjective     String?
+  publicDescription    String?       @db.VarChar(300)
+  coverPhoto           String?
+  internalNotes        String?
+  createdAt            DateTime      @default(now())
+  createdBy            Int?
+  updatedAt            DateTime?     @updatedAt
+
+  leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
+  department      Department @relation(fields: [departmentId], references: [id])
+  creator         User?      @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+
+  projectCoordinators  ProjectCoordinator[]
+  projectTopics        ProjectTopic[]
+  projectBeneficiaries ProjectBeneficiary[]
+}
+
+model ProjectCoordinator {
+  projectId Int
+  userId    Int
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@id([projectId, userId])
+}
+
+model ProjectTopic {
+  projectId Int
+  topicId   Int
+
+  project Project @relation(fields: [projectId], references: [id])
+  topic   Topic   @relation(fields: [topicId], references: [id])
+
+  @@id([projectId, topicId])
+}
+
+model ProjectBeneficiary {
+  id                          Int      @id @default(autoincrement())
+  projectId                   Int
+  year                        Int
+  directChildrenAdolescents   Int      @default(0)
+  indirectChildrenAdolescents Int      @default(0)
+  youth18To29                 Int      @default(0)
+  families                    Int      @default(0)
+  coordinatedInstitutions     Int      @default(0)
+  communityLeaders            Int      @default(0)
+  basicServiceStaff           Int      @default(0)
+  recordedAt                  DateTime @default(now())
+  authorId                    Int
+
+  project Project @relation(fields: [projectId], references: [id])
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@unique([projectId, year])
+}
+
+model Metric {
+  id                Int       @id @default(autoincrement())
+  key               String    @unique
+  name              String
+  showPublicly      Boolean   @default(false)
+  showPubliclyDraft Boolean   @default(false)
+  sortOrder         Int
+  updatedBy         Int?
+  updatedAt         DateTime? @updatedAt
+
+  updater User? @relation(fields: [updatedBy], references: [id])
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  generatedBy Int
+  periodYear  Int
+  format      String
+  filePath    String
+  generatedAt DateTime @default(now())
+
+  generator User @relation(fields: [generatedBy], references: [id])
+}
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  authorId   Int
+  action     AuditAction
+  entity     AuditEntity
+  entityId   Int
+  details    Json?
+  occurredAt DateTime    @default(now())
+
+  author User @relation(fields: [authorId], references: [id])
+}
