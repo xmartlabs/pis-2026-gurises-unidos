@@ -1,82 +1,105 @@
-// prisma/seed.ts
 import { PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // --- Catálogos ---
-  const montevideo = await prisma.departments.create({ data: { name: 'Montevideo' } });
-  const canelones = await prisma.departments.create({ data: { name: 'Canelones' } });
+  // --- Catalogs ---
+  const montevideo = await prisma.department.upsert({
+    where: { name: 'Montevideo' },
+    update: {},
+    create: { name: 'Montevideo' },
+  });
 
-  const education = await prisma.topics.create({ data: { name: 'Education' } });
-  const health = await prisma.topics.create({ data: { name: 'Health' } });
+  const canelones = await prisma.department.upsert({
+    where: { name: 'Canelones' },
+    update: {},
+    create: { name: 'Canelones' },
+  });
 
-  // --- Usuarios ---
-  const admin = await prisma.users.create({
-    data: {
-      first_name: 'Ana',
-      last_name: 'Admin',
-      document_id: '11111111',
+  const education = await prisma.topic.upsert({
+    where: { name: 'Education' },
+    update: {},
+    create: { name: 'Education' },
+  });
+
+  const health = await prisma.topic.upsert({
+    where: { name: 'Health' },
+    update: {},
+    create: { name: 'Health' },
+  });
+
+  // --- Users ---
+  const admin = await prisma.user.upsert({
+    where: { documentId: '11111111' },
+    update: {},
+    create: {
+      firstName: 'Ana',
+      lastName: 'Admin',
+      documentId: '11111111',
       email: 'admin@gurisesunidos.test',
       role: 'admin',
       status: 'active',
-      password_hash: 'fake-hash-not-real',
+      passwordHash: 'fake-hash-not-real',
     },
   });
 
-  const coordinator = await prisma.users.create({
-    data: {
-      first_name: 'Carlos',
-      last_name: 'Coordinator',
-      document_id: '22222222',
+  const coordinator = await prisma.user.upsert({
+    where: { documentId: '22222222' },
+    update: {},
+    create: {
+      firstName: 'Carlos',
+      lastName: 'Coordinator',
+      documentId: '22222222',
       email: 'coordinator@gurisesunidos.test',
       role: 'coordinator',
       status: 'active',
-      password_hash: 'fake-hash-not-real',
-      created_by: admin.id,
+      passwordHash: 'fake-hash-not-real',
+      createdBy: admin.id,
     },
   });
 
-  // --- Proyecto de prueba ---
-  const project = await prisma.projects.create({
+  // --- Test project ---
+  const project = await prisma.project.create({
     data: {
       name: 'Test project',
       status: 'active',
       intensity: 'medium',
-      start_year: 2025,
-      lead_coordinator_id: coordinator.id,
-      department_id: montevideo.id,
+      startYear: 2025,
+      leadCoordinatorId: coordinator.id,
+      departmentId: montevideo.id,
       zone: 'city',
-      created_by: admin.id,
-      project_topics: {
-        create: [{ topic_id: education.id }, { topic_id: health.id }],
+      createdBy: admin.id,
+      projectTopics: {
+        create: [{ topicId: education.id }, { topicId: health.id }],
       },
     },
   });
 
-  // --- Beneficiarios ---
-  await prisma.project_beneficiaries.create({
+  // --- Beneficiaries ---
+  await prisma.projectBeneficiary.create({
     data: {
-      project_id: project.id,
+      projectId: project.id,
       year: 2025,
-      direct_children_adolescents: 50,
+      directChildrenAdolescents: 50,
       families: 20,
-      author_id: coordinator.id,
+      authorId: coordinator.id,
     },
   });
 
-  // --- Métrica de ejemplo ---
-  await prisma.metrics.create({
-    data: {
+  // --- Sample metric ---
+  await prisma.metric.upsert({
+    where: { key: 'children_reached' },
+    update: {},
+    create: {
       key: 'children_reached',
       name: 'Children reached',
-      show_publicly: true,
-      sort_order: 1,
-      updated_by: admin.id,
+      showPublicly: true,
+      sortOrder: 1,
+      updatedBy: admin.id,
     },
   });
 
-  console.log('Seed completed ✅');
+  console.log('Seed completed');
 }
 
 main()

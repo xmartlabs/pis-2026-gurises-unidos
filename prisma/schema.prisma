@@ -10,44 +10,44 @@ datasource db {
 
 // ---------- ENUMS ----------
 
-enum user_role {
+enum UserRole {
   admin
   coordinator
 }
 
-enum user_status {
+enum UserStatus {
   active
-  pending_invitation
+  pendingInvitation
   disabled
 }
 
-enum project_status {
+enum ProjectStatus {
   active
-  in_progress
+  inProgress
   completed
   archived
 }
 
-enum intensity {
+enum Intensity {
   high
   medium
   low
 }
 
-enum zone {
+enum Zone {
   city
   inland
   border
   rural
 }
 
-enum audit_action {
+enum AuditAction {
   creation
   update
   deletion
 }
 
-enum audit_entity {
+enum AuditEntity {
   user
   project
   beneficiary
@@ -56,145 +56,145 @@ enum audit_entity {
 
 // ---------- TABLES ----------
 
-model users {
-  id             Int          @id @default(autoincrement())
-  first_name     String
-  last_name      String
-  document_id    String       @unique
-  email          String       @unique
-  role           user_role
-  status         user_status
-  password_hash  String
-  last_access    DateTime?
-  created_at     DateTime     @default(now())
-  created_by     Int?
-  updated_at     DateTime?    @updatedAt
-  deleted_at     DateTime?
+model User {
+  id           Int        @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  documentId   String     @unique
+  email        String     @unique
+  role         UserRole
+  status       UserStatus
+  passwordHash String
+  lastAccess   DateTime?
+  createdAt    DateTime   @default(now())
+  createdBy    Int?
+  updatedAt    DateTime?  @updatedAt
+  deletedAt    DateTime?
 
-  creator                users?                   @relation("UserCreatedBy", fields: [created_by], references: [id])
-  created_users          users[]                  @relation("UserCreatedBy")
-  led_projects           projects[]               @relation("ProjectLeadCoordinator")
-  created_projects       projects[]               @relation("ProjectCreatedBy")
-  project_coordinators   project_coordinators[]
-  project_beneficiaries  project_beneficiaries[]
-  metrics_updated        metrics[]
-  reports_generated      reports[]
-  audit_log              audit_log[]
+  creator              User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  createdUsers         User[]               @relation("UserCreatedBy")
+  ledProjects          Project[]            @relation("ProjectLeadCoordinator")
+  createdProjects      Project[]            @relation("ProjectCreatedBy")
+  projectCoordinators  ProjectCoordinator[]
+  projectBeneficiaries ProjectBeneficiary[]
+  metricsUpdated       Metric[]
+  reportsGenerated     Report[]
+  auditLogs            AuditLog[]
 }
 
-model topics {
+model Topic {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  project_topics project_topics[]
+  projectTopics ProjectTopic[]
 }
 
-model departments {
+model Department {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  projects projects[]
+  projects Project[]
 }
 
-model projects {
-  id                     Int             @id @default(autoincrement())
-  name                   String
-  status                 project_status
-  intensity              intensity
-  start_year             Int
-  lead_coordinator_id    Int
-  department_id          Int
-  locality_neighborhood  String?
-  zone                   zone
-  general_objective      String?
-  public_description     String?         @db.VarChar(300)
-  cover_photo            String?
-  internal_notes         String?
-  created_at             DateTime        @default(now())
-  created_by             Int?
-  updated_at             DateTime?       @updatedAt
-
-  lead_coordinator  users        @relation("ProjectLeadCoordinator", fields: [lead_coordinator_id], references: [id])
-  department        departments  @relation(fields: [department_id], references: [id])
-  creator           users?       @relation("ProjectCreatedBy", fields: [created_by], references: [id])
-
-  project_coordinators   project_coordinators[]
-  project_topics         project_topics[]
-  project_beneficiaries  project_beneficiaries[]
-}
-
-model project_coordinators {
-  project_id Int
-  user_id    Int
-
-  project projects @relation(fields: [project_id], references: [id])
-  user    users    @relation(fields: [user_id], references: [id])
-
-  @@id([project_id, user_id])
-}
-
-model project_topics {
-  project_id Int
-  topic_id   Int
-
-  project projects @relation(fields: [project_id], references: [id])
-  topic   topics   @relation(fields: [topic_id], references: [id])
-
-  @@id([project_id, topic_id])
-}
-
-model project_beneficiaries {
-  id                             Int      @id @default(autoincrement())
-  project_id                     Int
-  year                           Int
-  direct_children_adolescents    Int      @default(0)
-  indirect_children_adolescents  Int      @default(0)
-  youth_18_29                    Int      @default(0)
-  families                       Int      @default(0)
-  coordinated_institutions       Int      @default(0)
-  community_leaders              Int      @default(0)
-  basic_service_staff            Int      @default(0)
-  recorded_at                    DateTime @default(now())
-  author_id                      Int
-
-  project projects @relation(fields: [project_id], references: [id])
-  author  users    @relation(fields: [author_id], references: [id])
-
-  @@unique([project_id, year])
-}
-
-model metrics {
-  id                   Int       @id @default(autoincrement())
-  key                  String    @unique
+model Project {
+  id                   Int           @id @default(autoincrement())
   name                 String
-  show_publicly        Boolean   @default(false)
-  show_publicly_draft  Boolean   @default(false)
-  sort_order           Int
-  updated_by           Int?
-  updated_at           DateTime? @updatedAt
+  status               ProjectStatus
+  intensity            Intensity
+  startYear            Int
+  leadCoordinatorId    Int
+  departmentId         Int
+  localityNeighborhood String?
+  zone                 Zone
+  generalObjective     String?
+  publicDescription    String?       @db.VarChar(300)
+  coverPhoto           String?
+  internalNotes        String?
+  createdAt            DateTime      @default(now())
+  createdBy            Int?
+  updatedAt            DateTime?     @updatedAt
 
-  updater users? @relation(fields: [updated_by], references: [id])
+  leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
+  department      Department @relation(fields: [departmentId], references: [id])
+  creator         User?      @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+
+  projectCoordinators  ProjectCoordinator[]
+  projectTopics        ProjectTopic[]
+  projectBeneficiaries ProjectBeneficiary[]
 }
 
-model reports {
-  id            Int      @id @default(autoincrement())
-  generated_by  Int
-  period_year   Int
-  format        String
-  file_path     String
-  generated_at  DateTime @default(now())
+model ProjectCoordinator {
+  projectId Int
+  userId    Int
 
-  generator users @relation(fields: [generated_by], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@id([projectId, userId])
 }
 
-model audit_log {
-  id           Int          @id @default(autoincrement())
-  author_id    Int
-  action       audit_action
-  entity       audit_entity
-  entity_id    Int
-  details      String?
-  occurred_at  DateTime     @default(now())
+model ProjectTopic {
+  projectId Int
+  topicId   Int
 
-  author users @relation(fields: [author_id], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+  topic   Topic   @relation(fields: [topicId], references: [id])
+
+  @@id([projectId, topicId])
+}
+
+model ProjectBeneficiary {
+  id                          Int      @id @default(autoincrement())
+  projectId                   Int
+  year                        Int
+  directChildrenAdolescents   Int      @default(0)
+  indirectChildrenAdolescents Int      @default(0)
+  youth18To29                 Int      @default(0)
+  families                    Int      @default(0)
+  coordinatedInstitutions     Int      @default(0)
+  communityLeaders            Int      @default(0)
+  basicServiceStaff           Int      @default(0)
+  recordedAt                  DateTime @default(now())
+  authorId                    Int
+
+  project Project @relation(fields: [projectId], references: [id])
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@unique([projectId, year])
+}
+
+model Metric {
+  id                Int       @id @default(autoincrement())
+  key               String    @unique
+  name              String
+  showPublicly      Boolean   @default(false)
+  showPubliclyDraft Boolean   @default(false)
+  sortOrder         Int
+  updatedBy         Int?
+  updatedAt         DateTime? @updatedAt
+
+  updater User? @relation(fields: [updatedBy], references: [id])
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  generatedBy Int
+  periodYear  Int
+  format      String
+  filePath    String
+  generatedAt DateTime @default(now())
+
+  generator User @relation(fields: [generatedBy], references: [id])
+}
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  authorId   Int
+  action     AuditAction
+  entity     AuditEntity
+  entityId   Int
+  details    Json?
+  occurredAt DateTime    @default(now())
+
+  author User @relation(fields: [authorId], references: [id])
 }
