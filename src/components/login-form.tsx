@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { login, type LoginState } from '@/app/actions/auth';
+import { login } from '@/app/actions/auth';
 
 type FormFields = {
   email: string;

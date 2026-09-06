@@ -10,7 +10,7 @@ export type LoginState = {
 
 export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   try {
-    const result = await signIn('credentials', {
+    await signIn('credentials', {
       email: formData.get('email'),
       password: formData.get('password'),
       redirect: false,
