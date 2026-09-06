@@ -53,6 +53,15 @@ npx prisma migrate dev --name describe-the-change
 Esto genera el SQL versionado en `prisma/migrations/`. Ese archivo se commitea junto con el cambio
 en `schema.prisma`, en el mismo PR.
 
+## Autenticación (desarrollo local)
+
+```bash
+npx auth secret               # genera AUTH_SECRET y lo escribe en .env
+```
+
+`SEED_USER_PASSWORD` es la contraseña de los usuarios de prueba del seed. Poné cualquier valor en
+`.env` antes de correr `npx prisma db seed`. Si la cambiás, volvé a ejecutar el seed para actualizar los hashes.
+
 ## Deploy
 
 Hay dos workflows, los dos **buildean la imagen en GitHub Actions**, la publican en GHCR y después
