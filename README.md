@@ -22,6 +22,37 @@ docker run -p 3000:3000 pis-app   # http://localhost:3000
 
 Para usar otro puerto, cambiá el lado izquierdo: `-p 8080:3000` → http://localhost:8080.
 
+## Base de datos (desarrollo local)
+
+Postgres corre siempre en Docker, nunca instalado nativo en el sistema.
+
+```bash
+cp .env.example .env          # completar POSTGRES_PASSWORD con cualquier valor
+docker compose up -d db       # levanta Postgres en :5432 (solo accesible desde localhost)
+npx prisma migrate dev        # crea las tablas a partir de prisma/schema.prisma
+npx prisma db seed            # carga datos de prueba ficticios
+```
+
+`migrate dev` corre el seed automáticamente la primera vez. Para volver a cargarlo sin tocar el
+schema: `npx prisma db seed`. Para empezar de cero (borra los datos locales): `npx prisma migrate reset`.
+
+### Ver los datos
+
+```bash
+npx prisma studio   # http://localhost:5555
+```
+
+### Si cambiás el modelo
+
+Editá `prisma/schema.prisma` y corré:
+
+```bash
+npx prisma migrate dev --name describe-the-change
+```
+
+Esto genera el SQL versionado en `prisma/migrations/`. Ese archivo se commitea junto con el cambio
+en `schema.prisma`, en el mismo PR.
+
 ## Deploy
 
 Hay dos workflows, los dos **buildean la imagen en GitHub Actions**, la publican en GHCR y después
@@ -29,7 +60,7 @@ entran por SSH a la VM para bajarla y levantarla:
 
 - `Deploy staging`: automático, se dispara al mergear a `staging`.
 - `Deploy main`: **manual**. Producción se deploya cuando el equipo decide, no como efecto colateral
-  de mergear la PR de promoción. Actions → *Deploy main* → *Run workflow* (rama `main`), o
+  de mergear la PR de promoción. Actions → _Deploy main_ → _Run workflow_ (rama `main`), o
   `gh workflow run deploy-main.yml --ref main`.
 
 ```
@@ -40,12 +71,12 @@ VM (159.89.90.10):                 docker compose pull → up -d
 La VM no compila nada: el `next build` en el droplet lo dejaba sin RAM y tumbaba hasta sshd.
 Cada imagen se tagea con el SHA del commit y con el nombre de la rama.
 
-| Rama | URL | Directorio en la VM | Compose project |
-|---|---|---|---|
-| `staging` | `http://<IP_VM>:3001` | `/srv/pis-staging` | `pis-staging` |
-| `main` | `http://<IP_VM>:3000` | `/srv/pis-main` | `pis-main` |
+| Rama      | URL                   | Directorio en la VM | Compose project |
+| --------- | --------------------- | ------------------- | --------------- |
+| `staging` | `http://<IP_VM>:3001` | `/srv/pis-staging`  | `pis-staging`   |
+| `main`    | `http://<IP_VM>:3000` | `/srv/pis-main`     | `pis-main`      |
 
-Los dos entornos son clones y *compose projects* separados, así que un deploy de uno no toca al otro.
+Los dos entornos son clones y _compose projects_ separados, así que un deploy de uno no toca al otro.
 El contenedor siempre escucha 3000 adentro; el puerto de afuera lo pasa el workflow.
 
 El package de GHCR es privado (la org no permite hacerlo público), así que el workflow hace
@@ -55,7 +86,7 @@ PAT propio de `read:packages`.
 
 Requiere en el repo (Settings → Secrets and variables → Actions): los secrets `SSH_HOST` y
 `SSH_KEY`, y la variable `SSH_USER` (si no está, el workflow usa `deploy`). El usuario va como
-*variable* y no como secret a propósito: como secret, GitHub lo enmascara y los logs quedan con
+_variable_ y no como secret a propósito: como secret, GitHub lo enmascara y los logs quedan con
 `/srv/pis-***` en vez de la ruta real.
 
 ### Ver logs y estado en la VM
@@ -92,26 +123,27 @@ sudo -iu deploy
 Ojo: el próximo deploy automático vuelve a poner la punta de la rama. Para que el rollback quede,
 hay que revertir el commit en la rama.
 
-### Cuando agreguemos base de datos
+### Base de datos
 
-Nada de esto cambia el workflow: sigue siendo build en Actions → push a GHCR → `pull` + `up -d`.
-Los cambios son todos del lado del compose y de la VM.
+El servicio `db` ya está en `docker-compose.yml` (agregado junto con el modelo de datos):
 
-**1. Un servicio más en `docker-compose.yml`**, con volumen — sin volumen los datos se borran en cada
-deploy:
-
-```yaml
+```
 services:
   web:
     image: ghcr.io/xmartlabs/pis-2026-gurises-unidos:${TAG:-main}
     ports:
       - "${PORT:-3000}:3000"
     env_file: .env
-    depends_on: [db]
+    depends_on:
+      - db
     restart: unless-stopped
   db:
     image: postgres:17-alpine
     env_file: .env
+    environment:
+      POSTGRES_DB: app
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -120,8 +152,9 @@ volumes:
 ```
 
 El volumen queda prefijado por el compose project (`pis-staging_pgdata` vs `pis-main_pgdata`), así que
-staging y prod tienen bases separadas sin configurar nada. El puerto de Postgres **no** se expone:
-`web` le llega por el nombre `db` en la red interna del proyecto.
+staging y prod tienen bases separadas sin configurar nada. En local, `db` publica el puerto atado a
+`127.0.0.1` para que Prisma se conecte desde fuera del contenedor sin exponerlo a la red; en la VM
+ese mismo binding alcanza para que solo el propio servidor pueda acceder, nunca internet.
 
 **2. Un `.env` por entorno, a mano en la VM, nunca en el repo:**
 
@@ -155,15 +188,15 @@ esto, un `docker volume rm` de más es pérdida total.
 - Todo en **inglés**: nombres de variables, funciones, tipos, archivos y strings internos, y también
   los mensajes de commit, los títulos de PR y los nombres de rama.
 - **Sin comentarios largos.** El código se explica solo; si hace falta un párrafo, el problema es el
-  código. Un comentario corto solo cuando explica un *por qué* que no se lee en el código.
+  código. Un comentario corto solo cuando explica un _por qué_ que no se lee en el código.
 - Convenciones de nombres:
 
-| Qué | Convención | Ejemplo |
-|---|---|---|
-| Funciones y métodos | `camelCase` | `getUserById`, `sendInvite` |
-| Variables | `camelCase` | `userId`, `pendingItems` |
-| Constantes | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL` |
-| Archivos | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
+| Qué                 | Convención   | Ejemplo                                  |
+| ------------------- | ------------ | ---------------------------------------- |
+| Funciones y métodos | `camelCase`  | `getUserById`, `sendInvite`              |
+| Variables           | `camelCase`  | `userId`, `pendingItems`                 |
+| Constantes          | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL`            |
+| Archivos            | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
 
 ## Ramas
 
@@ -174,11 +207,11 @@ feature/*  →  development  →  staging  →  main
                                     (tag + CHANGELOG)
 ```
 
-| Rama | Para qué | Quién la escribe |
-|---|---|---|
-| `development` | Integración diaria. Es la rama **default**: toda PR de feature apunta acá. | PRs desde `feature/*` |
-| `staging` | Pre-producción / QA. Se llena promoviendo `development` entero. | PR desde `development` |
-| `main` | Producción. Acá corre release-please. | PR desde `staging` |
+| Rama          | Para qué                                                                   | Quién la escribe       |
+| ------------- | -------------------------------------------------------------------------- | ---------------------- |
+| `development` | Integración diaria. Es la rama **default**: toda PR de feature apunta acá. | PRs desde `feature/*`  |
+| `staging`     | Pre-producción / QA. Se llena promoviendo `development` entero.            | PR desde `development` |
+| `main`        | Producción. Acá corre release-please.                                      | PR desde `staging`     |
 
 Nadie pushea directo a ninguna de las tres. Siempre PR.
 
@@ -223,16 +256,16 @@ escrito es una línea que falta en el changelog.
 <tipo>(<scope opcional>): <descripción en inglés, minúscula, imperativo, sin punto final>
 ```
 
-| Tipo | Cuándo | Efecto en la versión |
-|---|---|---|
-| `feat` | Funcionalidad nueva | **minor** (1.2.0 → 1.3.0) |
-| `fix` | Corrección de bug | **patch** (1.2.0 → 1.2.1) |
-| `perf` | Mejora de performance | patch |
-| `refactor` | Reescritura sin cambio de comportamiento | ninguno |
-| `docs` | Solo documentación | ninguno |
-| `test` | Solo tests | ninguno |
-| `chore` | Build, deps, config, CI | ninguno |
-| `style` | Formato, espacios, punto y coma | ninguno |
+| Tipo       | Cuándo                                   | Efecto en la versión      |
+| ---------- | ---------------------------------------- | ------------------------- |
+| `feat`     | Funcionalidad nueva                      | **minor** (1.2.0 → 1.3.0) |
+| `fix`      | Corrección de bug                        | **patch** (1.2.0 → 1.2.1) |
+| `perf`     | Mejora de performance                    | patch                     |
+| `refactor` | Reescritura sin cambio de comportamiento | ninguno                   |
+| `docs`     | Solo documentación                       | ninguno                   |
+| `test`     | Solo tests                               | ninguno                   |
+| `chore`    | Build, deps, config, CI                  | ninguno                   |
+| `style`    | Formato, espacios, punto y coma          | ninguno                   |
 
 ### Ejemplos válidos
 
@@ -264,14 +297,14 @@ BREAKING CHANGE: clients reading `user_id` stop working.
 
 ### Ejemplos inválidos
 
-| Mal | Por qué | Bien |
-|---|---|---|
-| `Add login` | Sin tipo | `feat(auth): add login` |
-| `fix: Fix the bug.` | Mayúscula y punto final | `fix: fix the user list timeout` |
-| `feat: agregar login` | En español | `feat(auth): add login` |
-| `feat: changes` | No dice nada | `feat(auth): add refresh token` |
-| `WIP` | No es un commit publicable | Squashealo antes de la PR |
-| `Feat: something` | Tipo capitalizado | `feat: something` |
+| Mal                   | Por qué                    | Bien                             |
+| --------------------- | -------------------------- | -------------------------------- |
+| `Add login`           | Sin tipo                   | `feat(auth): add login`          |
+| `fix: Fix the bug.`   | Mayúscula y punto final    | `fix: fix the user list timeout` |
+| `feat: agregar login` | En español                 | `feat(auth): add login`          |
+| `feat: changes`       | No dice nada               | `feat(auth): add refresh token`  |
+| `WIP`                 | No es un commit publicable | Squashealo antes de la PR        |
+| `Feat: something`     | Tipo capitalizado          | `feat: something`                |
 
 ## Pull Requests
 
@@ -304,15 +337,15 @@ Los tres cumplen lo mismo:
 
 ### Qué difiere entre ramas
 
-| | `development` | `staging` y `main` |
-|---|---|---|
-| **Merge method** | Squash | Merge commit |
-| **Historial lineal** | Obligatorio | No |
+|                      | `development` | `staging` y `main` |
+| -------------------- | ------------- | ------------------ |
+| **Merge method**     | Squash        | Merge commit       |
+| **Historial lineal** | Obligatorio   | No                 |
 
 La razón es release-please. En `development` queremos historial limpio: una feature = un commit, y
 los `wip`/`arreglo typo`/`ahora sí` de la rama de trabajo se colapsan en el título de la PR.
 
-Pero al promover a `staging` y `main`, un squash colapsaría *todas* las features del ciclo en un
+Pero al promover a `staging` y `main`, un squash colapsaría _todas_ las features del ciclo en un
 único commit. release-please leería un solo `chore: promover staging a main` y el CHANGELOG saldría
 vacío. Con merge commit, cada `feat:` y `fix:` que entró por squash a `development` llega intacto a
 `main` y aparece como su propia línea en el changelog. Eso también es por qué `main` y `staging` no
@@ -369,7 +402,7 @@ La config vive en `release-please-config.json` y la versión actual en `.release
 El workflow usa el `GITHUB_TOKEN` del run, y las PRs creadas con ese token no disparan otros
 workflows: el check `Conventional commit` nunca correría sobre la PR de release y la dejaría
 bloqueada para siempre. Como era el único check, en el ruleset de `main` está apagada la regla
-*Require status checks to pass* entera (GitHub no acepta la lista vacía), y con ella el *strict* de
+_Require status checks to pass_ entera (GitHub no acepta la lista vacía), y con ella el _strict_ de
 ramas actualizadas. `main` solo recibe la PR de promoción desde `staging` y la de release-please, y
 sigue exigiendo 2 approvals, conversaciones resueltas y merge commit. En `development` y `staging`
 no cambia nada: ahí se validan los títulos que arman el CHANGELOG.
@@ -384,7 +417,7 @@ no cambia nada: ahí se validan los títulos que arman el CHANGELOG.
 ## Notas
 
 - El borrado automático de ramas al mergear está **desactivado**: en las PRs de promoción la rama
-  *head* es `staging`, y GitHub la borraba al mergear `staging → main`. Las ramas de feature se
+  _head_ es `staging`, y GitHub la borraba al mergear `staging → main`. Las ramas de feature se
   borran a mano después de mergear.
 - El check de título corre con `pull_request_target`, así que se re-evalúa cuando editás el título
   de la PR (a diferencia de `pull_request`, que no se dispara con ese evento).
