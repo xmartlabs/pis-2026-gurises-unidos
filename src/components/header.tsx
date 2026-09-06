@@ -16,9 +16,6 @@ export async function Header() {
           <Link href="/" className="text-ink-2 hover:text-ink hidden sm:inline">
             Alcance público
           </Link>
-          <Link href="/dashboard/projects" className="text-ink-2 hover:text-ink">
-            Proyectos
-          </Link>
           {session?.user ? (
             <>
               <Link href="/dashboard/projects" className="text-ink-2 hover:text-ink">
