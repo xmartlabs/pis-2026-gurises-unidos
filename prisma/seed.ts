@@ -1,8 +1,17 @@
+import 'dotenv/config';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const seedPassword = process.env.SEED_USER_PASSWORD;
+  if (!seedPassword) {
+    throw new Error('SEED_USER_PASSWORD environment variable is required');
+  }
+
+  const passwordHash = await bcrypt.hash(seedPassword, 10);
+
   // --- Catalogs ---
   const montevideo = await prisma.department.upsert({
     where: { name: 'Montevideo' },
@@ -31,7 +40,7 @@ async function main() {
   // --- Users ---
   const admin = await prisma.user.upsert({
     where: { documentId: '11111111' },
-    update: {},
+    update: { passwordHash },
     create: {
       firstName: 'Ana',
       lastName: 'Admin',
@@ -39,13 +48,13 @@ async function main() {
       email: 'admin@gurisesunidos.test',
       role: 'admin',
       status: 'active',
-      passwordHash: 'fake-hash-not-real',
+      passwordHash,
     },
   });
 
   const coordinator = await prisma.user.upsert({
     where: { documentId: '22222222' },
-    update: {},
+    update: { passwordHash },
     create: {
       firstName: 'Carlos',
       lastName: 'Coordinator',
@@ -53,7 +62,7 @@ async function main() {
       email: 'coordinator@gurisesunidos.test',
       role: 'coordinator',
       status: 'active',
-      passwordHash: 'fake-hash-not-real',
+      passwordHash,
       createdBy: admin.id,
     },
   });
