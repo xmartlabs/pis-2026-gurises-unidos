@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation"
-import { Sparkline } from "@/components/charts/sparkline"
-import { StackedBar } from "@/components/charts/stacked-bar"
-import { formatNumber } from "@/lib/format"
-import { getSession } from "@/lib/session"
+import { redirect } from 'next/navigation';
+import { Sparkline } from '@/components/charts/sparkline';
+import { StackedBar } from '@/components/charts/stacked-bar';
+import { formatNumber } from '@/lib/format';
+import { auth } from '@/auth';
 import {
   BENEFICIARY_CATEGORIES,
   PROJECTS,
@@ -10,76 +10,71 @@ import {
   getProjectReach,
   getTopProjects,
   getTotals,
-} from "@/lib/projects"
+} from '@/lib/projects';
 
 const SERIES_COLORS = [
-  "var(--series-1)",
-  "var(--series-2)",
-  "var(--series-3)",
-  "var(--series-4)",
-  "var(--series-5)",
-  "var(--series-6)",
-  "var(--series-7)",
-]
+  'var(--series-1)',
+  'var(--series-2)',
+  'var(--series-3)',
+  'var(--series-4)',
+  'var(--series-5)',
+  'var(--series-6)',
+  'var(--series-7)',
+];
 
-const INTERNAL_KEYS = ["nnaIndirect", "youth", "otherAdults"]
+const INTERNAL_KEYS = ['nnaIndirect', 'youth', 'otherAdults'];
 
 export default async function DashboardPage() {
-  const session = await getSession()
+  const session = await auth();
 
-  if (!session) {
-    redirect("/login")
+  if (!session?.user) {
+    redirect('/login');
   }
 
-  const totals = getTotals()
-  const internal = INTERNAL_KEYS.map((key) => totals.find((item) => item.key === key)!)
+  const totals = getTotals();
+  const internal = INTERNAL_KEYS.map((key) => totals.find((item) => item.key === key)!);
   const series = BENEFICIARY_CATEGORIES.map((category, index) => ({
     label: category.label,
     color: SERIES_COLORS[index],
-  }))
-  const sortedProjects = [...PROJECTS].sort(
-    (a, b) => getProjectReach(b) - getProjectReach(a),
-  )
+  }));
+  const sortedProjects = [...PROJECTS].sort((a, b) => getProjectReach(b) - getProjectReach(a));
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <p className="font-mono text-xs tracking-widest text-ink-3 uppercase">
-        Panel interno · {session}
+      <p className="text-ink-3 font-mono text-xs tracking-widest uppercase">
+        Panel interno · {session.user.email}
       </p>
-      <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
+      <h1 className="font-display mt-3 text-3xl font-semibold tracking-tight">
         Métricas ampliadas
       </h1>
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-2">
-        Las categorías que no se publican en el dashboard público, la composición del
-        alcance por proyecto y la serie 2019–2025 de cada uno.
+      <p className="text-ink-2 mt-3 max-w-2xl text-sm leading-relaxed">
+        Las categorías que no se publican en el dashboard público, la composición del alcance por
+        proyecto y la serie 2019–2025 de cada uno.
       </p>
 
       <dl className="mt-8 grid gap-4 sm:grid-cols-3">
         {internal.map((item) => (
-          <div key={item.key} className="rounded-xl border border-line bg-surface p-5">
-            <dt className="text-sm text-ink-2">{item.label}</dt>
-            <dd className="mt-2 font-display text-3xl font-semibold tracking-tight">
+          <div key={item.key} className="border-line bg-surface rounded-xl border p-5">
+            <dt className="text-ink-2 text-sm">{item.label}</dt>
+            <dd className="font-display mt-2 text-3xl font-semibold tracking-tight">
               {formatNumber(item.total)}
             </dd>
-            <p className="mt-3 text-xs leading-relaxed text-ink-3">{item.definition}</p>
+            <p className="text-ink-3 mt-3 text-xs leading-relaxed">{item.definition}</p>
           </div>
         ))}
       </dl>
 
-      <article className="mt-10 rounded-xl border border-line bg-surface p-6">
+      <article className="border-line bg-surface mt-10 rounded-xl border p-6">
         <h2 className="font-display text-xl font-semibold tracking-tight">
           Composición del alcance
         </h2>
-        <p className="mt-1 text-sm text-ink-2">
+        <p className="text-ink-2 mt-1 text-sm">
           Doce proyectos de mayor alcance, apilados por categoría.
         </p>
         <ul className="mt-5 mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs">
           {series.map((item) => (
-            <li key={item.label} className="flex items-center gap-2 text-ink-2">
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ background: item.color }}
-              />
+            <li key={item.label} className="text-ink-2 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
               {item.label}
             </li>
           ))}
@@ -88,25 +83,21 @@ export default async function DashboardPage() {
           series={series}
           rows={getTopProjects(12).map((project) => ({
             label: project.name,
-            values: BENEFICIARY_CATEGORIES.map(
-              (category) => project.beneficiaries[category.key],
-            ),
+            values: BENEFICIARY_CATEGORIES.map((category) => project.beneficiaries[category.key]),
           }))}
         />
       </article>
 
-      <article className="mt-10 rounded-xl border border-line bg-surface p-6">
-        <h2 className="font-display text-xl font-semibold tracking-tight">
-          Todos los proyectos
-        </h2>
-        <p className="mt-1 mb-5 text-sm text-ink-2">
+      <article className="border-line bg-surface mt-10 rounded-xl border p-6">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Todos los proyectos</h2>
+        <p className="text-ink-2 mt-1 mb-5 text-sm">
           {PROJECTS.length} proyectos · tendencia {REACH_YEARS[0]}–
           {REACH_YEARS[REACH_YEARS.length - 1]}
         </p>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
-              <tr className="border-b border-line text-left font-mono text-[11px] text-ink-3 uppercase">
+              <tr className="border-line text-ink-3 border-b text-left font-mono text-[11px] uppercase">
                 <th className="py-2 pr-4 font-normal">Proyecto</th>
                 <th className="py-2 pr-4 font-normal">Territorio</th>
                 <th className="py-2 pr-4 font-normal">Intensidad</th>
@@ -118,10 +109,10 @@ export default async function DashboardPage() {
             </thead>
             <tbody>
               {sortedProjects.map((project) => (
-                <tr key={project.slug} className="border-b border-line/60">
+                <tr key={project.slug} className="border-line/60 border-b">
                   <td className="py-2.5 pr-4">{project.name}</td>
-                  <td className="py-2.5 pr-4 text-ink-2">{project.territory}</td>
-                  <td className="py-2.5 pr-4 text-ink-2">{project.intensity}</td>
+                  <td className="text-ink-2 py-2.5 pr-4">{project.territory}</td>
+                  <td className="text-ink-2 py-2.5 pr-4">{project.intensity}</td>
                   <td className="py-2.5 pr-4 text-right font-mono tabular-nums">
                     {formatNumber(project.beneficiaries.nna)}
                   </td>
@@ -141,5 +132,5 @@ export default async function DashboardPage() {
         </div>
       </article>
     </div>
-  )
+  );
 }
