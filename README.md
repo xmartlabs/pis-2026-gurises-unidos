@@ -168,10 +168,16 @@ ese mismo binding alcanza para que solo el propio servidor pueda acceder, nunca 
 **2. Un `.env` por entorno, a mano en la VM, nunca en el repo:**
 
 ```bash
-# /srv/pis-staging/.env   (y otro, con otra password, en /srv/pis-main)
+# /srv/pis-staging/.env   (y otro, con otra password y secret, en /srv/pis-main)
 POSTGRES_PASSWORD=<distinta por entorno>
 DATABASE_URL=postgresql://postgres:<pass>@db:5432/app
+AUTH_SECRET=<openssl rand -base64 32>
+AUTH_TRUST_HOST=true
 ```
+
+`AUTH_SECRET` es un secret de runtime (Auth.js firma cookies/JWT). No va en el Dockerfile ni
+como build arg: Compose ya lo inyecta con `env_file: .env`. Staging y prod tienen que usar
+valores distintos. Generarlo en la VM con `openssl rand -base64 32`. `AUTH_URL=http://<IP>:<puerto>`.
 
 Sobrevive a los deploys: `git reset --hard` no toca archivos no trackeados. Agregar `.env` al
 `.gitignore` para que nadie lo comitee.
