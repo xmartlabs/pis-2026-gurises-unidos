@@ -3,8 +3,14 @@ import Credentials from 'next-auth/providers/credentials';
 import { toAuthUser, verifyUserCredentials } from './lib/credentials';
 import prisma from './lib/prisma';
 
+const SESSION_MAX_AGE = 12 * 60 * 60; // 12 hours
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: { strategy: 'jwt' },
+  session: {
+    strategy: 'jwt',
+    maxAge: SESSION_MAX_AGE,
+    updateAge: 0,
+  },
   providers: [
     Credentials({
       credentials: {
