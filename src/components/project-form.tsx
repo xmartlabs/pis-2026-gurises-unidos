@@ -43,6 +43,12 @@ export function ProjectForm({
 
   return (
     <form action={formAction} className="mt-8 space-y-8">
+      {state.formError && (
+        <p className="border-accent bg-accent/10 text-accent rounded-lg border px-4 py-3 text-sm">
+          {state.formError}
+        </p>
+      )}
+
       <section className="border-line bg-surface space-y-5 rounded-xl border p-6">
         <h2 className="font-display text-lg font-semibold tracking-tight">Información básica</h2>
 

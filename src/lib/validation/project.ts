@@ -4,7 +4,11 @@ export const projectSchema = z.object({
   name: z.string().trim().min(1, 'El nombre es obligatorio'),
   status: z.enum(['active', 'inProgress', 'completed', 'archived']),
   intensity: z.enum(['high', 'medium', 'low']),
-  startYear: z.coerce.number().int().min(1989, 'Año inválido'),
+  startYear: z.coerce
+    .number()
+    .int()
+    .min(1989, 'Año inválido')
+    .max(new Date().getFullYear(), 'Año inválido'),
   leadCoordinatorId: z.coerce
     .number({ error: 'Elegí un coordinador' })
     .int()
@@ -37,4 +41,4 @@ export const projectSchema = z.object({
     .transform((value) => value || null),
 });
 
-export type ProjectFormState = { errors?: Record<string, string[]> };
+export type ProjectFormState = { errors?: Record<string, string[]>; formError?: string };

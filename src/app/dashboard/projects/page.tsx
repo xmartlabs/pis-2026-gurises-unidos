@@ -1,44 +1,17 @@
 import Link from 'next/link';
-import { PrismaClient } from '@/generated/prisma/client';
-import { ProjectStatus } from '@/generated/prisma/enums';
+import { redirect } from 'next/navigation';
+import prisma from '@/lib/prisma';
+import { auth } from '@/auth';
 import { formatNumber } from '@/lib/format';
-
-const prisma = new PrismaClient();
-
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  active: 'Activo',
-  inProgress: 'En progreso',
-  completed: 'Completado',
-  archived: 'Archivado',
-};
-
-const INTENSITY_LABEL = {
-  high: 'Alta',
-  medium: 'Media',
-  low: 'Baja',
-};
-
-function sumBeneficiaries(record: {
-  directChildrenAdolescents: number;
-  indirectChildrenAdolescents: number;
-  youth18To29: number;
-  families: number;
-  coordinatedInstitutions: number;
-  communityLeaders: number;
-  basicServiceStaff: number;
-}) {
-  return (
-    record.directChildrenAdolescents +
-    record.indirectChildrenAdolescents +
-    record.youth18To29 +
-    record.families +
-    record.coordinatedInstitutions +
-    record.communityLeaders +
-    record.basicServiceStaff
-  );
-}
+import { STATUS_LABEL, INTENSITY_LABEL, sumBeneficiaries } from '@/lib/project-display';
 
 export default async function ProjectsPage() {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
   const [projects, total] = await Promise.all([
     prisma.project.findMany({
       include: {

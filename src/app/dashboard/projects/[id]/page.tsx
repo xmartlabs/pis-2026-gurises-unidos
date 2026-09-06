@@ -1,44 +1,16 @@
-import { notFound } from 'next/navigation';
-import { PrismaClient } from '@/generated/prisma/client';
-import { ProjectStatus, Intensity } from '@/generated/prisma/enums';
+import { notFound, redirect } from 'next/navigation';
+import prisma from '@/lib/prisma';
+import { auth } from '@/auth';
 import { formatNumber } from '@/lib/format';
-
-const prisma = new PrismaClient();
-
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  active: 'Activo',
-  inProgress: 'En progreso',
-  completed: 'Completado',
-  archived: 'Archivado',
-};
-
-const INTENSITY_LABEL: Record<Intensity, string> = {
-  high: 'Alta intensidad',
-  medium: 'Media intensidad',
-  low: 'Baja intensidad',
-};
-
-const BENEFICIARY_ROWS: { key: keyof BeneficiaryCounts; label: string }[] = [
-  { key: 'directChildrenAdolescents', label: 'NNA directos' },
-  { key: 'indirectChildrenAdolescents', label: 'NNA indirectos' },
-  { key: 'youth18To29', label: 'Jóvenes (18 a 29)' },
-  { key: 'families', label: 'Familias' },
-  { key: 'coordinatedInstitutions', label: 'Instituciones coordinadas' },
-  { key: 'communityLeaders', label: 'Referentes comunitarios' },
-  { key: 'basicServiceStaff', label: 'Personal de servicios básicos' },
-];
-
-type BeneficiaryCounts = {
-  directChildrenAdolescents: number;
-  indirectChildrenAdolescents: number;
-  youth18To29: number;
-  families: number;
-  coordinatedInstitutions: number;
-  communityLeaders: number;
-  basicServiceStaff: number;
-};
+import { STATUS_LABEL, INTENSITY_LABEL, BENEFICIARY_FIELDS } from '@/lib/project-display';
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
   const { id } = await params;
   const projectId = Number(id);
 
@@ -118,9 +90,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </h2>
             <p className="text-ink-2 mt-1 text-sm">Año {beneficiaries.year}</p>
             <ul className="mt-5 space-y-3">
-              {BENEFICIARY_ROWS.map((row) => {
+              {BENEFICIARY_FIELDS.map((row) => {
                 const value = beneficiaries[row.key];
-                const max = Math.max(...BENEFICIARY_ROWS.map((r) => beneficiaries[r.key]), 1);
+                const max = Math.max(...BENEFICIARY_FIELDS.map((r) => beneficiaries[r.key]), 1);
                 return (
                   <li key={row.key}>
                     <div className="flex items-baseline justify-between text-sm">
