@@ -21,6 +21,9 @@ export async function Header() {
           </Link>
           {session?.user ? (
             <>
+              <Link href="/dashboard/projects" className="text-ink-2 hover:text-ink">
+                Proyectos
+              </Link>
               <Link href="/dashboard" className="text-ink-2 hover:text-ink">
                 Panel interno
               </Link>
