@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '../src/generated/prisma/client';
+import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -68,25 +68,43 @@ async function main() {
   });
 
   // --- Test project ---
-  const project = await prisma.project.create({
-    data: {
-      name: 'Test project',
-      status: 'active',
-      intensity: 'medium',
-      startYear: 2025,
-      leadCoordinatorId: coordinator.id,
-      departmentId: montevideo.id,
-      zone: 'city',
-      createdBy: admin.id,
-      projectTopics: {
-        create: [{ topicId: education.id }, { topicId: health.id }],
-      },
-    },
+  const projectData = {
+    name: 'Test project',
+    status: 'active',
+    intensity: 'medium',
+    startYear: 2025,
+    leadCoordinatorId: coordinator.id,
+    departmentId: montevideo.id,
+    zone: 'city',
+    createdBy: admin.id,
+  } satisfies Prisma.ProjectUncheckedCreateInput;
+
+  // a project is identified by name + startYear, but there is no unique index yet
+  const existingProject = await prisma.project.findFirst({
+    where: { name: projectData.name, startYear: projectData.startYear },
   });
 
+  const project = existingProject
+    ? await prisma.project.update({ where: { id: existingProject.id }, data: projectData })
+    : await prisma.project.create({ data: projectData });
+
+  for (const topic of [education, health]) {
+    await prisma.projectTopic.upsert({
+      where: { projectId_topicId: { projectId: project.id, topicId: topic.id } },
+      update: {},
+      create: { projectId: project.id, topicId: topic.id },
+    });
+  }
+
   // --- Beneficiaries ---
-  await prisma.projectBeneficiary.create({
-    data: {
+  await prisma.projectBeneficiary.upsert({
+    where: { projectId_year: { projectId: project.id, year: 2025 } },
+    update: {
+      directChildrenAdolescents: 50,
+      families: 20,
+      authorId: coordinator.id,
+    },
+    create: {
       projectId: project.id,
       year: 2025,
       directChildrenAdolescents: 50,
