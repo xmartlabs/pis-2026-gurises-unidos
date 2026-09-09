@@ -149,12 +149,16 @@ propio servidor puede acceder, nunca internet.
 **Configurar un entorno nuevo:** clonar el repo en `/srv/pis-<rama>` y correr
 
 ```bash
-sudo ./vm-setup.sh staging     # o main
+./vm-setup.sh staging     # o main
 ```
 
 Genera `/srv/pis-<rama>/.env` con `POSTGRES_PASSWORD` y `AUTH_SECRET` nuevos, el `DATABASE_URL`
 apuntando a `db:5432` (el nombre del servicio en la red de compose, no `localhost`: `web` corre
 dentro de un contenedor) y el `DB_PORT` del entorno. El archivo queda en `600`.
+
+Como `deploy` y sin `sudo`: no necesita root, y con `sudo` el `.env` quedaría de root, ilegible para
+el usuario con el que entra el deploy automático. Si igual se corre como root, el script le pasa el
+archivo al dueño del directorio.
 
 **En un entorno que ya tenía `.env`** (los de la VM se crearon antes de que existiera `DB_PORT`) hay
 que agregarle la línea a mano, porque el script no sobrescribe: `DB_PORT=5432` en main y

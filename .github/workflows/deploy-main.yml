@@ -66,7 +66,7 @@ jobs:
               echo "falta DB_PORT en /srv/pis-$BRANCH/.env (5432 en main, 5433 en staging)" >&2
               exit 1
             }
-            COMPOSE_PROJECT_NAME="pis-$BRANCH" docker compose up -d db
+            COMPOSE_PROJECT_NAME="pis-$BRANCH" docker compose up -d --wait db
 
       - name: Run migrations through an SSH tunnel
         env:

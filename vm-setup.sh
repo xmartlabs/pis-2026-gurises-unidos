@@ -47,4 +47,8 @@ AUTH_TRUST_HOST=true
 AUTH_URL=http://$IP:$PORT
 EOF
 
+if [ "$(id -u)" -eq 0 ]; then
+  chown "$(stat -c '%u:%g' "$DIR")" "$ENV_FILE"
+fi
+
 echo "== $ENV_FILE creado"
