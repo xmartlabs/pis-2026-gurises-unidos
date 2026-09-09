@@ -53,8 +53,7 @@ npx prisma migrate dev --name describe-the-change
 Esto genera el SQL versionado en `prisma/migrations/`. Ese archivo se commitea junto con el cambio
 en `schema.prisma`, en el mismo PR.
 
-El check `DB drift` falla el PR si `schema.prisma` cambió sin su migración. Compara las migraciones
-contra el schema, no contra la base de un entorno: no detecta que alguien haya tocado prod a mano.
+El check `DB drift` falla el PR si `schema.prisma` cambió sin su migración.
 
 ## Autenticación (desarrollo local)
 
@@ -137,60 +136,31 @@ hay que revertir el commit en la rama.
 
 ### Base de datos
 
-El servicio `db` está en `docker-compose.yml` junto al de `web`. El volumen queda prefijado por el
-compose project (`pis-staging_pgdata` vs `pis-main_pgdata`), así que staging y prod tienen bases
-separadas sin configurar nada.
+`db` está en `docker-compose.yml`. Cada entorno tiene su volumen (`pis-staging_pgdata` vs
+`pis-main_pgdata`) y su puerto: `DB_PORT` 5432 en main, 5433 en staging, siempre atado a
+`127.0.0.1`.
 
-El puerto que `db` publica al host **es distinto por entorno** (`DB_PORT`: 5432 en main, 5433 en
-staging). Los dos entornos corren en la misma VM con el mismo compose, así que un puerto fijo hacía
-que el segundo `up -d` fallara con _port is already allocated_. Siempre atado a `127.0.0.1`: sólo el
-propio servidor puede acceder, nunca internet.
-
-**Configurar un entorno nuevo:** clonar el repo en `/srv/pis-<rama>` y correr
+Entorno nuevo: clonar en `/srv/pis-<rama>` y, como `deploy` y sin `sudo`:
 
 ```bash
 ./vm-setup.sh staging     # o main
 ```
 
-Genera `/srv/pis-<rama>/.env` con `POSTGRES_PASSWORD` y `AUTH_SECRET` nuevos, el `DATABASE_URL`
-apuntando a `db:5432` (el nombre del servicio en la red de compose, no `localhost`: `web` corre
-dentro de un contenedor) y el `DB_PORT` del entorno. El archivo queda en `600`.
+Genera el `.env` en `600` con `POSTGRES_PASSWORD`, `AUTH_SECRET`, `DB_PORT` y el `DATABASE_URL`
+apuntando a `db:5432`. No sobrescribe uno existente.
 
-Como `deploy` y sin `sudo`: no necesita root, y con `sudo` el `.env` quedaría de root, ilegible para
-el usuario con el que entra el deploy automático. Si igual se corre como root, el script le pasa el
-archivo al dueño del directorio.
-
-**En un entorno que ya tenía `.env`** (los de la VM se crearon antes de que existiera `DB_PORT`) hay
-que agregarle la línea a mano, porque el script no sobrescribe: `DB_PORT=5432` en main y
-`DB_PORT=5433` en staging. El `.env` es la única fuente del puerto — lo leen la interpolación del
-compose y el túnel del workflow —, así que el deploy corta al principio con un mensaje explícito si
-falta, en vez de atar el puerto del otro entorno.
-
-Es idempotente y **nunca sobrescribe un `.env` que ya existe**, a propósito: `POSTGRES_PASSWORD` sólo
-se aplica cuando Postgres inicializa el volumen, así que regenerarlo dejaría a `web` sin poder
-autenticarse contra los datos que ya están; y rotar `AUTH_SECRET` invalida todas las sesiones. El
-`.env` sobrevive a los deploys porque `git reset --hard` no toca archivos no trackeados.
+Si el `.env` ya existía, agregarle `DB_PORT` a mano: es la única fuente del puerto y el deploy corta
+si falta.
 
 ### Migraciones en el deploy
 
-Las migraciones las corre el workflow, **en el runner de Actions**, contra un túnel SSH hacia el
-Postgres de la VM. Es el mismo criterio que con `next build`: el droplet tiene 961 MiB y lo que puede
-correr afuera, corre afuera. La imagen no lleva el CLI de Prisma.
+Las corre el workflow en el runner de Actions, por un túnel SSH a la base de la VM. Orden: build y
+push → `up -d --wait db` → `migrate deploy` → `deploy.sh`. Si la migración falla, el deploy corta y
+sigue corriendo la app anterior.
 
-El orden es: buildear y pushear la imagen → levantar `db` en la VM → `prisma migrate deploy` por el
-túnel → `deploy.sh` (pull + up -d). Si la migración falla, el workflow corta **antes** de levantar la
-app nueva y queda corriendo la anterior. Por eso la migración no es el comando del contenedor: ahí una
-migración fallida dejaría al contenedor reiniciándose en loop.
+Un deploy a mano o un rollback no migran.
 
-La credencial se lee del `.env` de la VM por SSH en el mismo paso. No hay un `DATABASE_URL`
-duplicado como secret en GitHub: el secret vive en un solo lugar y no hay que rotarlo en dos.
-
-**Un deploy a mano o un rollback no corren migraciones.** Para el rollback es lo correcto: Prisma no
-tiene down migrations, así que volver a una imagen anterior contra un esquema más nuevo es lo
-esperado, y para bajar un cambio de esquema hace falta una migración nueva hacia adelante. Si
-deployás código nuevo a mano, corré la migración por tu cuenta.
-
-Ver en qué versión está la base de un entorno:
+Ver la versión de la base de un entorno:
 
 ```bash
 cd /srv/pis-main
@@ -198,14 +168,9 @@ COMPOSE_PROJECT_NAME=pis-main docker compose exec db \
   psql -U postgres -d app -c "SELECT migration_name, finished_at FROM _prisma_migrations ORDER BY finished_at;"
 ```
 
-### Pendientes de la VM
+### Pendiente
 
-**Backups.** Un cron con `docker exec <contenedor-db> pg_dump` a un archivo fuera del volumen. Sin
-esto, un `docker volume rm` de más es pérdida total.
-
-**RAM.** El droplet tiene 961 MiB y Postgres junto a Next entra justo. Se decidió no agregar swap: el
-camino es que todo lo que pueda correr fuera de la VM corra fuera, como ya pasa con el build y las
-migraciones. Si aprieta, subir el droplet.
+**Backups.** Falta un cron con `pg_dump` a un archivo fuera del volumen.
 
 ## Estilo de código
 
