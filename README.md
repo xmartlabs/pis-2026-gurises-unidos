@@ -53,6 +53,9 @@ npx prisma migrate dev --name describe-the-change
 Esto genera el SQL versionado en `prisma/migrations/`. Ese archivo se commitea junto con el cambio
 en `schema.prisma`, en el mismo PR.
 
+El check `DB drift` falla el PR si `schema.prisma` cambió sin su migración. Compara las migraciones
+contra el schema, no contra la base de un entorno: no detecta que alguien haya tocado prod a mano.
+
 ## Autenticación (desarrollo local)
 
 ```bash
@@ -73,8 +76,8 @@ entran por SSH a la VM para bajarla y levantarla:
   `gh workflow run deploy-main.yml --ref main`.
 
 ```
-Actions (runner 4 cores / 16 GB):  docker build → push a ghcr.io/xmartlabs/pis-2026-gurises-unidos
-VM (159.89.90.10):                 docker compose pull → up -d
+Actions (runner 4 cores / 16 GB):  docker build → push a GHCR → prisma migrate deploy
+VM (<IP_VM>):                      docker compose pull → up -d
 ```
 
 La VM no compila nada: el `next build` en el droplet lo dejaba sin RAM y tumbaba hasta sshd.
@@ -134,69 +137,65 @@ hay que revertir el commit en la rama.
 
 ### Base de datos
 
-El servicio `db` ya está en `docker-compose.yml` (agregado junto con el modelo de datos):
+El servicio `db` está en `docker-compose.yml` junto al de `web`. El volumen queda prefijado por el
+compose project (`pis-staging_pgdata` vs `pis-main_pgdata`), así que staging y prod tienen bases
+separadas sin configurar nada.
 
-```
-services:
-  web:
-    image: ghcr.io/xmartlabs/pis-2026-gurises-unidos:${TAG:-main}
-    ports:
-      - "${PORT:-3000}:3000"
-    env_file: .env
-    depends_on:
-      - db
-    restart: unless-stopped
-  db:
-    image: postgres:17-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: app
-    ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-volumes:
-  pgdata:
-```
+El puerto que `db` publica al host **es distinto por entorno** (`DB_PORT`: 5432 en main, 5433 en
+staging). Los dos entornos corren en la misma VM con el mismo compose, así que un puerto fijo hacía
+que el segundo `up -d` fallara con _port is already allocated_. Siempre atado a `127.0.0.1`: sólo el
+propio servidor puede acceder, nunca internet.
 
-El volumen queda prefijado por el compose project (`pis-staging_pgdata` vs `pis-main_pgdata`), así que
-staging y prod tienen bases separadas sin configurar nada. En local, `db` publica el puerto atado a
-`127.0.0.1` para que Prisma se conecte desde fuera del contenedor sin exponerlo a la red; en la VM
-ese mismo binding alcanza para que solo el propio servidor pueda acceder, nunca internet.
-
-**2. Un `.env` por entorno, a mano en la VM, nunca en el repo:**
+**Configurar un entorno nuevo:** clonar el repo en `/srv/pis-<rama>` y correr
 
 ```bash
-# /srv/pis-staging/.env   (y otro, con otra password y secret, en /srv/pis-main)
-POSTGRES_PASSWORD=<distinta por entorno>
-DATABASE_URL=postgresql://postgres:<pass>@db:5432/app
-AUTH_SECRET=<openssl rand -base64 32>
-AUTH_TRUST_HOST=true
+sudo ./vm-setup.sh staging     # o main
 ```
 
-`AUTH_SECRET` es un secret de runtime (Auth.js firma cookies/JWT). No va en el Dockerfile ni
-como build arg: Compose ya lo inyecta con `env_file: .env`. Staging y prod tienen que usar
-valores distintos. Generarlo en la VM con `openssl rand -base64 32`. `AUTH_URL=http://<IP>:<puerto>`.
+Genera `/srv/pis-<rama>/.env` con `POSTGRES_PASSWORD` y `AUTH_SECRET` nuevos, el `DATABASE_URL`
+apuntando a `db:5432` (el nombre del servicio en la red de compose, no `localhost`: `web` corre
+dentro de un contenedor) y el `DB_PORT` del entorno. El archivo queda en `600`.
 
-Sobrevive a los deploys: `git reset --hard` no toca archivos no trackeados. Agregar `.env` al
-`.gitignore` para que nadie lo comitee.
+Es idempotente y **nunca sobrescribe un `.env` que ya existe**, a propósito: `POSTGRES_PASSWORD` sólo
+se aplica cuando Postgres inicializa el volumen, así que regenerarlo dejaría a `web` sin poder
+autenticarse contra los datos que ya están; y rotar `AUTH_SECRET` invalida todas las sesiones. El
+`.env` sobrevive a los deploys porque `git reset --hard` no toca archivos no trackeados.
 
-**3. Migraciones.** Es la decisión de fondo, no el compose. Lo más simple es correrlas al arrancar el
-contenedor (`prisma migrate deploy && node server.js` como comando), así deploy y migración van
-juntos y no hay que acordarse. El costo: una migración que falla deja el contenedor reiniciándose en
-loop. La alternativa es un paso aparte en el workflow, antes del `up -d`.
+### Migraciones en el deploy
 
-**4. RAM.** El droplet tiene 961 MiB. Postgres junto a Next entra, pero justo: conviene agregar swap
-antes, o subir el droplet.
+Las migraciones las corre el workflow, **en el runner de Actions**, contra un túnel SSH hacia el
+Postgres de la VM. Es el mismo criterio que con `next build`: el droplet tiene 961 MiB y lo que puede
+correr afuera, corre afuera. La imagen no lleva el CLI de Prisma.
+
+El orden es: buildear y pushear la imagen → levantar `db` en la VM → `prisma migrate deploy` por el
+túnel → `deploy.sh` (pull + up -d). Si la migración falla, el workflow corta **antes** de levantar la
+app nueva y queda corriendo la anterior. Por eso la migración no es el comando del contenedor: ahí una
+migración fallida dejaría al contenedor reiniciándose en loop.
+
+La credencial se lee del `.env` de la VM por SSH en el mismo paso. No hay un `DATABASE_URL`
+duplicado como secret en GitHub: el secret vive en un solo lugar y no hay que rotarlo en dos.
+
+**Un deploy a mano o un rollback no corren migraciones.** Para el rollback es lo correcto: Prisma no
+tiene down migrations, así que volver a una imagen anterior contra un esquema más nuevo es lo
+esperado, y para bajar un cambio de esquema hace falta una migración nueva hacia adelante. Si
+deployás código nuevo a mano, corré la migración por tu cuenta.
+
+Ver en qué versión está la base de un entorno:
 
 ```bash
-sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+cd /srv/pis-main
+COMPOSE_PROJECT_NAME=pis-main docker compose exec db \
+  psql -U postgres -d app -c "SELECT migration_name, finished_at FROM _prisma_migrations ORDER BY finished_at;"
 ```
 
-**5. Backups.** Un cron con `docker exec <contenedor-db> pg_dump` a un archivo fuera del volumen. Sin
+### Pendientes de la VM
+
+**Backups.** Un cron con `docker exec <contenedor-db> pg_dump` a un archivo fuera del volumen. Sin
 esto, un `docker volume rm` de más es pérdida total.
+
+**RAM.** El droplet tiene 961 MiB y Postgres junto a Next entra justo. Se decidió no agregar swap: el
+camino es que todo lo que pueda correr fuera de la VM corra fuera, como ya pasa con el build y las
+migraciones. Si aprieta, subir el droplet.
 
 ## Estilo de código
 
@@ -346,6 +345,7 @@ Los tres cumplen lo mismo:
 
 - 2 approvals de otras personas (no podés auto-aprobarte)
 - El check `Conventional commit` en verde
+- El check `DB drift` en verde, si el PR toca `prisma/`
 - Todas las conversaciones resueltas
 - Tu rama actualizada respecto de la base (ver más abajo)
 - Los approvals se invalidan si pusheás commits nuevos: hay que pedir re-review
