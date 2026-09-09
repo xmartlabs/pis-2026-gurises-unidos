@@ -158,9 +158,9 @@ dentro de un contenedor) y el `DB_PORT` del entorno. El archivo queda en `600`.
 
 **En un entorno que ya tenía `.env`** (los de la VM se crearon antes de que existiera `DB_PORT`) hay
 que agregarle la línea a mano, porque el script no sobrescribe: `DB_PORT=5432` en main y
-`DB_PORT=5433` en staging. Sin eso, un `up -d` a mano en staging intenta atar 5432 y falla con
-_port is already allocated_. Los deploys por workflow no dependen de esa línea: le pasan el puerto
-del entorno explícitamente.
+`DB_PORT=5433` en staging. El `.env` es la única fuente del puerto — lo leen la interpolación del
+compose y el túnel del workflow —, así que el deploy corta al principio con un mensaje explícito si
+falta, en vez de atar el puerto del otro entorno.
 
 Es idempotente y **nunca sobrescribe un `.env` que ya existe**, a propósito: `POSTGRES_PASSWORD` sólo
 se aplica cuando Postgres inicializa el volumen, así que regenerarlo dejaría a `web` sin poder

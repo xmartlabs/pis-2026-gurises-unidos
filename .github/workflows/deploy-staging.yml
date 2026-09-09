@@ -49,23 +49,29 @@ jobs:
       - uses: appleboy/ssh-action@v1
         env:
           BRANCH: staging
-          DB_PORT: '5433'
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ vars.SSH_USER || 'deploy' }}
           key: ${{ secrets.SSH_KEY }}
-          envs: BRANCH,DB_PORT
+          envs: BRANCH
           script: |
             set -euo pipefail
             cd "/srv/pis-$BRANCH"
             git fetch --prune origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
-            COMPOSE_PROJECT_NAME="pis-$BRANCH" DB_PORT="$DB_PORT" docker compose up -d db
+            [ -f .env ] || {
+              echo "falta /srv/pis-$BRANCH/.env: correr vm-setup.sh $BRANCH" >&2
+              exit 1
+            }
+            grep -q '^DB_PORT=.' .env || {
+              echo "falta DB_PORT en /srv/pis-$BRANCH/.env (5432 en main, 5433 en staging)" >&2
+              exit 1
+            }
+            COMPOSE_PROJECT_NAME="pis-$BRANCH" docker compose up -d db
 
       - name: Run migrations through an SSH tunnel
         env:
           BRANCH: staging
-          DB_PORT: '5433'
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ vars.SSH_USER || 'deploy' }}
           SSH_KEY: ${{ secrets.SSH_KEY }}
@@ -77,18 +83,25 @@ jobs:
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
           REMOTE_ENV="$(ssh -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "cat /srv/pis-$BRANCH/.env")"
-          PGPASS="$(printf '%s' "$REMOTE_ENV" | grep '^POSTGRES_PASSWORD=' | cut -d= -f2-)"
-          echo "::add-mask::$PGPASS"
-          if [ -z "$PGPASS" ]; then
-            echo "POSTGRES_PASSWORD vacio o ausente en /srv/pis-$BRANCH/.env" >&2
-            exit 1
-          fi
+          REMOTE_URL="$(printf '%s' "$REMOTE_ENV" | grep '^DATABASE_URL=' | cut -d= -f2-)"
+          DB_PORT="$(printf '%s' "$REMOTE_ENV" | grep '^DB_PORT=' | cut -d= -f2-)"
+          echo "::add-mask::$REMOTE_URL"
+
+          case "$REMOTE_URL" in
+            *"@db:5432/"*) ;;
+            *)
+              echo "DATABASE_URL de /srv/pis-$BRANCH/.env no apunta a db:5432" >&2
+              exit 1
+              ;;
+          esac
+
+          LOCAL_URL="${REMOTE_URL/@db:5432\//@127.0.0.1:55432/}"
+          echo "::add-mask::$LOCAL_URL"
 
           ssh -i ~/.ssh/deploy_key -f -N -o ExitOnForwardFailure=yes \
             -L "55432:127.0.0.1:$DB_PORT" "$SSH_USER@$SSH_HOST"
 
-          DATABASE_URL="postgresql://postgres:$PGPASS@127.0.0.1:55432/app" \
-            npx prisma migrate deploy
+          DATABASE_URL="$LOCAL_URL" npx prisma migrate deploy
 
       - uses: appleboy/ssh-action@v1
         env:
