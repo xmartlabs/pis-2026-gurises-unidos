@@ -156,6 +156,12 @@ Genera `/srv/pis-<rama>/.env` con `POSTGRES_PASSWORD` y `AUTH_SECRET` nuevos, el
 apuntando a `db:5432` (el nombre del servicio en la red de compose, no `localhost`: `web` corre
 dentro de un contenedor) y el `DB_PORT` del entorno. El archivo queda en `600`.
 
+**En un entorno que ya tenía `.env`** (los de la VM se crearon antes de que existiera `DB_PORT`) hay
+que agregarle la línea a mano, porque el script no sobrescribe: `DB_PORT=5432` en main y
+`DB_PORT=5433` en staging. Sin eso, un `up -d` a mano en staging intenta atar 5432 y falla con
+_port is already allocated_. Los deploys por workflow no dependen de esa línea: le pasan el puerto
+del entorno explícitamente.
+
 Es idempotente y **nunca sobrescribe un `.env` que ya existe**, a propósito: `POSTGRES_PASSWORD` sólo
 se aplica cuando Postgres inicializa el volumen, así que regenerarlo dejaría a `web` sin poder
 autenticarse contra los datos que ya están; y rotar `AUTH_SECRET` invalida todas las sesiones. El

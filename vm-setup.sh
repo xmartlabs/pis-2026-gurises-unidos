@@ -32,6 +32,10 @@ fi
 
 PG_PASS="$(openssl rand -hex 24)"
 IP="$(curl -fsS --max-time 5 ifconfig.me || hostname -I | awk '{print $1}')"
+[ -n "$IP" ] || {
+  echo "no pude determinar la IP: pasala a mano en AUTH_URL" >&2
+  exit 1
+}
 
 umask 077
 cat >"$ENV_FILE" <<EOF
