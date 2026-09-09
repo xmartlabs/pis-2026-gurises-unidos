@@ -320,7 +320,7 @@ Los tres cumplen lo mismo:
 
 - 2 approvals de otras personas (no podés auto-aprobarte)
 - El check `Conventional commit` en verde
-- El check `DB drift` en verde, si el PR toca `prisma/`
+- El check `DB drift` en verde
 - Todas las conversaciones resueltas
 - Tu rama actualizada respecto de la base (ver más abajo)
 - Los approvals se invalidan si pusheás commits nuevos: hay que pedir re-review

@@ -84,6 +84,10 @@ jobs:
           REMOTE_ENV="$(ssh -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "cat /srv/pis-$BRANCH/.env")"
           REMOTE_URL="$(printf '%s' "$REMOTE_ENV" | grep '^DATABASE_URL=' | cut -d= -f2-)"
           DB_PORT="$(printf '%s' "$REMOTE_ENV" | grep '^DB_PORT=' | cut -d= -f2-)"
+          REMOTE_URL="${REMOTE_URL%[\"\']}"
+          REMOTE_URL="${REMOTE_URL#[\"\']}"
+          DB_PORT="${DB_PORT%[\"\']}"
+          DB_PORT="${DB_PORT#[\"\']}"
           echo "::add-mask::$REMOTE_URL"
 
           case "$REMOTE_URL" in

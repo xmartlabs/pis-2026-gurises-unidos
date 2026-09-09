@@ -31,9 +31,10 @@ if [ -e "$ENV_FILE" ]; then
 fi
 
 PG_PASS="$(openssl rand -hex 24)"
-IP="$(curl -fsS --max-time 5 ifconfig.me || hostname -I | awk '{print $1}')"
+METADATA=http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address
+IP="${IP:-$(curl -fsS --max-time 5 "$METADATA" || curl -fsS --max-time 5 ifconfig.me || true)}"
 [ -n "$IP" ] || {
-  echo "no pude determinar la IP: pasala a mano en AUTH_URL" >&2
+  echo "no pude determinar la IP publica: correlo con IP=<ip> ./vm-setup.sh $BRANCH" >&2
   exit 1
 }
 
