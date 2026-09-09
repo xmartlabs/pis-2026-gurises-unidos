@@ -29,7 +29,7 @@ const initialState: ProjectFormState = {};
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages?.length) return null;
-  return <p className="text-accent mt-1 text-xs">{messages[0]}</p>;
+  return <p className="text-destructive mt-1 text-xs">{messages[0]}</p>;
 }
 
 export function ProjectForm({
@@ -44,16 +44,16 @@ export function ProjectForm({
   return (
     <form action={formAction} className="mt-8 space-y-8">
       {state.formError && (
-        <p className="border-accent bg-accent/10 text-accent rounded-lg border px-4 py-3 text-sm">
+        <p className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm">
           {state.formError}
         </p>
       )}
 
-      <section className="border-line bg-surface space-y-5 rounded-xl border p-6">
-        <h2 className="font-display text-lg font-semibold tracking-tight">Información básica</h2>
+      <section className="border-border bg-card space-y-5 rounded-xl border p-6">
+        <h2 className="text-lg font-semibold tracking-tight">Información básica</h2>
 
         <div>
-          <label htmlFor="name" className="text-ink-2 text-sm">
+          <label htmlFor="name" className="text-muted-foreground text-sm">
             Nombre del proyecto
           </label>
           <input
@@ -61,21 +61,21 @@ export function ProjectForm({
             name="name"
             type="text"
             placeholder="Ej: Espacio joven Malvín Norte"
-            className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
           />
           <FieldError messages={state.errors?.name} />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="status" className="text-ink-2 text-sm">
+            <label htmlFor="status" className="text-muted-foreground text-sm">
               Estado
             </label>
             <select
               id="status"
               name="status"
               defaultValue="active"
-              className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
             >
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -86,14 +86,14 @@ export function ProjectForm({
           </div>
 
           <div>
-            <label htmlFor="intensity" className="text-ink-2 text-sm">
+            <label htmlFor="intensity" className="text-muted-foreground text-sm">
               Intensidad
             </label>
             <select
               id="intensity"
               name="intensity"
               defaultValue="medium"
-              className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
             >
               {INTENSITY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -104,7 +104,7 @@ export function ProjectForm({
           </div>
 
           <div>
-            <label htmlFor="startYear" className="text-ink-2 text-sm">
+            <label htmlFor="startYear" className="text-muted-foreground text-sm">
               Año de inicio
             </label>
             <input
@@ -112,20 +112,20 @@ export function ProjectForm({
               name="startYear"
               type="number"
               defaultValue={new Date().getFullYear()}
-              className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
             />
             <FieldError messages={state.errors?.startYear} />
           </div>
 
           <div>
-            <label htmlFor="leadCoordinatorId" className="text-ink-2 text-sm">
+            <label htmlFor="leadCoordinatorId" className="text-muted-foreground text-sm">
               Coordinador responsable
             </label>
             <select
               id="leadCoordinatorId"
               name="leadCoordinatorId"
               defaultValue=""
-              className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
             >
               <option value="" disabled>
                 Seleccionar coordinador...
@@ -141,19 +141,19 @@ export function ProjectForm({
         </div>
       </section>
 
-      <section className="border-line bg-surface space-y-5 rounded-xl border p-6">
-        <h2 className="font-display text-lg font-semibold tracking-tight">Territorio</h2>
+      <section className="border-border bg-card space-y-5 rounded-xl border p-6">
+        <h2 className="text-lg font-semibold tracking-tight">Territorio</h2>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="departmentId" className="text-ink-2 text-sm">
+            <label htmlFor="departmentId" className="text-muted-foreground text-sm">
               Departamento
             </label>
             <select
               id="departmentId"
               name="departmentId"
               defaultValue=""
-              className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
             >
               <option value="" disabled>
                 Seleccionar...
@@ -168,7 +168,7 @@ export function ProjectForm({
           </div>
 
           <div>
-            <label htmlFor="localityNeighborhood" className="text-ink-2 text-sm">
+            <label htmlFor="localityNeighborhood" className="text-muted-foreground text-sm">
               Localidad / Barrio
             </label>
             <input
@@ -176,20 +176,20 @@ export function ProjectForm({
               name="localityNeighborhood"
               type="text"
               placeholder="Ej: Malvín Norte"
-              className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="zone" className="text-ink-2 text-sm">
+          <label htmlFor="zone" className="text-muted-foreground text-sm">
             Zona
           </label>
           <select
             id="zone"
             name="zone"
             defaultValue="city"
-            className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
           >
             {ZONE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -200,12 +200,14 @@ export function ProjectForm({
         </div>
       </section>
 
-      <section className="border-line bg-surface space-y-5 rounded-xl border p-6">
-        <h2 className="font-display text-lg font-semibold tracking-tight">Información pública</h2>
-        <p className="text-ink-3 text-sm">Aparece en la vista pública para donantes y aliados.</p>
+      <section className="border-border bg-card space-y-5 rounded-xl border p-6">
+        <h2 className="text-lg font-semibold tracking-tight">Información pública</h2>
+        <p className="text-muted-foreground text-sm">
+          Aparece en la vista pública para donantes y aliados.
+        </p>
 
         <div>
-          <label htmlFor="generalObjective" className="text-ink-2 text-sm">
+          <label htmlFor="generalObjective" className="text-muted-foreground text-sm">
             Objetivo general
           </label>
           <input
@@ -213,12 +215,12 @@ export function ProjectForm({
             name="generalObjective"
             type="text"
             placeholder="Ej: Acompañando a jóvenes en situación de vulnerabilidad"
-            className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
           />
         </div>
 
         <div>
-          <label htmlFor="publicDescription" className="text-ink-2 text-sm">
+          <label htmlFor="publicDescription" className="text-muted-foreground text-sm">
             Descripción pública
           </label>
           <textarea
@@ -227,16 +229,16 @@ export function ProjectForm({
             maxLength={300}
             rows={3}
             placeholder="Contá de qué trata el proyecto, a quiénes ayuda y cuál es su impacto..."
-            className="border-line bg-surface text-ink mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="border-border bg-card text-foreground mt-1 w-full rounded-lg border px-3 py-2 text-sm"
           />
           <FieldError messages={state.errors?.publicDescription} />
-          <p className="text-ink-3 mt-1 text-xs">Máx. 300 caracteres</p>
+          <p className="text-muted-foreground mt-1 text-xs">Máx. 300 caracteres</p>
         </div>
       </section>
 
-      <section className="border-line bg-surface space-y-5 rounded-xl border p-6">
-        <h2 className="font-display text-lg font-semibold tracking-tight">Notas internas</h2>
-        <p className="text-ink-3 text-sm">
+      <section className="border-border bg-card space-y-5 rounded-xl border p-6">
+        <h2 className="text-lg font-semibold tracking-tight">Notas internas</h2>
+        <p className="text-muted-foreground text-sm">
           Comentarios para el equipo. No se muestran en la vista pública.
         </p>
         <textarea
@@ -244,17 +246,20 @@ export function ProjectForm({
           name="internalNotes"
           rows={3}
           placeholder="Escribí un comentario para el equipo..."
-          className="border-line bg-surface text-ink w-full rounded-lg border px-3 py-2 text-sm"
+          className="border-border bg-card text-foreground w-full rounded-lg border px-3 py-2 text-sm"
         />
       </section>
 
       <div className="flex items-center justify-between">
-        <Link href="/dashboard/projects" className="text-ink-2 hover:text-ink text-sm">
+        <Link
+          href="/dashboard/projects"
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
           Cancelar
         </Link>
         <button
           type="submit"
-          className="bg-deep text-on-deep rounded-full px-6 py-2.5 text-sm hover:opacity-90"
+          className="bg-primary text-primary-foreground rounded-full px-6 py-2.5 text-sm hover:opacity-90"
         >
           Crear proyecto
         </button>
