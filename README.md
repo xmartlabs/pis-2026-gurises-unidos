@@ -76,16 +76,16 @@ entran por SSH a la VM para bajarla y levantarla:
 
 ```
 Actions (runner 4 cores / 16 GB):  docker build → push a GHCR → prisma migrate deploy
-VM (<IP_VM>):                      docker compose pull → up -d
+VM (159.89.90.10):                 docker compose pull → up -d
 ```
 
 La VM no compila nada: el `next build` en el droplet lo dejaba sin RAM y tumbaba hasta sshd.
 Cada imagen se tagea con el SHA del commit y con el nombre de la rama.
 
-| Rama      | URL                   | Directorio en la VM | Compose project |
-| --------- | --------------------- | ------------------- | --------------- |
-| `staging` | `http://<IP_VM>:3001` | `/srv/pis-staging`  | `pis-staging`   |
-| `main`    | `http://<IP_VM>:3000` | `/srv/pis-main`     | `pis-main`      |
+| Rama      | URL                        | Directorio en la VM | Compose project |
+| --------- | -------------------------- | ------------------- | --------------- |
+| `staging` | `http://159.89.90.10:3001` | `/srv/pis-staging`  | `pis-staging`   |
+| `main`    | `http://159.89.90.10:3000` | `/srv/pis-main`     | `pis-main`      |
 
 Los dos entornos son clones y _compose projects_ separados, así que un deploy de uno no toca al otro.
 El contenedor siempre escucha 3000 adentro; el puerto de afuera lo pasa el workflow.
