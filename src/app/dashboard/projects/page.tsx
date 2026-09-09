@@ -28,12 +28,12 @@ export default async function ProjectsPage() {
     <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Proyectos activos</h1>
-          <p className="text-ink-2 mt-2 text-sm">{total} proyectos</p>
+          <h1 className="text-3xl font-semibold tracking-tight">Proyectos activos</h1>
+          <p className="text-muted-foreground mt-2 text-sm">{total} proyectos</p>
         </div>
         <Link
           href="/dashboard/projects/new"
-          className="bg-deep text-on-deep rounded-full px-4 py-2 text-sm hover:opacity-90"
+          className="bg-primary text-primary-foreground rounded-full px-4 py-2 text-sm hover:opacity-90"
         >
           + Nuevo proyecto
         </Link>
@@ -46,38 +46,38 @@ export default async function ProjectsPage() {
             <li key={project.id}>
               <Link
                 href={`/dashboard/projects/${project.id}`}
-                className="border-line bg-surface hover:border-ink-3 flex h-full flex-col rounded-xl border p-5"
+                className="border-border bg-card hover:border-muted-foreground flex h-full flex-col rounded-xl border p-5"
               >
-                <h2 className="font-display text-lg leading-tight font-semibold">{project.name}</h2>
+                <h2 className="text-lg leading-tight font-semibold">{project.name}</h2>
 
                 <dl className="mt-4 space-y-1.5 text-sm">
                   <div className="flex justify-between gap-4">
-                    <dt className="text-ink-3">Territorio</dt>
-                    <dd className="text-ink-2">{project.department.name}</dd>
+                    <dt className="text-muted-foreground">Territorio</dt>
+                    <dd>{project.department.name}</dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-ink-3">Coordinador/a</dt>
-                    <dd className="text-ink-2">
+                    <dt className="text-muted-foreground">Coordinador/a</dt>
+                    <dd>
                       {project.leadCoordinator.firstName} {project.leadCoordinator.lastName}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-ink-3">Intensidad</dt>
-                    <dd className="text-ink-2">{INTENSITY_LABEL[project.intensity]}</dd>
+                    <dt className="text-muted-foreground">Intensidad</dt>
+                    <dd>{INTENSITY_LABEL[project.intensity]}</dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-ink-3">Estado</dt>
-                    <dd className="text-ink-2">{STATUS_LABEL[project.status]}</dd>
+                    <dt className="text-muted-foreground">Estado</dt>
+                    <dd>{STATUS_LABEL[project.status]}</dd>
                   </div>
                 </dl>
 
-                <div className="border-line mt-4 flex items-end justify-between border-t pt-3">
-                  <span className="text-ink-3 text-xs">
+                <div className="border-border mt-4 flex items-end justify-between border-t pt-3">
+                  <span className="text-muted-foreground text-xs">
                     {latestBeneficiaries
                       ? `Beneficiarios ${latestBeneficiaries.year}`
                       : 'Sin datos'}
                   </span>
-                  <span className="font-display text-xl font-semibold">
+                  <span className="text-xl font-semibold">
                     {latestBeneficiaries
                       ? formatNumber(sumBeneficiaries(latestBeneficiaries))
                       : '—'}

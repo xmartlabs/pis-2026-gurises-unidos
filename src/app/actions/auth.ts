@@ -25,7 +25,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     throw error;
   }
 
-  redirect('/dashboard');
+  redirect('/dashboard/projects');
 }
 
 export async function logout() {
