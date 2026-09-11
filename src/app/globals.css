@@ -124,6 +124,34 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.theme-public {
+  --background: #0e3a2e;
+  --foreground: #ededed;
+  --card: #0a2c22;
+  --card-foreground: #ededed;
+  --popover: #0a2c22;
+  --popover-foreground: #ededed;
+  --primary: #f5970c;
+  --primary-foreground: #0a2c22;
+  --secondary: #0a2c22;
+  --secondary-foreground: #ededed;
+  --muted: #0a2c22;
+  --muted-foreground: #a9c2b8;
+  --accent: #0e3a2e;
+  --accent-foreground: #f5970c;
+  --border: #a9c2b833;
+  --input: #a9c2b866;
+  --ring: #f5970c;
+  --sidebar: #0a2c22;
+  --sidebar-foreground: #ededed;
+  --sidebar-primary: #f5970c;
+  --sidebar-primary-foreground: #0a2c22;
+  --sidebar-accent: #0e3a2e;
+  --sidebar-accent-foreground: #f5970c;
+  --sidebar-border: #a9c2b833;
+  --sidebar-ring: #f5970c;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
