@@ -5,7 +5,8 @@ import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 import { projectSchema, type ProjectFormState } from '@/lib/validation/project';
-import { projectBeneficiarySchema } from '@/lib/validation/projectBeneficiary';
+import { projectBeneficiarySchema } from '@/lib/validation/project-beneficiary';
+import { logAudit } from '@/lib/audit-log';
 
 export async function createProject(
   _prevState: ProjectFormState,
@@ -18,17 +19,14 @@ export async function createProject(
   }
 
   const rawFormData = Object.fromEntries(formData);
-  const parsedProject = projectSchema.safeParse(rawFormData);
-  const parsedBeneficiary = projectBeneficiarySchema.safeParse(rawFormData);
+  const parsed = projectSchema.extend(projectBeneficiarySchema.shape).safeParse(rawFormData);
 
-  if (!parsedProject.success || !parsedBeneficiary.success) {
-    return {
-      errors: {
-        ...(parsedProject.success ? {} : parsedProject.error.flatten().fieldErrors),
-        ...(parsedBeneficiary.success ? {} : parsedBeneficiary.error.flatten().fieldErrors),
-      },
-    };
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
   }
+
+  const projectData = projectSchema.parse(parsed.data);
+  const beneficiaryData = projectBeneficiarySchema.parse(parsed.data);
 
   const authorId = Number(session.user.id);
 
@@ -37,33 +35,42 @@ export async function createProject(
     project = await prisma.$transaction(
       async (tx) => {
         const createdProject = await tx.project.create({
-          data: { ...parsedProject.data, createdBy: authorId },
+          data: { ...projectData, createdBy: authorId },
         });
 
-        await tx.auditLog.create({
-          data: { authorId, action: 'creation', entity: 'project', entityId: createdProject.id },
+        await logAudit(tx, {
+          authorId,
+          action: 'creation',
+          entity: 'project',
+          entityId: createdProject.id,
         });
 
         const createdBeneficiary = await tx.projectBeneficiary.create({
-          data: { ...parsedBeneficiary.data, projectId: createdProject.id, authorId },
+          data: { ...beneficiaryData, projectId: createdProject.id, authorId },
         });
 
-        await tx.auditLog.create({
-          data: { authorId, action: 'creation', entity: 'beneficiary', entityId: createdBeneficiary.id },
+        await logAudit(tx, {
+          authorId,
+          action: 'creation',
+          entity: 'beneficiary',
+          entityId: createdBeneficiary.id,
         });
 
         return createdProject;
-      }
+      },
+      { maxWait: 10_000, timeout: 30_000 }
     );
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2003') {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      const constraint = String(error.meta?.field_name ?? error.meta?.constraint ?? '');
+
+      if (constraint.includes('leadCoordinatorId') || constraint.includes('departmentId')) {
         return { formError: 'El coordinador o el departamento seleccionado no existe.' };
       }
-      if (error.code === 'P2002') {
-        return { formError: 'Ya existen datos de beneficiarios para ese año.' };
-      }
+
+      return { formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.' };
     }
+
     console.error('Failed to create project', error);
     return { formError: 'No se pudo crear el proyecto. Intentá de nuevo.' };
   }
