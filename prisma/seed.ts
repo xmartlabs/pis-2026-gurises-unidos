@@ -120,6 +120,8 @@ async function main() {
       });
 
       // --- Beneficiaries ---
+      const BENEFICIARY_YEAR = 2025;
+
       const beneficiaryData = {
         directChildrenAdolescents: 50,
         indirectChildrenAdolescents: 0,
@@ -132,9 +134,9 @@ async function main() {
       };
 
       await tx.projectBeneficiary.upsert({
-        where: { projectId_year: { projectId: project.id, year: projectData.startYear } },
+        where: { projectId_year: { projectId: project.id, year: BENEFICIARY_YEAR } },
         update: beneficiaryData,
-        create: { projectId: project.id, year: projectData.startYear, ...beneficiaryData },
+        create: { projectId: project.id, year: BENEFICIARY_YEAR, ...beneficiaryData },
       });
 
       // --- Sample metric ---
