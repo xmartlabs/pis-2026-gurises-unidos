@@ -1,8 +1,20 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '../src/generated/prisma/client';
+import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
+
+type ProjectFixture = Required<
+  Omit<
+    Prisma.ProjectUncheckedCreateInput,
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'projectCoordinators'
+    | 'projectTopics'
+    | 'projectBeneficiaries'
+  >
+>;
 
 async function main() {
   const seedPassword = process.env.SEED_USER_PASSWORD;
@@ -12,101 +24,136 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(seedPassword, 10);
 
-  // --- Catalogs ---
-  const montevideo = await prisma.department.upsert({
-    where: { name: 'Montevideo' },
-    update: {},
-    create: { name: 'Montevideo' },
-  });
+  await prisma.$transaction(
+    async (tx) => {
+      // --- Catalogs ---
+      const montevideo = await tx.department.upsert({
+        where: { name: 'Montevideo' },
+        update: {},
+        create: { name: 'Montevideo' },
+      });
 
-  const canelones = await prisma.department.upsert({
-    where: { name: 'Canelones' },
-    update: {},
-    create: { name: 'Canelones' },
-  });
+      await tx.department.upsert({
+        where: { name: 'Canelones' },
+        update: {},
+        create: { name: 'Canelones' },
+      });
 
-  const education = await prisma.topic.upsert({
-    where: { name: 'Education' },
-    update: {},
-    create: { name: 'Education' },
-  });
+      const education = await tx.topic.upsert({
+        where: { name: 'Education' },
+        update: {},
+        create: { name: 'Education' },
+      });
 
-  const health = await prisma.topic.upsert({
-    where: { name: 'Health' },
-    update: {},
-    create: { name: 'Health' },
-  });
+      const health = await tx.topic.upsert({
+        where: { name: 'Health' },
+        update: {},
+        create: { name: 'Health' },
+      });
 
-  // --- Users ---
-  const admin = await prisma.user.upsert({
-    where: { documentId: '11111111' },
-    update: { passwordHash },
-    create: {
-      firstName: 'Ana',
-      lastName: 'Admin',
-      documentId: '11111111',
-      email: 'admin@gurisesunidos.test',
-      role: 'admin',
-      status: 'active',
-      passwordHash,
+      // --- Users ---
+      const admin = await tx.user.upsert({
+        where: { documentId: '11111111' },
+        update: { passwordHash },
+        create: {
+          firstName: 'Ana',
+          lastName: 'Admin',
+          documentId: '11111111',
+          email: 'admin@gurisesunidos.test',
+          role: 'admin',
+          status: 'active',
+          passwordHash,
+        },
+      });
+
+      const coordinator = await tx.user.upsert({
+        where: { documentId: '22222222' },
+        update: { passwordHash },
+        create: {
+          firstName: 'Carlos',
+          lastName: 'Coordinator',
+          documentId: '22222222',
+          email: 'coordinator@gurisesunidos.test',
+          role: 'coordinator',
+          status: 'active',
+          passwordHash,
+          createdBy: admin.id,
+        },
+      });
+
+      // --- Test project ---
+      const projectData: ProjectFixture = {
+        name: 'Test project',
+        status: 'active',
+        intensity: 'medium',
+        startYear: 2025,
+        leadCoordinatorId: coordinator.id,
+        departmentId: montevideo.id,
+        zone: 'city',
+        localityNeighborhood: null,
+        generalObjective: null,
+        publicDescription: null,
+        coverPhoto: null,
+        internalNotes: null,
+        createdBy: admin.id,
+      };
+
+      // a project is identified by name + startYear, but there is no unique index yet
+      const existingProject = await tx.project.findFirst({
+        where: { name: projectData.name, startYear: projectData.startYear },
+        orderBy: { id: 'asc' },
+      });
+
+      const project = existingProject
+        ? await tx.project.update({ where: { id: existingProject.id }, data: projectData })
+        : await tx.project.create({ data: projectData });
+
+      const topicIds = [education.id, health.id];
+
+      await tx.projectTopic.deleteMany({
+        where: { projectId: project.id, topicId: { notIn: topicIds } },
+      });
+
+      await tx.projectTopic.createMany({
+        data: topicIds.map((topicId) => ({ projectId: project.id, topicId })),
+        skipDuplicates: true,
+      });
+
+      // --- Beneficiaries ---
+      const BENEFICIARY_YEAR = 2025;
+
+      const beneficiaryData = {
+        directChildrenAdolescents: 50,
+        indirectChildrenAdolescents: 0,
+        youth18To29: 0,
+        families: 20,
+        coordinatedInstitutions: 0,
+        communityLeaders: 0,
+        basicServiceStaff: 0,
+        authorId: coordinator.id,
+      };
+
+      await tx.projectBeneficiary.upsert({
+        where: { projectId_year: { projectId: project.id, year: BENEFICIARY_YEAR } },
+        update: beneficiaryData,
+        create: { projectId: project.id, year: BENEFICIARY_YEAR, ...beneficiaryData },
+      });
+
+      // --- Sample metric ---
+      await tx.metric.upsert({
+        where: { key: 'children_reached' },
+        update: {},
+        create: {
+          key: 'children_reached',
+          name: 'Children reached',
+          showPublicly: true,
+          sortOrder: 1,
+          updatedBy: admin.id,
+        },
+      });
     },
-  });
-
-  const coordinator = await prisma.user.upsert({
-    where: { documentId: '22222222' },
-    update: { passwordHash },
-    create: {
-      firstName: 'Carlos',
-      lastName: 'Coordinator',
-      documentId: '22222222',
-      email: 'coordinator@gurisesunidos.test',
-      role: 'coordinator',
-      status: 'active',
-      passwordHash,
-      createdBy: admin.id,
-    },
-  });
-
-  // --- Test project ---
-  const project = await prisma.project.create({
-    data: {
-      name: 'Test project',
-      status: 'active',
-      intensity: 'medium',
-      startYear: 2025,
-      leadCoordinatorId: coordinator.id,
-      departmentId: montevideo.id,
-      zone: 'city',
-      createdBy: admin.id,
-      projectTopics: {
-        create: [{ topicId: education.id }, { topicId: health.id }],
-      },
-    },
-  });
-
-  // --- Beneficiaries ---
-  await prisma.projectBeneficiary.create({
-    data: {
-      projectId: project.id,
-      year: 2025,
-      directChildrenAdolescents: 50,
-      families: 20,
-      authorId: coordinator.id,
-    },
-  });
-
-  // --- Sample metric ---
-  await prisma.metric.upsert({
-    where: { key: 'children_reached' },
-    update: {},
-    create: {
-      key: 'children_reached',
-      name: 'Children reached',
-      showPublicly: true,
-      sortOrder: 1,
-      updatedBy: admin.id,
-    },
-  });
+    { maxWait: 10_000, timeout: 30_000 }
+  );
 
   console.log('Seed completed');
 }
