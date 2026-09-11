@@ -33,7 +33,7 @@ async function main() {
         create: { name: 'Montevideo' },
       });
 
-      const canelones = await tx.department.upsert({
+      await tx.department.upsert({
         where: { name: 'Canelones' },
         update: {},
         create: { name: 'Canelones' },
