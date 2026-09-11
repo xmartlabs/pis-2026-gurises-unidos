@@ -4,6 +4,18 @@ import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
+type ProjectFixture = Required<
+  Omit<
+    Prisma.ProjectUncheckedCreateInput,
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'projectCoordinators'
+    | 'projectTopics'
+    | 'projectBeneficiaries'
+  >
+>;
+
 async function main() {
   const seedPassword = process.env.SEED_USER_PASSWORD;
   if (!seedPassword) {
@@ -70,7 +82,7 @@ async function main() {
       });
 
       // --- Test project ---
-      const projectData = {
+      const projectData: ProjectFixture = {
         name: 'Test project',
         status: 'active',
         intensity: 'medium',
@@ -84,7 +96,7 @@ async function main() {
         coverPhoto: null,
         internalNotes: null,
         createdBy: admin.id,
-      } satisfies Prisma.ProjectUncheckedCreateInput;
+      };
 
       // a project is identified by name + startYear, but there is no unique index yet
       const existingProject = await tx.project.findFirst({
