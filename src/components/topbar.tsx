@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { logout } from '@/app/actions/auth';
 
 const YEARS = ['2026', '2025', '2024'];
@@ -97,33 +97,16 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
 
   return (
     <header className="border-border bg-background flex h-[60px] items-center justify-between gap-4 border-b px-4 sm:px-6">
-      {/* Mobile: menu button + brand */}
-      <div className="flex items-center gap-3 sm:hidden">
-        <Sheet>
-          <SheetTrigger aria-label="Abrir menú">
-            <Menu className="size-6" />
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72">
-            <SheetHeader>
-              <SheetTitle>Buscar y filtrar</SheetTitle>
-            </SheetHeader>
-            <div className="flex flex-col gap-4 px-4">
-              {searchInput}
-              {yearToggle}
-              {countrySelect}
-            </div>
-          </SheetContent>
-        </Sheet>
-        <span className="font-medium">Gurises Unidos</span>
-      </div>
-
-      {/* Desktop: breadcrumb */}
-      <div className="hidden items-baseline gap-2 text-sm sm:flex">
-        <Link href="/dashboard/projects" className="font-medium hover:underline">
-          Dashboard
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-muted-foreground">{breadcrumb}</span>
+      <div className="flex items-center gap-3">
+        <SidebarTrigger />
+        <span className="font-medium sm:hidden">Gurises Unidos</span>
+        <div className="hidden items-baseline gap-2 text-sm sm:flex">
+          <Link href="/dashboard/projects" className="font-medium hover:underline">
+            Dashboard
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">{breadcrumb}</span>
+        </div>
       </div>
 
       {/* Desktop: search, year toggle, country select */}

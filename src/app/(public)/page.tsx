@@ -15,7 +15,7 @@ export default function Home() {
   }));
 
   return (
-    <div>
+    <main>
       <section className="bg-primary text-primary-foreground">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <p className="text-primary-foreground/70 text-xs tracking-widest uppercase">
@@ -71,6 +71,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
