@@ -12,39 +12,79 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  SidebarFooter as SidebarFooterUI,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { ChevronsUpDown, LogOut } from 'lucide-react';
 import type { Session } from 'next-auth';
-import { getInitials } from './utils';
+import { getInitials } from '@/lib/utils';
 
 interface Props {
   user: Session['user'];
 }
 
-export function AppSidebarFooter({ user }: Props) {
+function getUserInitials(user: Session['user']) {
+  return getInitials(user.name) || user.email?.[0]?.toUpperCase() || '?';
+}
+
+function SidebarUser({ user }: Props) {
   return (
-    <SidebarFooterUI>
+    <>
+      <Avatar className="rounded-md after:rounded-sm">
+        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+      </Avatar>
+      <span className="grid min-w-0 flex-1 text-left leading-tight">
+        <span className="truncate leading-5 font-medium">{user.name ?? 'Usuario'}</span>
+        <span className="text-muted-foreground truncate text-xs leading-4">{user.email}</span>
+      </span>
+    </>
+  );
+}
+
+function LogoutButton() {
+  return (
+    <form action={logout}>
+      <SidebarMenuButton
+        type="submit"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive h-10 gap-3 [&_svg]:size-5"
+      >
+        <LogOut />
+        <span>Cerrar sesión</span>
+      </SidebarMenuButton>
+    </form>
+  );
+}
+
+export function AppSidebarFooter({ user }: Props) {
+  const { isMobile } = useSidebar();
+
+  if (isMobile) {
+    return (
+      <SidebarFooter>
+        <div className="flex items-center gap-2 p-2">
+          <SidebarUser user={user} />
+        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <LogoutButton />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    );
+  }
+
+  return (
+    <SidebarFooter>
       <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<SidebarMenuButton size="lg" tooltip={user.name ?? 'Cuenta'} />}
+              render={<SidebarMenuButton size="lg" tooltip={user.name ?? 'Usuario'} />}
             >
-              <Avatar className="rounded-md after:rounded-sm">
-                <AvatarFallback>
-                  {getInitials(user.name) || user.email?.[0]?.toUpperCase() || '?'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="grid min-w-0 flex-1 text-left leading-tight">
-                <span className="truncate leading-5 font-medium">{user.name ?? 'Usuario'}</span>
-                <span className="text-muted-foreground truncate text-xs leading-4">
-                  {user.email}
-                </span>
-              </span>
+              <SidebarUser user={user} />
               <ChevronsUpDown className="ml-auto" />
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="end" sideOffset={8} className="min-w-56">
@@ -71,6 +111,6 @@ export function AppSidebarFooter({ user }: Props) {
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
-    </SidebarFooterUI>
+    </SidebarFooter>
   );
 }
