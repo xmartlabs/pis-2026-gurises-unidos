@@ -61,12 +61,12 @@ export function AppSidebar({ user }: Props) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
-        {NAV_GROUPS.map((group, index) => {
+      <SidebarContent className="space-y-2">
+        {NAV_GROUPS.map((group) => {
           const items = isMobile ? flattenNavItems(group.items) : group.items;
 
           return (
-            <SidebarGroup key={group.id} className={index === 0 ? 'pb-0' : 'pt-0'}>
+            <SidebarGroup key={group.id} className="first:pb-0 last:pt-0">
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-y-1">
@@ -85,7 +85,7 @@ export function AppSidebar({ user }: Props) {
       </SidebarContent>
 
       <AppSidebarFooter user={user} />
-      {!isMobile && <SidebarRail />}
+      <SidebarRail />
     </Sidebar>
   );
 }

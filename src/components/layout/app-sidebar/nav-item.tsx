@@ -18,12 +18,12 @@ import { type NavigationItem, isItemActive } from './navigation';
 
 const NAV_ITEM_CLASS = 'h-10 gap-3 [&_svg]:size-5 md:h-8 md:gap-2 md:[&_svg]:size-4';
 
-interface SidebarNavItemProps {
+interface SidebarNavItem {
   item: NavigationItem;
   pathname: string;
 }
 
-export function SidebarNavItem({ item, pathname }: SidebarNavItemProps) {
+export function SidebarNavItem({ item, pathname }: SidebarNavItem) {
   const Icon = item.icon;
   const { setOpenMobile } = useSidebar();
 
@@ -42,15 +42,10 @@ export function SidebarNavItem({ item, pathname }: SidebarNavItemProps) {
   );
 }
 
-interface SidebarCollapsibleNavItemProps {
-  item: NavigationItem;
-  pathname: string;
-}
-
-export function SidebarCollapsibleNavItem({ item, pathname }: SidebarCollapsibleNavItemProps) {
+export function SidebarCollapsibleNavItem({ item, pathname }: SidebarNavItem) {
   const Icon = item.icon;
   const children = item.children ?? [];
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(() => children.some((c) => isItemActive(pathname, c)));
   const { state, setOpen: setSidebarOpen, setOpenMobile } = useSidebar();
 
   function handleOpenChange(nextOpen: boolean) {
@@ -68,7 +63,12 @@ export function SidebarCollapsibleNavItem({ item, pathname }: SidebarCollapsible
       <Collapsible open={open} onOpenChange={handleOpenChange}>
         <CollapsibleTrigger
           render={
-            <SidebarMenuButton tooltip={item.title} isActive={isItemActive(pathname, item)} />
+            <SidebarMenuButton
+              tooltip={item.title}
+              isActive={
+                isItemActive(pathname, item) || children.some((c) => isItemActive(pathname, c))
+              }
+            />
           }
         >
           <Icon />

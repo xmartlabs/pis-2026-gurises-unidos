@@ -39,7 +39,7 @@ export function isItemActive(pathname: string, item: { href: string; match?: Pat
 
 export const NAV_GROUPS: readonly NavigationGroup[] = [
   {
-    id: 'principal',
+    id: 'main',
     title: 'Principal',
     items: [
       {
