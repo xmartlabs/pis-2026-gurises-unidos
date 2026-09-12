@@ -15,14 +15,5 @@ export default async function NewProjectPage() {
     prisma.department.findMany({ orderBy: { name: 'asc' } }),
   ]);
 
-  return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
-      <p className="text-muted-foreground text-xs tracking-widest uppercase">
-        Proyectos / Nuevo proyecto
-      </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Nuevo proyecto</h1>
-
-      <ProjectForm coordinators={coordinators} departments={departments} />
-    </div>
-  );
+  return <ProjectForm coordinators={coordinators} departments={departments} />;
 }
