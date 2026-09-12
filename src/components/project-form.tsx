@@ -284,11 +284,14 @@ function BeneficiaryField({
       <Input
         id={name}
         name={name}
-        type="number"
-        min={0}
-        step={1}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
         value={value}
-        onChange={(event) => onChange(name, event.currentTarget.value)}
+        onChange={(event) => {
+          const nextValue = event.currentTarget.value;
+          if (/^[0-9]*$/.test(nextValue)) onChange(name, nextValue);
+        }}
         aria-invalid={Boolean(messages?.length)}
         className={INPUT_CLASS_NAME}
       />
@@ -420,6 +423,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   });
   const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
   const [coverPhotoError, setCoverPhotoError] = useState<string>();
+  const coverPhotoInputRef = useRef<HTMLInputElement>(null);
   const submissionRef = useRef(false);
 
   useEffect(() => {
@@ -441,6 +445,12 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
       ...currentBeneficiaries,
       [field]: value,
     }));
+  };
+
+  const removeCoverPhoto = () => {
+    setCoverPhotoUrl(null);
+    setCoverPhotoError(undefined);
+    if (coverPhotoInputRef.current) coverPhotoInputRef.current.value = '';
   };
 
   const handleCoverPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -707,6 +717,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               </FieldLabel>
               <Input
                 id="coverPhoto"
+                ref={coverPhotoInputRef}
                 type="file"
                 accept="image/jpeg,image/png"
                 onChange={handleCoverPhotoChange}
@@ -720,6 +731,17 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               >
                 Clic para subir imagen (JPG, PNG, máx. 5MB)
               </Label>
+              {coverPhotoUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={removeCoverPhoto}
+                  className="self-start"
+                >
+                  Quitar foto
+                </Button>
+              )}
               <FieldError
                 id="cover-photo-error"
                 className="text-xs leading-4"
