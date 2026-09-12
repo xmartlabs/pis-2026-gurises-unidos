@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 
 const STATUS_OPTIONS = [
   {
