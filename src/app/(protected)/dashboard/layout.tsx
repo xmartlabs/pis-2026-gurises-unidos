@@ -5,9 +5,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth();
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <>
       <Topbar user={session?.user} />
       <main className="flex-1">{children}</main>
-    </div>
+    </>
   );
 }

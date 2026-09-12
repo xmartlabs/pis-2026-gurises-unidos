@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -18,8 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { logout } from '@/app/actions/auth';
+import { getInitials } from '@/lib/utils';
+import Image from 'next/image';
+import logo from '@/assets/logo.png';
 
 const YEARS = ['2026', '2025', '2024'];
 
@@ -32,14 +35,6 @@ interface TopbarProps {
 }
 
 export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
-  const initials = user?.name
-    ? user.name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
-    : '??';
   const [year, setYear] = useState('2026');
 
   const yearToggle = (
@@ -83,7 +78,7 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar className="size-8 cursor-pointer">
-          <AvatarFallback>{initials}</AvatarFallback>
+          <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -96,38 +91,28 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   );
 
   return (
-    <header className="border-border bg-background flex h-[60px] items-center justify-between gap-4 border-b px-4 sm:px-6">
-      {/* Mobile: menu button + brand */}
-      <div className="flex items-center gap-3 sm:hidden">
-        <Sheet>
-          <SheetTrigger aria-label="Abrir menú">
-            <Menu className="size-6" />
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72">
-            <SheetHeader>
-              <SheetTitle>Buscar y filtrar</SheetTitle>
-            </SheetHeader>
-            <div className="flex flex-col gap-4 px-4">
-              {searchInput}
-              {yearToggle}
-              {countrySelect}
-            </div>
-          </SheetContent>
-        </Sheet>
-        <span className="font-medium">Gurises Unidos</span>
-      </div>
-
-      {/* Desktop: breadcrumb */}
-      <div className="hidden items-baseline gap-2 text-sm sm:flex">
-        <Link href="/dashboard/projects" className="font-medium hover:underline">
-          Dashboard
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-muted-foreground">{breadcrumb}</span>
+    <header className="border-border bg-background flex h-[60px] items-center justify-between gap-4 border-b px-4 md:px-6">
+      <div className="flex items-center gap-3">
+        <SidebarTrigger className="md:hidden" />
+        <Image
+          className="size-8 shrink-0 rounded-md md:hidden"
+          src={logo}
+          alt="Gurises Unidos"
+          width={32}
+          height={32}
+        />
+        <span className="text-sm font-semibold md:hidden">Gurises Unidos</span>
+        <div className="hidden items-baseline gap-2 text-sm md:flex">
+          <Link href="/dashboard/projects" className="font-medium hover:underline">
+            Dashboard
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">{breadcrumb}</span>
+        </div>
       </div>
 
       {/* Desktop: search, year toggle, country select */}
-      <div className="hidden items-center gap-4 sm:flex">
+      <div className="hidden items-center gap-4 md:flex">
         {searchInput}
         {yearToggle}
         {countrySelect}
@@ -135,7 +120,7 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
       </div>
 
       {/* Mobile: avatar */}
-      <div className="sm:hidden">{userMenu}</div>
+      <div className="md:hidden">{userMenu}</div>
     </header>
   );
 }
