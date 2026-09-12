@@ -2,17 +2,38 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { type ChangeEvent, type ReactNode, useActionState, useEffect, useMemo, useState } from 'react';
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createProject } from '@/app/actions/projects';
 import { Badge } from '@/components/ui/badge';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import type { ProjectFormState } from '@/lib/validation/project';
@@ -47,10 +68,10 @@ const ZONE_OPTIONS = [
 ] as const;
 
 const BENEFICIARY_FIELDS = [
-  { name: 'directChildrenAdolescents', label: 'NNA participantes directos' },
-  { name: 'indirectChildrenAdolescents', label: 'NNA participantes indirectos' },
-  { name: 'youth18To29', label: 'Jóvenes de 18 a 29 años' },
-  { name: 'families', label: 'Familias acompañadas' },
+  { name: 'directChildrenAdolescents', label: 'NNA directos' },
+  { name: 'indirectChildrenAdolescents', label: 'NNA indirectos' },
+  { name: 'youth18To29', label: 'Jóvenes (18–29)' },
+  { name: 'families', label: 'Familias' },
   { name: 'coordinatedInstitutions', label: 'Instituciones coordinadas' },
   { name: 'communityLeaders', label: 'Referentes comunitarios' },
   { name: 'basicServiceStaff', label: 'Funcionarios de servicios básicos' },
@@ -89,10 +110,10 @@ type SelectOption = {
   label: string;
 };
 
-const initialState: ProjectFormState = {};
+const INITIAL_STATE: ProjectFormState = {};
 
-const inputClassName =
-  'h-9 rounded-lg border-[#e5e5e7] bg-white px-3 text-base shadow-[0_1px_2px_rgba(0,0,0,0.1)] md:text-base';
+const INPUT_CLASS_NAME =
+  'h-9 min-w-0 rounded-lg border-input bg-background px-3 text-base shadow-none md:text-sm';
 
 function FormSection({
   title,
@@ -110,16 +131,25 @@ function FormSection({
   return (
     <Card
       className={cn(
-        'gap-0 overflow-visible rounded-[14px] bg-white py-0 shadow-none ring-1 ring-[#e5e5e7]',
+        'bg-background ring-border gap-0 overflow-visible rounded-2xl py-0 shadow-none ring-1',
         className
       )}
     >
-      <div className="px-6 pt-5">
-        <h2 className="text-base leading-6 font-semibold text-[#0a0a0a]">{title}</h2>
-        {description && <p className="mt-0.5 text-xs leading-4 text-[#737373]">{description}</p>}
+      <div className="px-4 pt-5 sm:px-6">
+        <h2 className="text-foreground text-base leading-6 font-semibold">{title}</h2>
+        {description && (
+          <p className="text-muted-foreground mt-0.5 text-xs leading-4">{description}</p>
+        )}
       </div>
-      <Separator className="mt-4 bg-[#e5e5e7]" />
-      <div className={cn('flex flex-1 flex-col gap-4 px-6 pt-4 pb-5', contentClassName)}>
+      <div className="px-4 sm:px-6">
+        <Separator className="mt-4" />
+      </div>
+      <div
+        className={cn(
+          'flex min-w-0 flex-1 flex-col gap-4 px-4 pt-4 pb-5 sm:px-6',
+          contentClassName
+        )}
+      >
         {children}
       </div>
     </Card>
@@ -154,8 +184,8 @@ function TextInputField({
   required?: boolean;
 }) {
   return (
-    <Field className="gap-1.5" data-invalid={Boolean(messages?.length)}>
-      <FieldLabel htmlFor={id} className="text-xs leading-4 font-medium text-[#0a0a0a]">
+    <Field className="min-w-0 gap-1.5" data-invalid={Boolean(messages?.length)}>
+      <FieldLabel htmlFor={id} className="text-foreground text-xs leading-4 font-medium">
         {label}
       </FieldLabel>
       <Input
@@ -166,10 +196,10 @@ function TextInputField({
         placeholder={placeholder}
         required={required}
         aria-invalid={Boolean(messages?.length)}
-        className={inputClassName}
+        className={INPUT_CLASS_NAME}
       />
       {description && (
-        <FieldDescription className="text-xs leading-4 text-[#737373]">
+        <FieldDescription className="text-muted-foreground text-xs leading-4">
           {description}
         </FieldDescription>
       )}
@@ -200,8 +230,8 @@ function SelectField({
   required?: boolean;
 }) {
   return (
-    <Field className="gap-1.5" data-invalid={Boolean(messages?.length)}>
-      <FieldLabel htmlFor={id} className="text-xs leading-4 font-medium text-[#0a0a0a]">
+    <Field className="min-w-0 gap-1.5" data-invalid={Boolean(messages?.length)}>
+      <FieldLabel htmlFor={id} className="text-foreground text-xs leading-4 font-medium">
         {label}
       </FieldLabel>
       <Select
@@ -214,9 +244,9 @@ function SelectField({
         <SelectTrigger
           id={id}
           aria-invalid={Boolean(messages?.length)}
-          className="h-9 w-full rounded-lg border-[#e5e5e7] bg-white px-3 text-sm shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm shadow-none data-[size=default]:h-9"
         >
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder} className="min-w-0 truncate" />
         </SelectTrigger>
         <SelectContent align="start">
           {options.map((option) => (
@@ -247,8 +277,8 @@ function BeneficiaryField({
   className?: string;
 }) {
   return (
-    <Field className={cn('gap-1.5', className)} data-invalid={Boolean(messages?.length)}>
-      <FieldLabel htmlFor={name} className="text-xs leading-4 font-medium text-[#0a0a0a]">
+    <Field className={cn('min-w-0 gap-1.5', className)} data-invalid={Boolean(messages?.length)}>
+      <FieldLabel htmlFor={name} className="text-foreground text-xs leading-4 font-medium">
         {label}
       </FieldLabel>
       <Input
@@ -260,7 +290,7 @@ function BeneficiaryField({
         value={value}
         onChange={(event) => onChange(name, event.currentTarget.value)}
         aria-invalid={Boolean(messages?.length)}
-        className={inputClassName}
+        className={INPUT_CLASS_NAME}
       />
       <FormFieldError messages={messages} />
     </Field>
@@ -284,16 +314,16 @@ function ProjectPreview({
     STATUS_OPTIONS.find((option) => option.value === draft.status)?.label ?? 'Activo';
 
   return (
-    <aside className="w-[425px] shrink-0 bg-[#f5f5f5]">
-      <div className="flex h-12 items-center justify-between border-b border-[#e5e5e7] bg-[#fafafb] px-6">
-        <p className="text-xs leading-4 font-semibold text-[#0a0a0a]">
+    <aside aria-label="Vista previa de la tarjeta pública" className="bg-muted/30 min-w-0">
+      <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6">
+        <p className="text-muted-foreground text-xs leading-4">
           Vista previa de la tarjeta pública
         </p>
-        <p className="text-xs leading-4 text-[#737373]">Actualización automática</p>
+        <p className="text-muted-foreground text-xs leading-4">Actualización automática</p>
       </div>
-      <div className="flex h-[362px] flex-col items-center gap-3 bg-[#f5f5f5] px-6 py-8">
-        <Card className="h-[278px] w-[377px] gap-0 overflow-hidden rounded-xl bg-white py-0 shadow-none ring-1 ring-[#e5e5e7]">
-          <div className="relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden bg-[#fafafa]">
+      <div className="bg-muted/60 flex flex-col items-center gap-3 px-4 py-8 sm:px-6">
+        <Card className="bg-card ring-border w-full max-w-[377px] gap-0 overflow-hidden rounded-xl py-0 shadow-none ring-1">
+          <div className="bg-muted relative flex aspect-[377/140] shrink-0 items-center justify-center overflow-hidden">
             {coverPhotoUrl ? (
               <Image
                 src={coverPhotoUrl}
@@ -303,34 +333,34 @@ function ProjectPreview({
                 className="object-cover"
               />
             ) : (
-              <span className="text-xs leading-4 text-[#a1a1aa]">Foto de portada</span>
+              <span className="text-muted-foreground/60 text-xs leading-4">Foto de portada</span>
             )}
           </div>
           <div className="flex flex-1 flex-col gap-2 p-4">
-            <div className="flex h-[22px] items-center gap-1.5">
-              <Badge className="h-[22px] rounded-full bg-[#171717] px-2.5 text-xs text-white">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge className="bg-primary text-primary-foreground h-[22px] rounded-full px-2.5 text-xs">
                 {statusLabel}
               </Badge>
               <Badge
                 variant="secondary"
-                className="h-[22px] rounded-full bg-[#f5f5f5] px-2.5 text-xs text-[#525252]"
+                className="bg-muted text-secondary-foreground h-[22px] rounded-full px-2.5 text-xs"
               >
                 {topicLabel}
               </Badge>
             </div>
-            <h3 className="truncate text-base leading-6 font-semibold text-[#0a0a0a]">
+            <h3 className="text-foreground truncate text-base leading-6 font-semibold">
               {draft.name || 'Nombre del proyecto'}
             </h3>
-            <p className="truncate text-xs leading-4 text-[#737373]">
+            <p className="text-muted-foreground truncate text-xs leading-4">
               {draft.generalObjective || 'El tagline aparecerá aquí cuando lo completes.'}
             </p>
-            <div className="flex items-center gap-4 pt-1 text-xs leading-4 text-[#737373]">
+            <div className="text-muted-foreground flex items-center gap-4 pt-1 text-xs leading-4">
               <span className="truncate">📍 {locationLabel}</span>
-              <span>👥 {beneficiaryTotal || '—'}</span>
+              <span className="shrink-0">👥 {beneficiaryTotal || '—'}</span>
             </div>
           </div>
         </Card>
-        <p className="text-center text-xs leading-4 text-[#737373]">
+        <p className="text-muted-foreground text-center text-xs leading-4">
           Así se verá en el listado público
         </p>
       </div>
@@ -364,7 +394,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
       })),
     [departments]
   );
-  const [state, formAction, pending] = useActionState(createProject, initialState);
+  const [state, formAction, pending] = useActionState(createProject, INITIAL_STATE);
   const [draft, setDraft] = useState<ProjectDraft>({
     name: '',
     status: 'active',
@@ -390,6 +420,11 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   });
   const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
   const [coverPhotoError, setCoverPhotoError] = useState<string>();
+  const submissionRef = useRef(false);
+
+  useEffect(() => {
+    if (!pending) submissionRef.current = false;
+  }, [pending, state]);
 
   useEffect(() => {
     return () => {
@@ -443,22 +478,31 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   return (
     <form
       action={formAction}
-      className="min-w-[1185px] bg-white text-[#0a0a0a]"
+      className="bg-muted/30 text-foreground flex min-h-dvh min-w-0 flex-col"
+      aria-busy={pending}
       onSubmit={(event) => {
-        if (Object.values(beneficiaries).some((value) => Number(value) < 0)) {
+        if (
+          submissionRef.current ||
+          pending ||
+          Object.values(beneficiaries).some((value) => Number(value) < 0)
+        ) {
           event.preventDefault();
+          return;
         }
+        submissionRef.current = true;
       }}
     >
-      <input type="hidden" name="year" value={draft.startYear} />
-
-      <header className="flex h-[60px] items-center border-b border-[#e5e5e7] bg-white px-5">
+      <header className="bg-background flex min-h-15 items-center border-b px-4 py-4 sm:px-6">
         <Breadcrumb>
           <BreadcrumbList className="gap-1.5 text-sm leading-5">
-            <BreadcrumbItem className="text-[#737373]">Proyectos</BreadcrumbItem>
-            <BreadcrumbSeparator className="text-[#a1a1aa]">/</BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbPage className="font-semibold text-[#0a0a0a]">
+              <BreadcrumbLink render={<Link href="/dashboard/projects" />}>
+                Proyectos
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="text-muted-foreground/60">/</BreadcrumbSeparator>
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-foreground font-semibold">
                 Nuevo Proyecto
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -466,8 +510,8 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         </Breadcrumb>
       </header>
 
-      <div className="grid grid-cols-[760px_425px] items-start">
-        <div className="flex w-[760px] flex-col gap-5 bg-[#fafafb] px-6 pt-6 pb-8">
+      <div className="grid flex-1 content-start items-start lg:grid-cols-[minmax(0,16fr)_minmax(0,9fr)]">
+        <div className="flex min-w-0 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6 lg:pb-20">
           {state.formError && (
             <p
               role="alert"
@@ -477,7 +521,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
             </p>
           )}
 
-          <FormSection title="Información básica" className="min-h-[394px]">
+          <FormSection title="Información básica">
             <TextInputField
               id="name"
               name="name"
@@ -489,13 +533,14 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               messages={state.errors?.name}
               required
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <SelectField
                 id="status"
                 name="status"
                 label="Estado"
                 value={draft.status}
                 options={STATUS_OPTIONS}
+                messages={state.errors?.status}
                 onValueChange={(value) => updateDraft('status', value)}
                 required
               />
@@ -508,13 +553,14 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 onValueChange={(value) => updateDraft('topic', value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <SelectField
                 id="intensity"
                 name="intensity"
                 label="Intensidad"
                 value={draft.intensity}
                 options={INTENSITY_OPTIONS}
+                messages={state.errors?.intensity}
                 onValueChange={(value) => updateDraft('intensity', value)}
                 required
               />
@@ -542,12 +588,8 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
             />
           </FormSection>
 
-          <FormSection
-            title="Territorio"
-            description="¿En qué zonas opera este proyecto?"
-            className="min-h-[250px]"
-          >
-            <div className="grid grid-cols-2 gap-4">
+          <FormSection title="Territorio" description="¿En qué zonas opera este proyecto?">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <SelectField
                 id="departmentId"
                 name="departmentId"
@@ -565,21 +607,26 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 label="Localidad / Barrio"
                 value={draft.localityNeighborhood}
                 onValueChange={(value) => updateDraft('localityNeighborhood', value)}
+                messages={state.errors?.localityNeighborhood}
                 placeholder="Ej: Malvín Norte"
               />
             </div>
-            <Field className="gap-1.5">
-              <FieldLabel className="text-xs leading-4 font-medium text-[#0a0a0a]">Zona</FieldLabel>
+            <Field className="min-w-0 gap-1.5">
+              <FieldLabel id="zone-label" className="text-foreground text-xs leading-4 font-medium">
+                Zona
+              </FieldLabel>
               <RadioGroup
                 name="zone"
+                aria-labelledby="zone-label"
+                aria-invalid={Boolean(state.errors?.zone)}
                 value={draft.zone}
                 onValueChange={(value) => updateDraft('zone', value)}
-                className="flex gap-2"
+                className="flex flex-wrap gap-2"
               >
                 {ZONE_OPTIONS.map((option) => (
                   <Label
                     key={option.value}
-                    className="relative h-[22px] cursor-pointer rounded-full bg-[#f5f5f5] px-2.5 text-xs leading-4 font-medium text-[#525252] has-data-checked:bg-[#171717] has-data-checked:text-white"
+                    className="bg-muted text-secondary-foreground has-data-checked:bg-primary has-data-checked:text-primary-foreground has-[:focus-visible]:ring-ring relative h-[22px] cursor-pointer rounded-full px-2.5 text-xs leading-4 font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2"
                   >
                     <RadioGroupItem
                       value={option.value}
@@ -590,14 +637,14 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                   </Label>
                 ))}
               </RadioGroup>
+              <FormFieldError messages={state.errors?.zone} />
             </Field>
           </FormSection>
 
           <FormSection
-            title="Beneficiarios"
+            title="Beneficiarios principales"
             description="Estas categorías son el núcleo del impacto. Completá lo que aplica."
-            className="min-h-[397px]"
-            contentClassName="grid grid-cols-2 content-start gap-x-4 gap-y-4"
+            contentClassName="grid grid-cols-1 content-start gap-4 sm:grid-cols-2"
           >
             {BENEFICIARY_FIELDS.map((field, index) => (
               <BeneficiaryField
@@ -607,7 +654,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 value={beneficiaries[field.name]}
                 messages={state.errors?.[field.name]}
                 onChange={updateBeneficiary}
-                className={index === BENEFICIARY_FIELDS.length - 1 ? 'col-span-2' : undefined}
+                className={index === BENEFICIARY_FIELDS.length - 1 ? 'sm:col-span-2' : undefined}
               />
             ))}
           </FormSection>
@@ -615,7 +662,6 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
           <FormSection
             title="Información pública"
             description="Aparece en la vista pública para donantes y aliados."
-            className="min-h-[456px]"
           >
             <TextInputField
               id="generalObjective"
@@ -624,12 +670,16 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               value={draft.generalObjective}
               onValueChange={(value) => updateDraft('generalObjective', value)}
               placeholder="Ej: Acompañando a jóvenes en situación de vulnerabilidad"
+              messages={state.errors?.generalObjective}
               description="Aparece como subtítulo en la vista pública"
             />
-            <Field className="gap-1.5" data-invalid={Boolean(state.errors?.publicDescription)}>
+            <Field
+              className="min-w-0 gap-1.5"
+              data-invalid={Boolean(state.errors?.publicDescription)}
+            >
               <FieldLabel
                 htmlFor="publicDescription"
-                className="text-xs leading-4 font-medium text-[#0a0a0a]"
+                className="text-foreground text-xs leading-4 font-medium"
               >
                 Descripción pública
               </FieldLabel>
@@ -641,17 +691,17 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 maxLength={300}
                 placeholder="Contá de qué trata el proyecto, a quiénes ayuda y cuál es su impacto..."
                 aria-invalid={Boolean(state.errors?.publicDescription)}
-                className="h-20 resize-none rounded-lg border-[#e5e5e7] bg-white px-3 py-2 text-base shadow-[0_1px_2px_rgba(0,0,0,0.1)] md:text-base"
+                className="border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base shadow-none md:text-sm"
               />
-              <FieldDescription className="text-xs leading-4 text-[#737373]">
+              <FieldDescription className="text-muted-foreground text-xs leading-4">
                 Máx. 300 caracteres
               </FieldDescription>
               <FormFieldError messages={state.errors?.publicDescription} />
             </Field>
-            <Field className="gap-1.5" data-invalid={Boolean(coverPhotoError)}>
+            <Field className="min-w-0 gap-1.5" data-invalid={Boolean(coverPhotoError)}>
               <FieldLabel
                 htmlFor="coverPhoto"
-                className="text-xs leading-4 font-medium text-[#0a0a0a]"
+                className="text-foreground text-xs leading-4 font-medium"
               >
                 Foto de portada
               </FieldLabel>
@@ -660,32 +710,40 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 type="file"
                 accept="image/jpeg,image/png"
                 onChange={handleCoverPhotoChange}
-                className="sr-only"
+                aria-invalid={Boolean(coverPhotoError)}
+                aria-describedby={coverPhotoError ? 'cover-photo-error' : undefined}
+                className="peer sr-only"
               />
               <Label
                 htmlFor="coverPhoto"
-                className="flex h-[72px] w-full cursor-pointer items-center justify-center rounded-lg border border-[#e5e5e7] bg-[#f5f5f5] text-xs leading-4 font-normal text-[#737373] hover:bg-[#ededed]"
+                className="border-input bg-muted text-muted-foreground hover:bg-accent peer-focus-visible:ring-ring flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg border px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2"
               >
                 Clic para subir imagen (JPG, PNG, máx. 5MB)
               </Label>
-              <FieldError className="text-xs leading-4" errors={[{ message: coverPhotoError }]} />
+              <FieldError
+                id="cover-photo-error"
+                className="text-xs leading-4"
+                errors={[{ message: coverPhotoError }]}
+              />
             </Field>
           </FormSection>
 
           <FormSection
             title="Notas internas"
             description="Comentarios para el equipo. No se muestran en la vista pública."
-            className="min-h-[182px]"
             contentClassName="pt-3"
           >
             <Textarea
               id="internalNotes"
               name="internalNotes"
+              aria-label="Notas internas"
+              aria-invalid={Boolean(state.errors?.internalNotes)}
               value={draft.internalNotes}
               onChange={(event) => updateDraft('internalNotes', event.currentTarget.value)}
               placeholder="Escribí un comentario para el equipo…"
-              className="h-20 w-[448px] resize-none rounded-lg border-[#e5e5e7] bg-white px-3 py-2 text-base shadow-[0_1px_2px_rgba(0,0,0,0.1)] md:text-base"
+              className="border-input bg-background min-h-20 w-full resize-y rounded-lg px-3 py-2 text-base shadow-none sm:max-w-md md:text-sm"
             />
+            <FormFieldError messages={state.errors?.internalNotes} />
           </FormSection>
         </div>
 
@@ -698,8 +756,9 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         />
       </div>
 
-      <footer className="sticky bottom-0 z-20 flex h-[68px] items-center justify-between border-t border-[#e5e5e7] bg-white px-6 py-4">
+      <footer className="bg-background sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4 sm:px-6">
         <Button
+          nativeButton={false}
           variant="ghost"
           size="lg"
           render={<Link href="/dashboard/projects" />}
@@ -707,11 +766,11 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         >
           Cancelar
         </Button>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="lg" className="w-[147px]">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <Button type="button" variant="outline" size="lg" disabled className="sm:min-w-36">
             Guardar borrador
           </Button>
-          <Button type="submit" size="lg" disabled={pending} className="w-[145px]">
+          <Button type="submit" size="lg" disabled={pending} className="sm:min-w-36">
             {pending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
         </div>

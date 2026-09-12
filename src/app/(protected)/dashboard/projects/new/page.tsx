@@ -11,8 +11,15 @@ export default async function NewProjectPage() {
   }
 
   const [coordinators, departments] = await Promise.all([
-    prisma.user.findMany({ where: { role: 'coordinator' }, orderBy: { firstName: 'asc' } }),
-    prisma.department.findMany({ orderBy: { name: 'asc' } }),
+    prisma.user.findMany({
+      where: { role: 'coordinator' },
+      orderBy: { firstName: 'asc' },
+      select: { id: true, firstName: true, lastName: true },
+    }),
+    prisma.department.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    }),
   ]);
 
   return <ProjectForm coordinators={coordinators} departments={departments} />;
