@@ -25,8 +25,27 @@ export async function createProject(
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const projectData = projectSchema.parse(parsed.data);
-  const beneficiaryData = projectBeneficiarySchema.parse(parsed.data);
+  const {
+    year,
+    directChildrenAdolescents,
+    indirectChildrenAdolescents,
+    youth18To29,
+    families,
+    coordinatedInstitutions,
+    communityLeaders,
+    basicServiceStaff,
+    ...projectData
+  } = parsed.data;
+  const beneficiaryData = {
+    year,
+    directChildrenAdolescents,
+    indirectChildrenAdolescents,
+    youth18To29,
+    families,
+    coordinatedInstitutions,
+    communityLeaders,
+    basicServiceStaff,
+  };
 
   const authorId = Number(session.user.id);
 
