@@ -2,27 +2,32 @@ import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { logout } from '@/app/actions/auth';
 import { auth } from '@/auth';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 export async function Header() {
   const session = await auth();
+  const projectsHref = session?.user ? '/dashboard/projects' : '#proyectos';
 
   return (
-    <header className="sticky top-0 z-10" style={{ backgroundColor: '#0E3A2E' }}>
+    <header className="bg-background sticky top-0 z-10">
       <div className="flex h-16 items-center justify-between px-4 sm:px-16">
         <Link href="/" className="flex items-center gap-2 text-white">
           <span className="flex size-6 items-center justify-center rounded bg-orange-500 text-xs">
-            {/* logo icon, placeholder */}
+            {/* logo icon, placeholder; updates when #64 merges */}
           </span>
           <span className="text-base font-medium">Gurises Unidos</span>
         </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-sm text-emerald-100 sm:flex">
-          <Link
-            href={session?.user ? '/dashboard/projects' : '#proyectos'}
-            className="hover:text-white"
-          >
+          <Link href={projectsHref} className="hover:text-white">
             Proyectos
           </Link>
           <Link href="#impacto" className="hover:text-white">
@@ -63,28 +68,36 @@ export async function Header() {
               <SheetTitle>Menú</SheetTitle>
             </SheetHeader>
             <nav className="flex flex-col gap-4 px-4 text-sm">
-              <Link href={session?.user ? '/dashboard/projects' : '#proyectos'}>Proyectos</Link>
-              <Link href="#impacto">Impacto 2026</Link>
-              <Link href="#sobre-nosotros">Sobre nosotros</Link>
+              <SheetClose render={<Link href={projectsHref} />}>Proyectos</SheetClose>
+              <SheetClose render={<Link href="#impacto" />}>Impacto 2026</SheetClose>
+              <SheetClose render={<Link href="#sobre-nosotros" />}>Sobre nosotros</SheetClose>
               {session?.user ? (
                 <>
                   <span className="text-muted-foreground text-xs">{session.user.email}</span>
                   <form action={logout}>
-                    <button
-                      type="submit"
-                      className="border-border rounded-full border px-3.5 py-1.5 text-left"
+                    <SheetClose
+                      render={
+                        <button
+                          type="submit"
+                          className="border-border rounded-full border px-3.5 py-1.5 text-left"
+                        />
+                      }
                     >
                       Cerrar sesión
-                    </button>
+                    </SheetClose>
                   </form>
                 </>
               ) : (
-                <Link
-                  href="/login"
-                  className="bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-center"
+                <SheetClose
+                  render={
+                    <Link
+                      href="/login"
+                      className="bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-center"
+                    />
+                  }
                 >
                   Iniciar sesión
-                </Link>
+                </SheetClose>
               )}
             </nav>
           </SheetContent>

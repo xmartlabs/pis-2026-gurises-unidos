@@ -25,11 +25,21 @@ const YEARS = ['2026', '2025', '2024'];
 
 interface TopbarProps {
   breadcrumb?: string;
-  userInitials: string;
-  userEmail: string;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+  };
 }
 
-export function Topbar({ breadcrumb = 'Vista general', userInitials, userEmail }: TopbarProps) {
+export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
+  const initials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : '??';
   const [year, setYear] = useState('2026');
 
   const yearToggle = (
@@ -73,12 +83,12 @@ export function Topbar({ breadcrumb = 'Vista general', userInitials, userEmail }
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar className="size-8 cursor-pointer">
-          <AvatarFallback>{userInitials}</AvatarFallback>
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem disabled className="text-muted-foreground text-xs">
-          {userEmail}
+          {user?.email ?? ''}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => logout()}>Cerrar sesión</DropdownMenuItem>
       </DropdownMenuContent>
