@@ -5,6 +5,9 @@
 Next.js 16 + TypeScript + Tailwind. Requiere Node 24.
 
 ```bash
+nvm install       # instalar Node 24
+nvm use
+
 npm install
 npm run dev      # http://localhost:3000
 ```
