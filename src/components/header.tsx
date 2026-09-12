@@ -1,36 +1,43 @@
 import Link from 'next/link';
+import { Menu } from 'lucide-react';
 import { logout } from '@/app/actions/auth';
 import { auth } from '@/auth';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 export async function Header() {
   const session = await auth();
 
   return (
-    <header className="border-border bg-background/85 sticky top-0 z-10 border-b backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          Gurises Unidos
-          <span className="text-muted-foreground ml-2 text-xs font-normal">alcance</span>
+    <header className="sticky top-0 z-10" style={{ backgroundColor: '#0E3A2E' }}>
+      <div className="flex h-16 items-center justify-between px-4 sm:px-16">
+        <Link href="/" className="flex items-center gap-2 text-white">
+          <span className="flex size-6 items-center justify-center rounded bg-orange-500 text-xs">
+            {/* logo icon, placeholder */}
+          </span>
+          <span className="text-base font-medium">Gurises Unidos</span>
         </Link>
-        <nav className="ml-auto flex items-center gap-5 text-sm">
-          <Link href="/" className="text-muted-foreground hover:text-foreground hidden sm:inline">
-            Alcance público
+
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-8 text-sm text-emerald-100 sm:flex">
+          <Link
+            href={session?.user ? '/dashboard/projects' : '#proyectos'}
+            className="hover:text-white"
+          >
+            Proyectos
+          </Link>
+          <Link href="#impacto" className="hover:text-white">
+            Impacto 2026
+          </Link>
+          <Link href="#sobre-nosotros" className="hover:text-white">
+            Sobre nosotros
           </Link>
           {session?.user ? (
             <>
-              <Link
-                href="/dashboard/projects"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Proyectos
-              </Link>
-              <span className="text-muted-foreground hidden text-xs sm:inline">
-                {session.user.email}
-              </span>
+              <span className="text-xs text-emerald-300">{session.user.email}</span>
               <form action={logout}>
                 <button
                   type="submit"
-                  className="border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground rounded-full border px-3.5 py-1.5"
+                  className="rounded-full border border-emerald-700 px-3.5 py-1.5 hover:border-emerald-400 hover:text-white"
                 >
                   Cerrar sesión
                 </button>
@@ -39,12 +46,49 @@ export async function Header() {
           ) : (
             <Link
               href="/login"
-              className="bg-primary text-primary-foreground rounded-full px-4 py-1.5 hover:opacity-90"
+              className="rounded-full bg-white px-4 py-1.5 text-sm text-emerald-950 hover:opacity-90"
             >
               Iniciar sesión
             </Link>
           )}
         </nav>
+
+        {/* Mobile nav */}
+        <Sheet>
+          <SheetTrigger className="text-white sm:hidden" aria-label="Abrir menú">
+            <Menu className="size-6" />
+          </SheetTrigger>
+          <SheetContent side="right" className="w-72">
+            <SheetHeader>
+              <SheetTitle>Menú</SheetTitle>
+            </SheetHeader>
+            <nav className="flex flex-col gap-4 px-4 text-sm">
+              <Link href={session?.user ? '/dashboard/projects' : '#proyectos'}>Proyectos</Link>
+              <Link href="#impacto">Impacto 2026</Link>
+              <Link href="#sobre-nosotros">Sobre nosotros</Link>
+              {session?.user ? (
+                <>
+                  <span className="text-muted-foreground text-xs">{session.user.email}</span>
+                  <form action={logout}>
+                    <button
+                      type="submit"
+                      className="border-border rounded-full border px-3.5 py-1.5 text-left"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-center"
+                >
+                  Iniciar sesión
+                </Link>
+              )}
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );
