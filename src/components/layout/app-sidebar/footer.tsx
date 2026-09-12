@@ -26,15 +26,11 @@ interface Props {
   user: Session['user'];
 }
 
-function getUserInitials(user: Session['user']) {
-  return getInitials(user.name) || user.email?.[0]?.toUpperCase() || '?';
-}
-
 function SidebarUser({ user }: Props) {
   return (
     <>
       <Avatar className="rounded-md after:rounded-sm">
-        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
       </Avatar>
       <span className="grid min-w-0 flex-1 text-left leading-tight">
         <span className="truncate leading-5 font-medium">{user.name ?? 'Usuario'}</span>
