@@ -42,7 +42,7 @@ import { cn } from 'cn';
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Activo' },
   { value: 'inProgress', label: 'En progreso' },
-  { value: 'completed', label: 'Completado' },
+  { value: 'completed', label: 'Finalizado' },
   { value: 'archived', label: 'Archivado' },
 ] as const;
 
@@ -284,14 +284,11 @@ function BeneficiaryField({
       <Input
         id={name}
         name={name}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
+        type="number"
+        min={0}
+        step={1}
         value={value}
-        onChange={(event) => {
-          const nextValue = event.currentTarget.value;
-          if (/^[0-9]*$/.test(nextValue)) onChange(name, nextValue);
-        }}
+        onChange={(event) => onChange(name, event.currentTarget.value)}
         aria-invalid={Boolean(messages?.length)}
         className={INPUT_CLASS_NAME}
       />
@@ -423,7 +420,6 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   });
   const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
   const [coverPhotoError, setCoverPhotoError] = useState<string>();
-  const coverPhotoInputRef = useRef<HTMLInputElement>(null);
   const submissionRef = useRef(false);
 
   useEffect(() => {
@@ -445,12 +441,6 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
       ...currentBeneficiaries,
       [field]: value,
     }));
-  };
-
-  const removeCoverPhoto = () => {
-    setCoverPhotoUrl(null);
-    setCoverPhotoError(undefined);
-    if (coverPhotoInputRef.current) coverPhotoInputRef.current.value = '';
   };
 
   const handleCoverPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -717,7 +707,6 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               </FieldLabel>
               <Input
                 id="coverPhoto"
-                ref={coverPhotoInputRef}
                 type="file"
                 accept="image/jpeg,image/png"
                 onChange={handleCoverPhotoChange}
@@ -731,17 +720,6 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               >
                 Clic para subir imagen (JPG, PNG, máx. 5MB)
               </Label>
-              {coverPhotoUrl && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={removeCoverPhoto}
-                  className="self-start"
-                >
-                  Quitar foto
-                </Button>
-              )}
               <FieldError
                 id="cover-photo-error"
                 className="text-xs leading-4"
