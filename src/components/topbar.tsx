@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -36,6 +37,9 @@ interface TopbarProps {
 
 export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   const [year, setYear] = useState('2026');
+  const pathname = usePathname();
+
+  if (pathname === '/dashboard/projects/new') return null;
 
   const yearToggle = (
     <div className="bg-muted flex items-center gap-1 rounded-full p-1 text-sm">
