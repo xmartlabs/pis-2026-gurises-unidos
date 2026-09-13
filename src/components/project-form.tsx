@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Textarea } from '@/components/ui/textarea';
 import type { ProjectFormState } from '@/lib/validation/project';
 import { cn } from 'cn';
@@ -502,7 +503,8 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         submissionRef.current = true;
       }}
     >
-      <header className="bg-background flex min-h-15 items-center border-b px-4 py-4 sm:px-6">
+      <header className="bg-background flex min-h-15 items-center gap-3 border-b px-4 py-4 sm:px-6">
+        <SidebarTrigger className="md:hidden" />
         <Breadcrumb>
           <BreadcrumbList className="gap-1.5 text-sm leading-5">
             <BreadcrumbItem>
