@@ -42,7 +42,6 @@ import { cn } from 'cn';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Activo' },
-  { value: 'inProgress', label: 'En progreso' },
   { value: 'completed', label: 'Finalizado' },
   { value: 'archived', label: 'Archivado' },
 ] as const;
