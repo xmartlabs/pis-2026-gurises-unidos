@@ -96,3 +96,27 @@ export async function createProject(
 
   redirect(`/dashboard/projects/${project.id}`);
 }
+
+export async function updateProject(
+  projectId: number,
+  _prevState: ProjectFormState,
+  formData: FormData
+): Promise<ProjectFormState> {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  if (!Number.isInteger(projectId) || projectId <= 0 || projectId > 2_147_483_647) {
+    return { formError: 'El proyecto no es válido.' };
+  }
+
+  const parsed = projectSchema.pick({ name: true }).safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  return { formError: 'La edición todavía no está implementada. No se guardaron cambios.' };
+}
