@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useActionState, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { FormActions } from '@/components/ui/forms/form-actions';
+import { FormSection } from '@/components/ui/forms/form-section';
+import { TextInputField } from '@/components/ui/forms/text-input-field';
 import type { ProjectFormState } from '@/lib/validation/project';
 
 type EditProjectFormProps = {
@@ -20,40 +19,47 @@ export function EditProjectForm({ initialName, cancelHref, submitAction }: EditP
   const [state, formAction, pending] = useActionState(submitAction, INITIAL_STATE);
 
   return (
-    <form action={formAction} aria-busy={pending} className="mx-auto max-w-3xl space-y-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">Editar proyecto</h1>
-        <p className="text-muted-foreground">{initialName}</p>
-      </header>
+    <form
+      action={formAction}
+      aria-busy={pending}
+      className="bg-muted/30 text-foreground flex min-h-0 min-w-0 flex-1 flex-col"
+    >
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-semibold">Editar proyecto</h1>
+          <p className="text-muted-foreground">{initialName}</p>
+        </header>
 
-      {state.formError && (
-        <p role="alert" className="text-destructive text-sm">
-          {state.formError}
-        </p>
-      )}
+        {state.formError && (
+          <p
+            role="alert"
+            className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm"
+          >
+            {state.formError}
+          </p>
+        )}
 
-      <Field data-invalid={Boolean(state.errors?.name?.length)}>
-        <FieldLabel htmlFor="name">Nombre del proyecto</FieldLabel>
-        <Input
-          id="name"
-          name="name"
-          value={name}
-          onChange={(event) => setName(event.currentTarget.value)}
-          aria-invalid={Boolean(state.errors?.name?.length)}
-          aria-describedby={state.errors?.name?.length ? 'name-error' : undefined}
-          required
-        />
-        <FieldError id="name-error" errors={state.errors?.name?.map((message) => ({ message }))} />
-      </Field>
+        <FormSection title="Información básica">
+          <TextInputField
+            id="name"
+            name="name"
+            label="Nombre del proyecto"
+            value={name}
+            onValueChange={setName}
+            placeholder="Ej: Espacio joven Malvín Norte"
+            description="Nombre de fantasía — puede cambiarse después"
+            messages={state.errors?.name}
+            required
+          />
+        </FormSection>
+      </div>
 
-      <footer className="flex items-center justify-between gap-3">
-        <Button nativeButton={false} variant="outline" render={<Link href={cancelHref} />}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Validando...' : 'Validar formulario'}
-        </Button>
-      </footer>
+      <FormActions
+        cancelHref={cancelHref}
+        submitLabel="Validar formulario"
+        pendingLabel="Validando..."
+        pending={pending}
+      />
     </form>
   );
 }

@@ -1,16 +1,12 @@
 'use client';
 
-import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } from 'react';
+import { useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import { createProject } from '@/app/actions/projects';
-import { Card } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import type { ProjectFormState } from '@/lib/validation/project';
-import { cn } from 'cn';
-// import { Button } from '@/components/ui/button';
 import {
   BENEFICIARY_FIELDS,
   FIRST_PROJECT_YEAR,
@@ -27,6 +23,7 @@ import { ImageUploadField } from '@/components/ui/forms/image-upload-field';
 import { ProjectPreview } from '@/components/projects/form/project-preview';
 import type { ProjectFormValues } from '@/components/projects/form/project-form-values';
 import { projectFormSchema } from '@/lib/validation/project-form';
+import { FormSection } from '@/components/ui/forms/form-section';
 import { FormActions } from '@/components/ui/forms/form-actions';
 
 type ProjectFormProps = {
@@ -50,47 +47,6 @@ async function submitProject(
 }
 
 const INITIAL_STATE: ProjectFormState = {};
-
-function FormSection({
-  title,
-  description,
-  className,
-  contentClassName,
-  children,
-}: {
-  title: string;
-  description?: string;
-  className?: string;
-  contentClassName?: string;
-  children: ReactNode;
-}) {
-  return (
-    <Card
-      className={cn(
-        'bg-background ring-border gap-0 overflow-visible rounded-2xl py-0 shadow-none ring-1',
-        className
-      )}
-    >
-      <div className="px-4 pt-5 sm:px-6">
-        <h2 className="text-foreground text-base leading-6 font-semibold">{title}</h2>
-        {description && (
-          <p className="text-muted-foreground mt-0.5 text-xs leading-4">{description}</p>
-        )}
-      </div>
-      <div className="px-4 sm:px-6">
-        <Separator className="mt-4" />
-      </div>
-      <div
-        className={cn(
-          'flex min-w-0 flex-1 flex-col gap-4 px-4 pt-4 pb-5 sm:px-6',
-          contentClassName
-        )}
-      >
-        {children}
-      </div>
-    </Card>
-  );
-}
 
 export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   const currentYear = new Date().getFullYear();
@@ -439,11 +395,6 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         cancelHref="/dashboard/projects"
         submitLabel="Guardar cambios"
         pending={pending}
-        // secondaryAction={
-          // <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
-          //   Guardar borrador
-          // </Button>
-        //}
       />
     </form>
   );

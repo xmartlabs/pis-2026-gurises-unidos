@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 import { logAudit } from '@/lib/audit-log';
-import type { ProjectFormState } from '@/lib/validation/project';
+import { projectSchema, type ProjectFormState } from '@/lib/validation/project';
 import { projectFormSchema } from '@/lib/validation/project-form';
 
 export async function createProject(
