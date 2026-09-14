@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -37,9 +36,6 @@ interface TopbarProps {
 
 export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   const [year, setYear] = useState('2026');
-  const pathname = usePathname();
-
-  if (pathname === '/dashboard/projects/new') return null;
 
   const yearToggle = (
     <div className="bg-muted flex items-center gap-1 rounded-full p-1 text-sm">
@@ -95,7 +91,7 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   );
 
   return (
-    <header className="border-border bg-background flex h-[60px] items-center justify-between gap-4 border-b px-4 md:px-6">
+    <header className="border-border bg-background flex h-[60px] shrink-0 items-center justify-between gap-4 border-b px-4 md:px-6">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
         <Image
