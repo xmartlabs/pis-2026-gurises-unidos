@@ -8,6 +8,7 @@ type FormActionsProps = {
   cancelHref: string;
   submitLabel: string;
   pending: boolean;
+  pendingLabel?: string;
   secondaryAction?: ReactNode;
 };
 
@@ -15,6 +16,7 @@ export function FormActions({
   cancelHref,
   submitLabel,
   pending,
+  pendingLabel = 'Guardando...',
   secondaryAction,
 }: FormActionsProps) {
   return (
@@ -31,7 +33,7 @@ export function FormActions({
       <div className="flex w-full flex-wrap gap-2 sm:w-auto">
         {secondaryAction}
         <Button type="submit" size="lg" disabled={pending} className="flex-1 sm:min-w-36">
-          {pending ? 'Guardando...' : submitLabel}
+          {pending ? pendingLabel : submitLabel}
         </Button>
       </div>
     </footer>
