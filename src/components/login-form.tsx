@@ -9,14 +9,13 @@ export function LoginForm() {
   return (
     <form action={formAction} className="mt-8 flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm">
-        Correo
+        Documento
         <input
-          type="email"
-          name="email"
-          defaultValue={state.email}
+          type="text"
+          name="documentId"
+          defaultValue={state.documentId}
           required
-          autoComplete="email"
-          placeholder="nombre@gurisesunidos.org.uy"
+          autoComplete="username"
           className="border-border bg-card text-foreground focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border px-3.5 py-2.5 outline-none focus-visible:ring-2"
         />
       </label>
@@ -32,7 +31,7 @@ export function LoginForm() {
       </label>
 
       {state.error ? (
-        <p className="text-destructive text-sm">Correo o contraseña incorrectos.</p>
+        <p className="text-destructive text-sm">Documento o contraseña incorrectos.</p>
       ) : null}
 
       <button
