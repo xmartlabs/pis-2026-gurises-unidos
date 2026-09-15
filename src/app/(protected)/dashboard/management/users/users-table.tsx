@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 
 type User = {
@@ -77,6 +77,13 @@ const SORT_LABELS: Record<SortBy, string> = {
   role: 'Ordenar: Rol',
   status: 'Ordenar: Estado',
   lastAccess: 'Ordenar: Último acceso',
+};
+
+const SORT_VALUE_LABELS: Record<SortBy, string> = {
+  name: 'Nombre',
+  role: 'Rol',
+  status: 'Estado',
+  lastAccess: 'Último acceso',
 };
 
 function fullName(user: User) {
@@ -216,6 +223,26 @@ export function UsersTable({
     </Select>
   );
 
+  const mobileSortSelect = (
+    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
+      <SelectTrigger>
+        <SelectValue>{(value: SortBy) => SORT_VALUE_LABELS[value]}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="name">Nombre</SelectItem>
+        <SelectItem value="role">Rol</SelectItem>
+        <SelectItem value="status">Estado</SelectItem>
+        <SelectItem value="lastAccess">Último acceso</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
+  function clearFilters() {
+    setRoleFilter('all');
+    setStatusFilter('all');
+    setSortBy('name');
+  }
+
   return (
     <>
       <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -237,20 +264,50 @@ export function UsersTable({
             {sortSelect}
           </div>
 
-          <Popover>
-            <PopoverTrigger
+          <Sheet>
+            <SheetTrigger
               render={
                 <Button variant="outline" className="shrink-0 md:hidden">
                   Filtros
                 </Button>
               }
             />
-            <PopoverContent align="end" className="flex w-64 flex-col gap-2">
-              {roleSelect}
-              {statusSelect}
-              {sortSelect}
-            </PopoverContent>
-          </Popover>
+            <SheetContent side="bottom" showCloseButton={false} className="rounded-t-2xl">
+              <div className="bg-muted mx-auto mt-2 h-1.5 w-10 rounded-full" />
+
+              <div className="flex items-center justify-between px-4 pt-2">
+                <SheetTitle className="text-lg">Filtros</SheetTitle>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-muted-foreground text-sm"
+                >
+                  Limpiar
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4 px-4 pb-2">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-foreground text-sm font-medium">Rol</span>
+                  {roleSelect}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-foreground text-sm font-medium">Estado</span>
+                  {statusSelect}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-foreground text-sm font-medium">Ordenar por</span>
+                  {mobileSortSelect}
+                </div>
+              </div>
+
+              <div className="p-4 pt-2">
+                <SheetClose render={<Button className="w-full">Aplicar filtros</Button>} />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         <span className="hidden text-sm leading-5 font-normal tracking-normal md:inline">
