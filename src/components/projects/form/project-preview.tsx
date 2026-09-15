@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { MapPin, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { STATUS_OPTIONS } from '@/lib/project-display';
@@ -30,7 +31,7 @@ export function ProjectPreview({
       </div>
       <div className="bg-muted/60 flex flex-col items-center gap-3 px-4 py-8 sm:px-6">
         <Card className="bg-card ring-border w-full max-w-[377px] gap-0 overflow-hidden rounded-xl py-0 shadow-none ring-1">
-          <div className="bg-muted relative flex aspect-[377/140] shrink-0 items-center justify-center overflow-hidden">
+          <div className="bg-muted relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden">
             {values.coverPhotoUrl ? (
               <Image
                 src={values.coverPhotoUrl}
@@ -62,8 +63,14 @@ export function ProjectPreview({
               {values.generalObjective || 'El tagline aparecerá aquí cuando lo completes.'}
             </p>
             <div className="text-muted-foreground flex items-center gap-4 pt-1 text-xs leading-4">
-              <span className="truncate">📍 {locationLabel}</span>
-              <span className="shrink-0">👥 {beneficiaryTotal || '—'}</span>
+              <span className="flex min-w-0 items-center gap-1">
+                <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+                <span className="truncate">{locationLabel}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1">
+                <Users aria-hidden="true" className="size-3.5 shrink-0" />
+                {beneficiaryTotal || '—'}
+              </span>
             </div>
           </div>
         </Card>

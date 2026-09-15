@@ -1,18 +1,10 @@
-import type { BeneficiaryCounts } from '@/lib/project-display';
+import type { z } from 'zod';
+import type { projectFormSchema } from '@/lib/validation/project-form';
 
 export type ProjectFormValues = {
-  name: string;
-  status: string;
+  [K in keyof Omit<z.infer<typeof projectFormSchema>, 'year'>]: string;
+} & {
   topic: string;
-  intensity: string;
-  startYear: string;
-  leadCoordinatorId: string;
-  departmentId: string;
-  zone: string;
-  localityNeighborhood: string;
-  generalObjective: string;
-  publicDescription: string;
-  internalNotes: string;
   coverPhoto: File | null;
   coverPhotoUrl: string | null;
-} & Record<keyof BeneficiaryCounts, string>;
+};
