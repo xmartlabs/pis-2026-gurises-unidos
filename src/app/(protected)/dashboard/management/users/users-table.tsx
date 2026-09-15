@@ -115,7 +115,7 @@ function compareUsers(a: User, b: User, sortBy: SortBy) {
   }
 }
 
-export function UsersTable({ users }: { users: User[] }) {
+export function UsersTable({ users, actionsEnabled = true }: { users: User[]; actionsEnabled?: boolean }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -234,7 +234,7 @@ export function UsersTable({ users }: { users: User[] }) {
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" disabled={!actionsEnabled}>
                           <MoreHorizontal />
                         </Button>
                       }

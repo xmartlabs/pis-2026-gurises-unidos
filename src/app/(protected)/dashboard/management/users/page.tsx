@@ -15,6 +15,8 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { UsersTable } from './users-table';
 
+const USERS_MANAGEMENT_FINALIZED = false;
+
 export default async function NewProjectPage() {
   const session = await auth();
 
@@ -76,9 +78,11 @@ export default async function NewProjectPage() {
             </span>
           </div>
 
-          <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
-            + Nuevo usuario
-          </Button>
+          {USERS_MANAGEMENT_FINALIZED && (
+            <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
+              + Nuevo usuario
+            </Button>
+          )}
         </div>
 
         <div className="flex h-83 w-296.25 gap-5 pt-6 pr-6 pb-8 pl-6">
@@ -90,9 +94,11 @@ export default async function NewProjectPage() {
               <EmptyTitle>Todavía no hay usuarios registrados</EmptyTitle>
               <EmptyDescription>Cuando agregues personas al sistema, vas a verlas listadas acá con su rol y estado.</EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button>Crear primer usuario</Button>
-            </EmptyContent>
+            {USERS_MANAGEMENT_FINALIZED && (
+              <EmptyContent>
+                <Button>Crear primer usuario</Button>
+              </EmptyContent>
+            )}
           </Empty>
         </div>
       </div>
@@ -115,9 +121,11 @@ export default async function NewProjectPage() {
             </span>
           </div>
 
-          <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
-            + Nuevo usuario
-          </Button>
+          {USERS_MANAGEMENT_FINALIZED && (
+            <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
+              + Nuevo usuario
+            </Button>
+          )}
         </div>
 
         <div className="flex h-190 w-296.25 flex-col gap-5 pt-6 pr-6 pb-8 pl-6">
@@ -152,7 +160,7 @@ export default async function NewProjectPage() {
             </Card>
           </div>
 
-          <UsersTable users={users} />
+          <UsersTable users={users} actionsEnabled={USERS_MANAGEMENT_FINALIZED} />
         </div>
       </div>
   );
