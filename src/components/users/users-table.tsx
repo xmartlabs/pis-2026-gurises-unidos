@@ -29,107 +29,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-
-type User = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  status: string;
-  lastAccess: Date | null;
-};
-
-type SortBy = 'name' | 'role' | 'status' | 'lastAccess';
-
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrador',
-  coordinator: 'Coordinador',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Activo',
-  pendingInvitation: 'Invitación pendiente',
-  disabled: 'Deshabilitado',
-};
-
-const STATUS_CLASSNAMES: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700',
-  pendingInvitation: 'bg-amber-100 text-amber-700',
-  disabled: 'bg-muted text-muted-foreground',
-};
-
-const ROLE_FILTER_LABELS: Record<string, string> = {
-  all: 'Todos los roles',
-  admin: 'Administrador',
-  coordinator: 'Coordinador',
-};
-
-const STATUS_FILTER_LABELS: Record<string, string> = {
-  all: 'Todos los estados',
-  active: 'Activo',
-  pendingInvitation: 'Invitación pendiente',
-  disabled: 'Deshabilitado',
-};
-
-const SORT_LABELS: Record<SortBy, string> = {
-  name: 'Ordenar: Nombre',
-  role: 'Ordenar: Rol',
-  status: 'Ordenar: Estado',
-  lastAccess: 'Ordenar: Último acceso',
-};
-
-const SORT_VALUE_LABELS: Record<SortBy, string> = {
-  name: 'Nombre',
-  role: 'Rol',
-  status: 'Estado',
-  lastAccess: 'Último acceso',
-};
-
-function fullName(user: User) {
-  return `${user.firstName} ${user.lastName}`;
-}
-
-function formatLastAccess(lastAccess: Date | null) {
-  if (!lastAccess) return 'Nunca';
-  return new Date(lastAccess).toLocaleDateString('es-UY', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
-function formatUserCount(count: number) {
-  if (count === 0) return 'No hay resultados';
-  if (count === 1) return '1 usuario';
-  return `${count} usuarios`;
-}
-
-function matchesFilters(
-  user: User,
-  { search, roleFilter, statusFilter }: { search: string; roleFilter: string; statusFilter: string }
-) {
-  const term = search.trim().toLowerCase();
-  const matchesSearch =
-    !term || fullName(user).toLowerCase().includes(term) || user.email.toLowerCase().includes(term);
-  const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-  const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-
-  return matchesSearch && matchesRole && matchesStatus;
-}
-
-function compareUsers(a: User, b: User, sortBy: SortBy) {
-  switch (sortBy) {
-    case 'role':
-      return a.role.localeCompare(b.role);
-    case 'status':
-      return a.status.localeCompare(b.status);
-    case 'lastAccess':
-      return (b.lastAccess?.getTime() ?? 0) - (a.lastAccess?.getTime() ?? 0);
-    case 'name':
-      return fullName(a).localeCompare(fullName(b));
-  }
-}
+import {
+  ROLE_LABELS,
+  STATUS_LABELS,
+  STATUS_CLASSNAMES,
+  ROLE_FILTER_LABELS,
+  STATUS_FILTER_LABELS,
+  SORT_LABELS,
+  SORT_VALUE_LABELS,
+  type SortBy,
+} from '@/features/users/constants';
+import {
+  fullName,
+  formatLastAccess,
+  formatUserCount,
+  matchesFilters,
+  compareUsers,
+  type User,
+} from '@/features/users/format';
 
 function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
   return (
