@@ -1,3 +1,4 @@
+import { createProject } from '@/app/actions/projects';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
@@ -22,5 +23,11 @@ export default async function NewProjectPage() {
     }),
   ]);
 
-  return <ProjectForm coordinators={coordinators} departments={departments} />;
+  return (
+    <ProjectForm
+      coordinators={coordinators}
+      departments={departments}
+      submitAction={createProject}
+    />
+  );
 }

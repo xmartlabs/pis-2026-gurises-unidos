@@ -9,6 +9,7 @@ type TextInputFieldProps = Omit<
   ComponentProps<typeof Input>,
   'value' | 'onChange' | 'className'
 > & {
+  variant?: 'default' | 'detailed';
   id: string;
   name: string;
   label: string;
@@ -20,6 +21,7 @@ type TextInputFieldProps = Omit<
 };
 
 export function TextInputField({
+  variant = 'default',
   id,
   name,
   label,
@@ -42,7 +44,10 @@ export function TextInputField({
         value={value}
         onChange={(event) => onValueChange(event.currentTarget.value)}
         aria-invalid={Boolean(messages?.length)}
-        className="border-input bg-background h-9 min-w-0 rounded-lg px-3 text-base shadow-none md:text-sm"
+        className={cn(
+          'border-input bg-background h-9 min-w-0 rounded-lg px-3 text-base',
+          variant === 'detailed' ? 'leading-6 shadow-sm' : 'shadow-none md:text-sm'
+        )}
       />
       {description && (
         <FieldDescription className="text-muted-foreground text-xs leading-4">
