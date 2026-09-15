@@ -67,10 +67,17 @@ export default async function NewProjectPage() {
           </div>
 
           <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
-            TEXTO BOTON
+            + Nuevo usuario
           </Button>
         </div>
+
+        <div className="flex h-83 w-296.25 gap-5 pt-6 pr-6 pb-8 pl-6">
+          <span className="h-9 w-31.75 text-3xl font-semibold tracking-tight">
+              Usuarios
+          </span>
+        </div>
       </div>
+
     );
   }
 
