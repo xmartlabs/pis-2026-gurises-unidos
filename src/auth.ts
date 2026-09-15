@@ -14,18 +14,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: {},
+        documentId: {},
         password: {},
       },
       authorize: async (credentials) => {
-        const email = credentials?.email;
+        const documentId = credentials?.documentId;
         const password = credentials?.password;
 
-        if (typeof email !== 'string' || typeof password !== 'string') {
+        if (typeof documentId !== 'string' || typeof password !== 'string') {
           return null;
         }
 
-        const user = await verifyUserCredentials(email, password);
+        const user = await verifyUserCredentials(documentId, password);
 
         return user ? toAuthUser(user) : null;
       },

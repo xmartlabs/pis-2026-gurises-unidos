@@ -6,21 +6,21 @@ import { signIn, signOut } from '@/auth';
 
 export type LoginState = {
   error?: string;
-  email?: string;
+  documentId?: string;
 };
 
 export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
-  const email = String(formData.get('email') ?? '');
+  const documentId = String(formData.get('documentId') ?? '');
 
   try {
     await signIn('credentials', {
-      email,
+      documentId,
       password: formData.get('password'),
       redirect: false,
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: 'Invalid credentials', email };
+      return { error: 'Invalid credentials', documentId };
     }
     throw error;
   }
