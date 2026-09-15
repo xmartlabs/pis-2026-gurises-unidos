@@ -14,8 +14,8 @@ export default async function NewUserPage() {
   }
 
   return (
-    <div className="bg-primary-foreground min-h-full w-full">
-      <div className="mx-auto max-w-[1185px]">
+    <div className="bg-primary-foreground flex w-full flex-1 flex-col">
+      <div className="flex w-full flex-1 flex-col">
         <header className="flex h-30 w-full flex-col gap-1.5 px-6 pt-6 pb-2.5">
           <p className="text-muted-foreground h-5 text-sm leading-5 font-normal tracking-normal">
             Administración
@@ -30,7 +30,7 @@ export default async function NewUserPage() {
           </p>
         </header>
 
-        <main>
+        <main className="flex flex-1 flex-col">
           <UserForm />
         </main>
       </div>
