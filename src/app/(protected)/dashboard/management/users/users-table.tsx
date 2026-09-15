@@ -27,6 +27,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Card, CardContent } from '@/components/ui/card';
 
 type User = {
   id: number;
@@ -81,6 +83,15 @@ function fullName(user: User) {
   return `${user.firstName} ${user.lastName}`;
 }
 
+function formatLastAccess(lastAccess: Date | null) {
+  if (!lastAccess) return 'Nunca';
+  return new Date(lastAccess).toLocaleDateString('es-UY', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 function formatUserCount(count: number) {
   if (count === 0) return 'No hay resultados';
   if (count === 1) return '1 usuario';
@@ -115,6 +126,41 @@ function compareUsers(a: User, b: User, sortBy: SortBy) {
   }
 }
 
+function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" disabled={!actionsEnabled}>
+            <MoreHorizontal />
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end" className="w-56 max-h-104 rounded-md border">
+        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+          Acciones
+        </DropdownMenuItem>
+        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+          Restablecer contraseña
+        </DropdownMenuItem>
+        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+          Desactivar
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          className="h-8 w-54 gap-2 rounded-sm px-2 py-1.5 font-sans text-sm leading-5 font-medium tracking-normal"
+        >
+          Eliminar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function UsersTable({ users, actionsEnabled = true }: { users: User[]; actionsEnabled?: boolean }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -125,11 +171,52 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
     .filter((user) => matchesFilters(user, { search, roleFilter, statusFilter }))
     .sort((a, b) => compareUsers(a, b, sortBy));
 
+  const roleSelect = (
+    <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value ?? 'all')}>
+      <SelectTrigger>
+        <SelectValue>{(value: string) => ROLE_FILTER_LABELS[value]}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todos los roles</SelectItem>
+        <SelectItem value="admin">Administrador</SelectItem>
+        <SelectItem value="coordinator">Coordinador</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
+  const statusSelect = (
+    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? 'all')}>
+      <SelectTrigger>
+        <SelectValue>{(value: string) => STATUS_FILTER_LABELS[value]}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todos los estados</SelectItem>
+        <SelectItem value="active">Activo</SelectItem>
+        <SelectItem value="pendingInvitation">Invitación pendiente</SelectItem>
+        <SelectItem value="disabled">Deshabilitado</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
+  const sortSelect = (
+    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
+      <SelectTrigger>
+        <SelectValue>{(value: SortBy) => SORT_LABELS[value]}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="name">Nombre</SelectItem>
+        <SelectItem value="role">Rol</SelectItem>
+        <SelectItem value="status">Estado</SelectItem>
+        <SelectItem value="lastAccess">Último acceso</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <>
-      <div className="flex h-9 w-284.25 justify-between">
-        <div className="flex h-9 w-221 gap-2">
-          <InputGroup className="h-9 w-80 rounded-md">
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex w-full items-center gap-2 md:w-auto">
+          <InputGroup className="h-9 min-w-0 flex-1 rounded-md sm:w-80 sm:flex-none">
             <InputGroupAddon>
               <Search />
             </InputGroupAddon>
@@ -140,48 +227,58 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
             />
           </InputGroup>
 
-          <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value ?? 'all')}>
-            <SelectTrigger>
-              <SelectValue>{(value: string) => ROLE_FILTER_LABELS[value]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los roles</SelectItem>
-              <SelectItem value="admin">Administrador</SelectItem>
-              <SelectItem value="coordinator">Coordinador</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="hidden gap-2 md:flex">
+            {roleSelect}
+            {statusSelect}
+            {sortSelect}
+          </div>
 
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? 'all')}>
-            <SelectTrigger>
-              <SelectValue>{(value: string) => STATUS_FILTER_LABELS[value]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="active">Activo</SelectItem>
-              <SelectItem value="pendingInvitation">Invitación pendiente</SelectItem>
-              <SelectItem value="disabled">Deshabilitado</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
-            <SelectTrigger>
-              <SelectValue>{(value: SortBy) => SORT_LABELS[value]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Nombre</SelectItem>
-              <SelectItem value="role">Rol</SelectItem>
-              <SelectItem value="status">Estado</SelectItem>
-              <SelectItem value="lastAccess">Último acceso</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button variant="outline" className="shrink-0 md:hidden">
+                  Filtros
+                </Button>
+              }
+            />
+            <PopoverContent align="end" className="flex w-64 flex-col gap-2">
+              {roleSelect}
+              {statusSelect}
+              {sortSelect}
+            </PopoverContent>
+          </Popover>
         </div>
 
-        <span className="h-5 font-sans text-sm leading-5 font-normal tracking-normal">
+        <span className="hidden text-sm leading-5 font-normal tracking-normal md:inline">
           {formatUserCount(filteredUsers.length)}
         </span>
       </div>
 
-      <div className="h-130 w-284.25 overflow-y-auto rounded-[14px] border">
+      <div className="flex max-h-130 flex-col gap-3 overflow-y-auto md:hidden">
+        {filteredUsers.length === 0 && (
+          <p className="rounded-[14px] border py-12 text-center text-muted-foreground">
+            No se encontraron usuarios
+          </p>
+        )}
+        {filteredUsers.map((user) => (
+          <Card key={user.id} className="gap-3 py-4">
+            <CardContent className="flex items-start justify-between gap-3 px-4">
+              <div className="min-w-0">
+                <p className="truncate font-medium text-foreground">{fullName(user)}</p>
+                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                <p className="mt-1 text-sm text-foreground">{ROLE_LABELS[user.role]}</p>
+              </div>
+              <UserActionsMenu actionsEnabled={actionsEnabled} />
+            </CardContent>
+            <CardContent className="flex items-center justify-between gap-3 px-4">
+              <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
+              <span className="text-sm text-muted-foreground">{formatLastAccess(user.lastAccess)}</span>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="hidden w-full overflow-auto rounded-[14px] border md:block md:max-h-130">
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="bg-(--surface-subtle,#F5F5F5)">
@@ -222,45 +319,10 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
                   </Badge>
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-muted-foreground">
-                  {user.lastAccess
-                    ? new Date(user.lastAccess).toLocaleDateString('es-UY', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })
-                    : 'Nunca'}
+                  {formatLastAccess(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button variant="ghost" size="icon" disabled={!actionsEnabled}>
-                          <MoreHorizontal />
-                        </Button>
-                      }
-                    />
-                    <DropdownMenuContent align="end" className="w-56 max-h-104 rounded-md border">
-                      <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
-                        Acciones
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
-                        Restablecer contraseña
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
-                        Desactivar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        className="h-8 w-54 gap-2 rounded-sm px-2 py-1.5 font-sans text-sm leading-5 font-medium tracking-normal"
-                      >
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <UserActionsMenu actionsEnabled={actionsEnabled} />
                 </TableCell>
               </TableRow>
             ))}
