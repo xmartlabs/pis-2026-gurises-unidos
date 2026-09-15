@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/project-form';
 
@@ -29,7 +29,9 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   fireEvent.change(screen.getByLabelText('Nombre del proyecto'), {
     target: { value: 'Edited project' },
   });
-  fireEvent.submit(container.querySelector('form')!);
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
   await screen.findByRole('alert');
   expect(submitAction).toHaveBeenCalledTimes(1);
   const submitted = submitAction.mock.calls[0][1] as FormData;
@@ -40,8 +42,16 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   expect((screen.getByLabelText('Nombre del proyecto') as HTMLInputElement).value).toBe(
     'Edited project'
   );
-  fireEvent.submit(container.querySelector('form')!);
-  await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(2));
+  expect(Object.fromEntries(new FormData(container.querySelector('form')!))).toEqual(
+    Object.fromEntries(submitted)
+  );
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+  expect(submitAction).toHaveBeenCalledTimes(2);
+  expect(Object.fromEntries(submitAction.mock.calls[1][1] as FormData)).toEqual(
+    Object.fromEntries(submitted)
+  );
 });
 
 it('keeps the original creation appearance separate from edit styling', () => {
