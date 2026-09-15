@@ -191,7 +191,7 @@ describe('createProject', () => {
           basicServiceStaff: undefined,
         })
       )
-    ).rejects.toThrow();
+    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
 
     expect(beneficiaryCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -228,6 +228,18 @@ describe('createProject', () => {
     const result = await createProject(EMPTY_STATE, buildFormData());
 
     expect(result).toEqual({ formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.' });
+  });
+
+  test('falls back to meta.constraint when field_name is absent', async () => {
+    transactionMock.mockRejectedValue(
+      knownRequestError('P2003', { constraint: 'Project_leadCoordinatorId_fkey' })
+    );
+
+    const result = await createProject(EMPTY_STATE, buildFormData());
+
+    expect(result).toEqual({
+      formError: 'El coordinador o el departamento seleccionado no existe.',
+    });
   });
 
   test('reports a generic error message and logs unexpected failures', async () => {
