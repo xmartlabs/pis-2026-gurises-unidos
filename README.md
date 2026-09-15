@@ -14,7 +14,8 @@ npm run dev      # http://localhost:3000
 
 La app queda corriendo en **http://localhost:3000** (`dev`, `start` y Docker usan el mismo puerto).
 
-Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`.
+Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`,
+`npm test` (Vitest), `npm run test:watch`.
 
 ### Con Docker
 
