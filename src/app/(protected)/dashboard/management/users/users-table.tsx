@@ -104,9 +104,7 @@ function matchesFilters(
 ) {
   const term = search.trim().toLowerCase();
   const matchesSearch =
-    !term ||
-    fullName(user).toLowerCase().includes(term) ||
-    user.email.toLowerCase().includes(term);
+    !term || fullName(user).toLowerCase().includes(term) || user.email.toLowerCase().includes(term);
   const matchesRole = roleFilter === 'all' || user.role === roleFilter;
   const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
 
@@ -136,17 +134,17 @@ function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
           </Button>
         }
       />
-      <DropdownMenuContent align="end" className="w-56 max-h-104 rounded-md border">
-        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+      <DropdownMenuContent align="end" className="max-h-104 w-56 rounded-md border">
+        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Acciones
         </DropdownMenuItem>
-        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Editar
         </DropdownMenuItem>
-        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Restablecer contraseña
         </DropdownMenuItem>
-        <DropdownMenuItem className="font-sans text-sm leading-5 font-medium tracking-normal text-popover-foreground">
+        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Desactivar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -161,7 +159,13 @@ function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
   );
 }
 
-export function UsersTable({ users, actionsEnabled = true }: { users: User[]; actionsEnabled?: boolean }) {
+export function UsersTable({
+  users,
+  actionsEnabled = true,
+}: {
+  users: User[];
+  actionsEnabled?: boolean;
+}) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -256,7 +260,7 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
 
       <div className="flex max-h-130 flex-col gap-3 overflow-y-auto md:hidden">
         {filteredUsers.length === 0 && (
-          <p className="rounded-[14px] border py-12 text-center text-muted-foreground">
+          <p className="text-muted-foreground rounded-[14px] border py-12 text-center">
             No se encontraron usuarios
           </p>
         )}
@@ -264,15 +268,17 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
           <Card key={user.id} className="gap-3 py-4">
             <CardContent className="flex items-start justify-between gap-3 px-4">
               <div className="min-w-0">
-                <p className="truncate font-medium text-foreground">{fullName(user)}</p>
-                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-                <p className="mt-1 text-sm text-foreground">{ROLE_LABELS[user.role]}</p>
+                <p className="text-foreground truncate font-medium">{fullName(user)}</p>
+                <p className="text-muted-foreground truncate text-sm">{user.email}</p>
+                <p className="text-foreground mt-1 text-sm">{ROLE_LABELS[user.role]}</p>
               </div>
               <UserActionsMenu actionsEnabled={actionsEnabled} />
             </CardContent>
             <CardContent className="flex items-center justify-between gap-3 px-4">
               <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
-              <span className="text-sm text-muted-foreground">{formatLastAccess(user.lastAccess)}</span>
+              <span className="text-muted-foreground text-sm">
+                {formatLastAccess(user.lastAccess)}
+              </span>
             </CardContent>
           </Card>
         ))}
@@ -282,35 +288,35 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="bg-(--surface-subtle,#F5F5F5)">
-              <TableHead className="h-10 w-56 px-4 py-2.5 text-muted-foreground">Nombre</TableHead>
-              <TableHead className="h-10 w-80 px-4 py-2.5 text-muted-foreground">
+              <TableHead className="text-muted-foreground h-10 w-56 px-4 py-2.5">Nombre</TableHead>
+              <TableHead className="text-muted-foreground h-10 w-80 px-4 py-2.5">
                 Correo electrónico
               </TableHead>
-              <TableHead className="h-10 w-38 px-4 py-2.5 text-muted-foreground">Rol</TableHead>
-              <TableHead className="h-10 w-38 px-4 py-2.5 text-muted-foreground">Estado</TableHead>
-              <TableHead className="h-10 w-45 px-4 py-2.5 text-muted-foreground">
+              <TableHead className="text-muted-foreground h-10 w-38 px-4 py-2.5">Rol</TableHead>
+              <TableHead className="text-muted-foreground h-10 w-38 px-4 py-2.5">Estado</TableHead>
+              <TableHead className="text-muted-foreground h-10 w-45 px-4 py-2.5">
                 Último acceso
               </TableHead>
-              <TableHead className="h-10 w-26 px-4 py-2.5 text-right text-muted-foreground" />
+              <TableHead className="text-muted-foreground h-10 w-26 px-4 py-2.5 text-right" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.length === 0 && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6} className="h-120 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-muted-foreground h-120 text-center">
                   No se encontraron usuarios
                 </TableCell>
               </TableRow>
             )}
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="h-15 truncate px-4 py-3 font-medium text-foreground">
+                <TableCell className="text-foreground h-15 truncate px-4 py-3 font-medium">
                   {user.firstName} {user.lastName}
                 </TableCell>
-                <TableCell className="h-15 truncate px-4 py-3 text-muted-foreground">
+                <TableCell className="text-muted-foreground h-15 truncate px-4 py-3">
                   {user.email}
                 </TableCell>
-                <TableCell className="h-15 px-4 py-3 text-foreground">
+                <TableCell className="text-foreground h-15 px-4 py-3">
                   {ROLE_LABELS[user.role]}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3">
@@ -318,7 +324,7 @@ export function UsersTable({ users, actionsEnabled = true }: { users: User[]; ac
                     {STATUS_LABELS[user.status]}
                   </Badge>
                 </TableCell>
-                <TableCell className="h-15 px-4 py-3 text-muted-foreground">
+                <TableCell className="text-muted-foreground h-15 px-4 py-3">
                   {formatLastAccess(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
