@@ -66,6 +66,21 @@ async function main() {
         },
       });
 
+      await tx.user.upsert({
+        where: { documentId: '33333333' },
+        update: { passwordHash },
+        create: {
+          firstName: 'Bruno',
+          lastName: 'Admin',
+          documentId: '33333333',
+          email: 'admin2@gurisesunidos.test',
+          role: 'admin',
+          status: 'pendingInvitation',
+          passwordHash,
+          createdBy: admin.id,
+        },
+      });
+
       const coordinator = await tx.user.upsert({
         where: { documentId: '22222222' },
         update: { passwordHash },
@@ -76,6 +91,21 @@ async function main() {
           email: 'coordinator@gurisesunidos.test',
           role: 'coordinator',
           status: 'active',
+          passwordHash,
+          createdBy: admin.id,
+        },
+      });
+
+      await tx.user.upsert({
+        where: { documentId: '44444444' },
+        update: { passwordHash },
+        create: {
+          firstName: 'Diana',
+          lastName: 'Coordinator',
+          documentId: '44444444',
+          email: 'coordinator2@gurisesunidos.test',
+          role: 'coordinator',
+          status: 'disabled',
           passwordHash,
           createdBy: admin.id,
         },
