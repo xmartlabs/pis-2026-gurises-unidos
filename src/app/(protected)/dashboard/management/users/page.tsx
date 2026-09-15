@@ -64,28 +64,28 @@ export default async function NewProjectPage() {
 
   if (total === 1) {
     return (
-      <div className="mx-auto max-w-296.25">
-        <div className="flex h-30.5 w-full items-start justify-between gap-1.5 pt-6 pr-6 pb-2.5 pl-6">
+      <div className="mx-auto w-full max-w-296.25">
+        <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
           <div className="flex flex-col">
-            <span className="h-5 w-24.5 text-sm tracking-normal text-muted-foreground">
+            <span className="text-sm tracking-normal text-muted-foreground">
               Administración
             </span>
-            <span className="h-9 w-31.75 text-3xl font-semibold tracking-tight">
+            <span className="text-3xl font-semibold tracking-tight">
               Usuarios
             </span>
-            <span className="h-5 w-87.25 text-sm tracking-normal text-muted-foreground">
+            <span className="text-sm tracking-normal text-muted-foreground">
               Administrá las personas que tienen acceso al sistema.
             </span>
           </div>
 
           {USERS_MANAGEMENT_FINALIZED && (
-            <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
+            <Button size="lg" className="h-9 gap-2.5 px-4 py-2">
               + Nuevo usuario
             </Button>
           )}
         </div>
 
-        <div className="flex h-83 w-296.25 gap-5 pt-6 pr-6 pb-8 pl-6">
+        <div className="flex w-full flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -107,30 +107,30 @@ export default async function NewProjectPage() {
   }
 
   else return (
-      <div className="mx-auto max-w-296.25">
-        <div className="flex h-30.5 w-full items-start justify-between gap-1.5 pt-6 pr-6 pb-2.5 pl-6">
+      <div className="mx-auto w-full max-w-296.25">
+        <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
           <div className="flex flex-col">
-            <span className="h-5 w-24.5 text-sm tracking-normal text-muted-foreground">
+            <span className="text-sm tracking-normal text-muted-foreground">
               Administración
             </span>
-            <span className="h-9 w-31.75 text-3xl font-semibold tracking-tight">
+            <span className="text-3xl font-semibold tracking-tight">
               Usuarios
             </span>
-            <span className="h-5 w-87.25 text-sm tracking-normal text-muted-foreground">
+            <span className="text-sm tracking-normal text-muted-foreground">
               Administrá las personas que tienen acceso al sistema.
             </span>
           </div>
 
           {USERS_MANAGEMENT_FINALIZED && (
-            <Button size="lg" className="h-9 w-35.5 gap-2.5 px-4 py-2">
+            <Button size="lg" className="h-9 gap-2.5 px-4 py-2">
               + Nuevo usuario
             </Button>
           )}
         </div>
 
-        <div className="flex h-190 w-296.25 flex-col gap-5 pt-6 pr-6 pb-8 pl-6">
+        <div className="flex w-full flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
 
-          <div className="grid h-27 w-284.25 grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-3xl font-bold">{total}</CardTitle>
