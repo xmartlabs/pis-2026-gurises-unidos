@@ -1,10 +1,12 @@
 'use client';
 
+import { cn } from 'cn';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 type FormActionsProps = {
+  variant?: 'default' | 'detailed';
   cancelHref: string;
   submitLabel: string;
   pending: boolean;
@@ -13,6 +15,7 @@ type FormActionsProps = {
 };
 
 export function FormActions({
+  variant = 'default',
   cancelHref,
   submitLabel,
   pending,
@@ -26,13 +29,21 @@ export function FormActions({
         variant="ghost"
         size="lg"
         render={<Link href={cancelHref} />}
-        className="px-3"
+        className={variant === 'detailed' ? 'rounded-[10px] px-4' : 'px-3'}
       >
         Cancelar
       </Button>
       <div className="flex w-full flex-wrap gap-2 sm:w-auto">
         {secondaryAction}
-        <Button type="submit" size="lg" disabled={pending} className="flex-1 sm:min-w-36">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={pending}
+          className={cn(
+            'flex-1 sm:min-w-36',
+            variant === 'detailed' && 'rounded-[10px] px-4 shadow-sm'
+          )}
+        >
           {pending ? pendingLabel : submitLabel}
         </Button>
       </div>

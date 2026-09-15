@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
 import { notFound, redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
@@ -36,6 +38,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
+      <Link
+        href={`/dashboard/projects/${project.id}/edit`}
+        className={buttonVariants({ variant: 'outline' })}
+      >
+        Editar proyecto
+      </Link>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight">{project.name}</h1>
 
       <div className="text-muted-foreground mt-3 space-y-1 text-sm">

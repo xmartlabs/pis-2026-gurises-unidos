@@ -1,65 +1,40 @@
-'use client';
+import type { ComponentProps } from 'react';
+import type { Project, ProjectBeneficiary } from '@/generated/prisma/client';
+import { ProjectForm } from '@/components/project-form';
 
-import { useActionState, useState } from 'react';
-import { FormActions } from '@/components/ui/forms/form-actions';
-import { FormSection } from '@/components/ui/forms/form-section';
-import { TextInputField } from '@/components/ui/forms/text-input-field';
-import type { ProjectFormState } from '@/lib/validation/project';
-
-type EditProjectFormProps = {
-  initialName: string;
-  cancelHref: string;
-  submitAction: (previousState: ProjectFormState, formData: FormData) => Promise<ProjectFormState>;
+type EditProjectFormProps = Omit<ComponentProps<typeof ProjectForm>, 'initialValues' | 'mode'> & {
+  project: Project & { projectBeneficiaries: ProjectBeneficiary[] };
 };
 
-const INITIAL_STATE: ProjectFormState = {};
-
-export function EditProjectForm({ initialName, cancelHref, submitAction }: EditProjectFormProps) {
-  const [name, setName] = useState(initialName);
-  const [state, formAction, pending] = useActionState(submitAction, INITIAL_STATE);
+export function EditProjectForm({ project, ...props }: EditProjectFormProps) {
+  const beneficiaries = project.projectBeneficiaries[0];
 
   return (
-    <form
-      action={formAction}
-      aria-busy={pending}
-      className="bg-muted/30 text-foreground flex min-h-0 min-w-0 flex-1 flex-col"
-    >
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold">Editar proyecto</h1>
-          <p className="text-muted-foreground">{initialName}</p>
-        </header>
-
-        {state.formError && (
-          <p
-            role="alert"
-            className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm"
-          >
-            {state.formError}
-          </p>
-        )}
-
-        <FormSection title="Información básica">
-          <TextInputField
-            id="name"
-            name="name"
-            label="Nombre del proyecto"
-            value={name}
-            onValueChange={setName}
-            placeholder="Ej: Espacio joven Malvín Norte"
-            description="Nombre de fantasía — puede cambiarse después"
-            messages={state.errors?.name}
-            required
-          />
-        </FormSection>
-      </div>
-
-      <FormActions
-        cancelHref={cancelHref}
-        submitLabel="Validar formulario"
-        pendingLabel="Validando..."
-        pending={pending}
-      />
-    </form>
+    <ProjectForm
+      {...props}
+      mode="edit"
+      initialValues={{
+        name: project.name,
+        status: project.status,
+        intensity: project.intensity,
+        startYear: String(project.startYear),
+        leadCoordinatorId: String(project.leadCoordinatorId),
+        departmentId: String(project.departmentId),
+        zone: project.zone,
+        localityNeighborhood: project.localityNeighborhood ?? '',
+        generalObjective: project.generalObjective ?? '',
+        publicDescription: project.publicDescription ?? '',
+        internalNotes: project.internalNotes ?? '',
+        coverPhotoUrl: project.coverPhoto,
+        year: String(beneficiaries?.year ?? new Date().getFullYear()),
+        directChildrenAdolescents: String(beneficiaries?.directChildrenAdolescents ?? 0),
+        indirectChildrenAdolescents: String(beneficiaries?.indirectChildrenAdolescents ?? 0),
+        youth18To29: String(beneficiaries?.youth18To29 ?? 0),
+        families: String(beneficiaries?.families ?? 0),
+        coordinatedInstitutions: String(beneficiaries?.coordinatedInstitutions ?? 0),
+        communityLeaders: String(beneficiaries?.communityLeaders ?? 0),
+        basicServiceStaff: String(beneficiaries?.basicServiceStaff ?? 0),
+      }}
+    />
   );
 }

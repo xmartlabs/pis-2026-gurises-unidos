@@ -1,7 +1,8 @@
 'use client';
 
-import { useActionState, useEffect, useMemo, useRef, useState } from 'react';
-import { createProject } from '@/app/actions/projects';
+import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { cn } from 'cn';
+import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
@@ -28,28 +29,38 @@ import { FormSection } from '@/components/ui/forms/form-section';
 import { FormActions } from '@/components/ui/forms/form-actions';
 
 type ProjectFormProps = {
+  mode?: 'create' | 'edit';
+  initialValues?: Partial<ProjectFormValues>;
+  submitAction: (previousState: ProjectFormState, formData: FormData) => Promise<ProjectFormState>;
+  cancelHref?: string;
+  children?: ReactNode;
   coordinators: { id: number; firstName: string; lastName: string }[];
   departments: { id: number; name: string }[];
 };
 
-async function submitProject(
-  previousState: ProjectFormState,
-  formData: FormData
-): Promise<ProjectFormState> {
-  const parsed = projectFormSchema.safeParse(Object.fromEntries(formData));
-
-  if (!parsed.success) {
-    return {
-      errors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  return createProject(previousState, formData);
-}
-
 const INITIAL_STATE: ProjectFormState = {};
 
-export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
+export function ProjectForm({
+  mode = 'create',
+  coordinators,
+  departments,
+  initialValues,
+  submitAction,
+  cancelHref = '/dashboard/projects',
+  children,
+}: ProjectFormProps) {
+  async function submitProject(
+    previousState: ProjectFormState,
+    formData: FormData
+  ): Promise<ProjectFormState> {
+    const parsed = projectFormSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+      return { errors: parsed.error.flatten().fieldErrors };
+    }
+    return submitAction(previousState, formData);
+  }
+  const isEditing = mode === 'edit';
+  const variant = isEditing ? 'detailed' : 'default';
   const currentYear = new Date().getFullYear();
   const yearOptions = useMemo(
     () =>
@@ -77,6 +88,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   );
   const [state, formAction, pending] = useActionState(submitProject, INITIAL_STATE);
   const [values, setValues] = useState<ProjectFormValues>({
+    year: String(currentYear),
     name: '',
     status: 'active',
     topic: '',
@@ -98,6 +110,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
     basicServiceStaff: '0',
     coverPhoto: null,
     coverPhotoUrl: null,
+    ...initialValues,
   });
   const coverPhotoUrl = values.coverPhotoUrl;
   const submissionRef = useRef(false);
@@ -108,7 +121,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
 
   useEffect(() => {
     return () => {
-      if (coverPhotoUrl) URL.revokeObjectURL(coverPhotoUrl);
+      if (coverPhotoUrl?.startsWith('blob:')) URL.revokeObjectURL(coverPhotoUrl);
     };
   }, [coverPhotoUrl]);
 
@@ -125,7 +138,14 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
     (department) => String(department.id) === values.departmentId
   )?.name;
   const zoneLabel = ZONE_OPTIONS.find((option) => option.value === values.zone)?.label;
-  const locationLabel = departmentLabel ?? zoneLabel ?? PREVIEW_LOCATION_FALLBACK;
+  const locationLabel =
+    (isEditing && values.localityNeighborhood.trim()) ||
+    departmentLabel ||
+    zoneLabel ||
+    PREVIEW_LOCATION_FALLBACK;
+  const coverageLabel = [departmentLabel, values.localityNeighborhood.trim()]
+    .filter(Boolean)
+    .join(' • ');
   const beneficiaryTotal = BENEFICIARY_FIELDS.reduce(
     (total, field) => total + Math.max(0, Number(values[field.key]) || 0),
     0
@@ -134,7 +154,10 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   return (
     <form
       action={formAction}
-      className="bg-muted/30 text-foreground flex min-h-0 min-w-0 flex-1 flex-col"
+      className={cn(
+        'text-foreground flex min-h-0 min-w-0 flex-1 flex-col',
+        isEditing ? 'bg-surface-page' : 'bg-muted/30'
+      )}
       aria-busy={pending}
       onSubmit={(event) => {
         if (submissionRef.current || pending) {
@@ -145,8 +168,21 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         submissionRef.current = true;
       }}
     >
-      <div className="grid flex-1 content-start items-start lg:grid-cols-[minmax(0,16fr)_minmax(0,9fr)]">
-        <div className="flex min-w-0 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6 lg:pb-20">
+      <input type="hidden" name="year" value={values.year} />
+      <div
+        className={cn(
+          'grid flex-1 content-start items-start',
+          isEditing
+            ? 'lg:grid-cols-[minmax(0,152fr)_minmax(0,85fr)]'
+            : 'lg:grid-cols-[minmax(0,16fr)_minmax(0,9fr)]'
+        )}
+      >
+        <div
+          className={cn(
+            'flex min-w-0 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6',
+            !isEditing && 'lg:pb-20'
+          )}
+        >
           {state.formError && (
             <p
               role="alert"
@@ -156,8 +192,9 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
             </p>
           )}
 
-          <FormSection title="Información básica">
+          <FormSection variant={variant} title="Información básica">
             <TextInputField
+              variant={variant}
               id="name"
               name="name"
               label="Nombre del proyecto"
@@ -174,7 +211,11 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 name="status"
                 label="Estado"
                 value={values.status}
-                options={STATUS_OPTIONS}
+                options={
+                  isEditing
+                    ? STATUS_OPTIONS
+                    : STATUS_OPTIONS.filter((option) => option.value !== 'inProgress')
+                }
                 messages={state.errors?.status}
                 onValueChange={(value) => updateField('status', value)}
                 required
@@ -223,7 +264,12 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
             />
           </FormSection>
 
-          <FormSection title="Territorio" description="¿En qué zonas opera este proyecto?">
+          <FormSection
+            variant={variant}
+            title="Territorio"
+            description="¿En qué zonas opera este proyecto?"
+            descriptionSpacing={isEditing ? 'relaxed' : 'compact'}
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <SelectField
                 id="departmentId"
@@ -237,6 +283,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 required
               />
               <TextInputField
+                variant={variant}
                 id="localityNeighborhood"
                 name="localityNeighborhood"
                 label="Localidad / Barrio"
@@ -274,15 +321,27 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               </RadioGroup>
               <FieldError className="text-xs leading-4">{state.errors?.zone?.[0]}</FieldError>
             </Field>
+            {isEditing && (
+              <div className="bg-muted rounded-[10px] px-3.5 py-3">
+                <p className="text-muted-foreground text-sm leading-5">Cobertura</p>
+                <p className="mt-1 flex items-center gap-1 text-sm leading-5">
+                  <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+                  {coverageLabel || 'Seleccioná un departamento'}
+                </p>
+              </div>
+            )}
           </FormSection>
 
           <FormSection
+            variant={variant}
             title="Beneficiarios principales"
+            descriptionSpacing={isEditing ? 'relaxed' : 'compact'}
             description="Estas categorías son el núcleo del impacto. Completá lo que aplica."
             contentClassName="grid grid-cols-1 content-start gap-4 sm:grid-cols-2"
           >
             {BENEFICIARY_FIELDS.map((field, index) => (
               <TextInputField
+                variant={variant}
                 key={field.key}
                 id={field.key}
                 name={field.key}
@@ -303,10 +362,12 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
           </FormSection>
 
           <FormSection
+            variant={variant}
             title="Información pública"
             description="Aparece en la vista pública para donantes y aliados."
           >
             <TextInputField
+              variant={variant}
               id="generalObjective"
               name="generalObjective"
               label="Objetivo general"
@@ -317,12 +378,15 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               description="Aparece como subtítulo en la vista pública"
             />
             <Field
-              className="min-w-0 gap-1.5"
+              className={cn('min-w-0', isEditing ? 'gap-3' : 'gap-1.5')}
               data-invalid={Boolean(state.errors?.publicDescription)}
             >
               <FieldLabel
                 htmlFor="publicDescription"
-                className="text-foreground text-xs leading-4 font-medium"
+                className={cn(
+                  'text-foreground font-medium',
+                  isEditing ? 'text-sm leading-5' : 'text-xs leading-4'
+                )}
               >
                 Descripción pública
               </FieldLabel>
@@ -334,9 +398,17 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 maxLength={300}
                 placeholder="Contá de qué trata el proyecto, a quiénes ayuda y cuál es su impacto..."
                 aria-invalid={Boolean(state.errors?.publicDescription)}
-                className="border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base shadow-none md:text-sm"
+                className={cn(
+                  'border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base',
+                  isEditing ? 'leading-6 shadow-sm' : 'shadow-none md:text-sm'
+                )}
               />
-              <FieldDescription className="text-muted-foreground text-xs leading-4">
+              <FieldDescription
+                className={cn(
+                  'text-muted-foreground',
+                  isEditing ? 'text-sm leading-5' : 'text-xs leading-4'
+                )}
+              >
                 Máx. 300 caracteres
               </FieldDescription>
               <FieldError className="text-xs leading-4">
@@ -344,8 +416,10 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               </FieldError>
             </Field>
             <ImageUploadField
+              variant={variant}
               id="coverPhoto"
               label="Foto de portada"
+              imageUrl={values.coverPhotoUrl}
               value={values.coverPhoto}
               onValueChange={(file) => {
                 const coverPhotoUrl = file ? URL.createObjectURL(file) : null;
@@ -359,9 +433,12 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
           </FormSection>
 
           <FormSection
+            variant={variant}
             title="Notas internas"
             description="Comentarios para el equipo. No se muestran en la vista pública."
-            contentClassName="pt-3"
+            separator={!isEditing}
+            descriptionClassName={isEditing ? 'text-text-muted text-sm leading-5' : undefined}
+            contentClassName={isEditing ? 'pt-4' : 'pt-3'}
           >
             <Textarea
               id="internalNotes"
@@ -371,15 +448,20 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               value={values.internalNotes}
               onChange={(event) => updateField('internalNotes', event.currentTarget.value)}
               placeholder="Escribí un comentario para el equipo…"
-              className="border-input bg-background min-h-20 w-full resize-y rounded-lg px-3 py-2 text-base shadow-none sm:max-w-md md:text-sm"
+              className={cn(
+                'border-input bg-background min-h-20 w-full resize-y rounded-lg px-3 py-2 text-base sm:max-w-md',
+                isEditing ? 'leading-6 shadow-sm' : 'shadow-none md:text-sm'
+              )}
             />
             <FieldError className="text-xs leading-4">
               {state.errors?.internalNotes?.[0]}
             </FieldError>
           </FormSection>
+          {children}
         </div>
 
         <ProjectPreview
+          variant={variant}
           values={values}
           topicLabel={topicLabel}
           locationLabel={locationLabel}
@@ -388,11 +470,21 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
       </div>
 
       <FormActions
-        cancelHref="/dashboard/projects"
+        variant={variant}
+        cancelHref={cancelHref}
         submitLabel="Guardar cambios"
         pending={pending}
         secondaryAction={
-          <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            disabled
+            className={cn(
+              'flex-1 sm:min-w-36',
+              isEditing && 'rounded-[10px] px-4 shadow-sm disabled:opacity-100'
+            )}
+          >
             Guardar borrador
           </Button>
         }

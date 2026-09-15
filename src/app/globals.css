@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --surface-page: #fafafb;
+  --text-muted: #a1a1aa;
+  --status-success: #16a34b;
+  --history-marker: #ff9500;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -40,6 +44,10 @@
 }
 
 @theme inline {
+  --color-surface-page: var(--surface-page);
+  --color-text-muted: var(--text-muted);
+  --color-status-success: var(--status-success);
+  --color-history-marker: var(--history-marker);
   --font-sans: var(--font-mulish);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
