@@ -1,12 +1,13 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
-import { projectSchema, type ProjectFormState } from '@/lib/validation/project';
-import { projectBeneficiarySchema } from '@/lib/validation/project-beneficiary';
 import { logAudit } from '@/lib/audit-log';
+import type { ProjectFormState } from '@/lib/validation/project';
+import { projectFormSchema, splitProjectFormData } from '@/lib/validation/project-form';
 
 export async function createProject(
   _prevState: ProjectFormState,
@@ -19,33 +20,13 @@ export async function createProject(
   }
 
   const rawFormData = Object.fromEntries(formData);
-  const parsed = projectSchema.extend(projectBeneficiarySchema.shape).safeParse(rawFormData);
+  const parsed = projectFormSchema.safeParse(rawFormData);
 
   if (!parsed.success) {
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const {
-    year,
-    directChildrenAdolescents,
-    indirectChildrenAdolescents,
-    youth18To29,
-    families,
-    coordinatedInstitutions,
-    communityLeaders,
-    basicServiceStaff,
-    ...projectData
-  } = parsed.data;
-  const beneficiaryData = {
-    year,
-    directChildrenAdolescents,
-    indirectChildrenAdolescents,
-    youth18To29,
-    families,
-    coordinatedInstitutions,
-    communityLeaders,
-    basicServiceStaff,
-  };
+  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
 
   const authorId = Number(session.user.id);
 
@@ -95,4 +76,73 @@ export async function createProject(
   }
 
   redirect(`/dashboard/projects/${project.id}`);
+}
+
+export async function updateProject(
+  projectId: number,
+  _prevState: ProjectFormState,
+  formData: FormData
+): Promise<ProjectFormState> {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  if (!Number.isInteger(projectId) || projectId <= 0 || projectId > 2_147_483_647) {
+    return { formError: 'El proyecto no es válido.' };
+  }
+
+  const parsed = projectFormSchema.safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
+  const authorId = Number(session.user.id);
+
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.project.update({ where: { id: projectId }, data: projectData });
+        await logAudit(tx, { authorId, action: 'update', entity: 'project', entityId: projectId });
+
+        const where = { projectId_year: { projectId, year: beneficiaryData.year } };
+        const existingBeneficiary = await tx.projectBeneficiary.findUnique({ where });
+        const beneficiary = await tx.projectBeneficiary.upsert({
+          where,
+          create: { ...beneficiaryData, projectId, authorId },
+          update: { ...beneficiaryData, authorId, recordedAt: new Date() },
+        });
+        await logAudit(tx, {
+          authorId,
+          action: existingBeneficiary ? 'update' : 'creation',
+          entity: 'beneficiary',
+          entityId: beneficiary.id,
+        });
+      },
+      { maxWait: 10_000, timeout: 30_000 }
+    );
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return { formError: 'El proyecto no existe o fue eliminado.' };
+      }
+      if (error.code === 'P2003') {
+        const constraint = String(error.meta?.field_name ?? error.meta?.constraint ?? '');
+        if (constraint.includes('leadCoordinatorId') || constraint.includes('departmentId')) {
+          return { formError: 'El coordinador o el departamento seleccionado no existe.' };
+        }
+        return { formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.' };
+      }
+    }
+    console.error('Failed to update project', error);
+    return { formError: 'No se pudo actualizar el proyecto. Intentá de nuevo.' };
+  }
+
+  revalidatePath('/dashboard/projects');
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath(`/dashboard/projects/${projectId}/edit`);
+  redirect(`/dashboard/projects/${projectId}`);
 }

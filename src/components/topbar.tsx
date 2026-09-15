@@ -91,7 +91,7 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   );
 
   return (
-    <header className="border-border bg-background flex h-[60px] items-center justify-between gap-4 border-b px-4 md:px-6">
+    <header className="border-border bg-background flex h-[60px] shrink-0 items-center justify-between gap-4 border-b px-4 md:px-6">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
         <Image

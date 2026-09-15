@@ -1,3 +1,4 @@
+import { createProject } from '@/app/actions/projects';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
@@ -11,18 +12,22 @@ export default async function NewProjectPage() {
   }
 
   const [coordinators, departments] = await Promise.all([
-    prisma.user.findMany({ where: { role: 'coordinator' }, orderBy: { firstName: 'asc' } }),
-    prisma.department.findMany({ orderBy: { name: 'asc' } }),
+    prisma.user.findMany({
+      where: { role: 'coordinator' },
+      orderBy: { firstName: 'asc' },
+      select: { id: true, firstName: true, lastName: true },
+    }),
+    prisma.department.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    }),
   ]);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
-      <p className="text-muted-foreground text-xs tracking-widest uppercase">
-        Proyectos / Nuevo proyecto
-      </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Nuevo proyecto</h1>
-
-      <ProjectForm coordinators={coordinators} departments={departments} />
-    </div>
+    <ProjectForm
+      coordinators={coordinators}
+      departments={departments}
+      submitAction={createProject}
+    />
   );
 }
