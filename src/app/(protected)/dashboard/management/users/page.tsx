@@ -13,15 +13,15 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UsersTable } from './users-table';
+import { UsersTable } from '@/components/users/users-table';
 
 const USERS_MANAGEMENT_FINALIZED = false;
 
-export default async function NewProjectPage() {
+export default async function UsersPage() {
   const session = await auth();
 
-  if (!session?.user) {
-    redirect('/login');
+  if (session?.user.role !== 'admin') {
+    redirect('/dashboard/projects');
   }
 
   const [users, total, admins, coordinators, pendingInvitations] = await Promise.all([
@@ -61,7 +61,7 @@ export default async function NewProjectPage() {
 
   if (total === 1) {
     return (
-      <div className="mx-auto w-full max-w-296.25">
+      <div className="mx-auto w-full max-w-296">
         <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
           <div className="flex flex-col">
             <span className="text-muted-foreground text-sm tracking-normal">Administración</span>
@@ -100,7 +100,7 @@ export default async function NewProjectPage() {
     );
   } else
     return (
-      <div className="mx-auto w-full max-w-296.25">
+      <div className="mx-auto w-full max-w-296">
         <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
           <div className="flex flex-col">
             <span className="text-muted-foreground text-sm tracking-normal">Administración</span>
