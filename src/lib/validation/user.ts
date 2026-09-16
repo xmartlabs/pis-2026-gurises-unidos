@@ -1,8 +1,12 @@
 import { z } from 'zod';
+import { normalizeDocumentId } from '@/lib/utils';
+
 
 export type UserFormState = { errors?: Record<string, string[]>; formError?: string };
 
 export function isValidUruguayanDocumentId(rawValue: string) {
+  if (!/^[\d .-]+$/.test(rawValue)) return false;
+
   const digits = rawValue.replace(/\D/g, '');
   if (digits.length !== 8) return false;
 
@@ -29,7 +33,8 @@ export const userFormSchema = z
       .string()
       .trim()
       .min(1, 'El documento es obligatorio.')
-      .refine(isValidUruguayanDocumentId, 'Ingresá una cédula uruguaya válida (8 dígitos).'),
+      .refine(isValidUruguayanDocumentId, 'Ingresá una cédula uruguaya válida (8 dígitos).')
+      .transform(normalizeDocumentId),
     email: z
       .string()
       .trim()
