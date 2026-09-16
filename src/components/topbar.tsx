@@ -1,17 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +14,6 @@ import { getInitials } from '@/lib/utils';
 import Image from 'next/image';
 import logo from '@/assets/logo.png';
 
-const YEARS = ['2026', '2025', '2024'];
-
 interface TopbarProps {
   breadcrumb?: string;
   user?: {
@@ -35,45 +23,6 @@ interface TopbarProps {
 }
 
 export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
-  const [year, setYear] = useState('2026');
-
-  const yearToggle = (
-    <div className="bg-muted flex items-center gap-1 rounded-full p-1 text-sm">
-      {YEARS.map((y) => (
-        <button
-          key={y}
-          type="button"
-          onClick={() => setYear(y)}
-          className={
-            y === year
-              ? 'bg-background text-foreground rounded-full px-3 py-1 font-medium shadow-sm'
-              : 'text-muted-foreground hover:text-foreground rounded-full px-3 py-1'
-          }
-        >
-          {y}
-        </button>
-      ))}
-    </div>
-  );
-
-  const countrySelect = (
-    <Select defaultValue="all">
-      <SelectTrigger className="w-40">
-        <SelectValue placeholder="Todo el país" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">Todo el país</SelectItem>
-      </SelectContent>
-    </Select>
-  );
-
-  const searchInput = (
-    <div className="relative w-full sm:w-56">
-      <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-      <Input placeholder="Buscar proyectos..." className="pl-9" />
-    </div>
-  );
-
   const userMenu = (
     <DropdownMenu>
       <DropdownMenuTrigger>
@@ -111,16 +60,14 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
         </div>
       </div>
 
-      {/* Desktop: search, year toggle, country select */}
-      <div className="hidden items-center gap-4 md:flex">
+      {/* TODO: re-enable search, year toggle, and country select once real filtering is implemented */}
+      {/* <div className="hidden items-center gap-4 md:flex">
         {searchInput}
         {yearToggle}
         {countrySelect}
-        {userMenu}
-      </div>
+      </div> */}
 
-      {/* Mobile: avatar */}
-      <div className="md:hidden">{userMenu}</div>
+      <div className="flex items-center gap-4">{userMenu}</div>
     </header>
   );
 }
