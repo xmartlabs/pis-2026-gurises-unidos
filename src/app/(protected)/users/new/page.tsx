@@ -30,9 +30,9 @@ export default async function NewUserPage() {
           </p>
         </header>
 
-        <main className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col">
           <UserForm />
-        </main>
+        </div>
       </div>
     </div>
   );

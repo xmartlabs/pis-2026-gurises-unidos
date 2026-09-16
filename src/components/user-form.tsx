@@ -5,7 +5,6 @@ import { useActionState, useRef, useState } from 'react';
 import { cn } from 'cn';
 
 import { createUser } from '@/app/actions/users';
-import type { UserFormState } from '@/lib/validation/user';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -15,6 +14,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+import { Eye, EyeOff } from 'lucide-react';
+
+import { userFormSchema, type UserFormState } from '@/lib/validation/user';
+import { generateTemporaryPassword } from '@/lib/users';
+
 
 const initialState: UserFormState = {};
 
@@ -30,41 +35,16 @@ const INFO_ROWS = [
   { label: 'Última modificación' },
 ];
 
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) return null;
-  return <p className="text-destructive text-xs leading-4">{messages[0]}</p>;
-}
-
-function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function isValidUruguayanDocumentId(rawValue: string) {
-  const digits = rawValue.replace(/\D/g, '');
-  if (digits.length !== 8) return false;
-
-  const weights = [2, 9, 8, 7, 6, 3, 4];
-  const sum = weights.reduce((total, weight, index) => total + Number(digits[index]) * weight, 0);
-  const checkDigit = sum % 10 === 0 ? 0 : 10 - (sum % 10);
-
-  return checkDigit === Number(digits[7]);
-}
-
-function generateTemporaryPassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-  return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-}
-
 const STATUS_OPTIONS = [
   {
     value: 'active',
     label: 'Activo',
-    className: 'bg-[#E1FAEC] text-[#16A34B]',
+    className: 'bg-status-active text-status-active-foreground',
   },
   {
     value: 'pendingInvitation',
     label: 'Invitación pendiente',
-    className: 'bg-[#FFF8E0] text-[#A96104]',
+    className: 'bg-status-pending text-status-pending-foreground',
   },
   {
     value: 'disabled',
@@ -73,9 +53,16 @@ const STATUS_OPTIONS = [
   },
 ];
 
+function FieldError({ messages }: { messages?: string[] }) {
+  if (!messages?.length) return null;
+  return <p className="text-destructive text-xs leading-4">{messages[0]}</p>;
+}
+
 export function UserForm() {
   const [state, formAction, pending] = useActionState(createUser, initialState);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [passwordConfirmVisible, setPasswordConfirmVisible] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
   const passwordConfirmRef = useRef<HTMLInputElement>(null);
 
@@ -92,56 +79,19 @@ export function UserForm() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
 
-    const firstName = String(formData.get('firstName') ?? '').trim();
-    const lastName = String(formData.get('lastName') ?? '').trim();
-    const documentId = String(formData.get('documentId') ?? '');
-    const email = String(formData.get('email') ?? '').trim();
-    const password = String(formData.get('password') ?? '');
-    const passwordConfirm = String(formData.get('passwordConfirm') ?? '');
+    const result = userFormSchema.safeParse(Object.fromEntries(formData));
 
-    const showError = (field: string, message: string) => {
+    if (!result.success) {
       event.preventDefault();
-      setClientErrors({ [field]: message });
-    };
+      const errors: Record<string, string> = {};
 
-    if (!firstName) {
-      return showError('firstName', 'El nombre es obligatorio.');
-    }
+      for (const issue of result.error.issues) {
+        const field = String(issue.path[0]);
+        errors[field] ??= issue.message;
+      }
 
-    if (!lastName) {
-      return showError('lastName', 'El apellido es obligatorio.');
-    }
-
-    if (!documentId) {
-      return showError('documentId', 'El documento es obligatorio.');
-    }
-
-    if (!isValidUruguayanDocumentId(documentId)) {
-      return showError('documentId', 'Ingresá una cédula uruguaya válida (8 dígitos).');
-    }
-
-    if (!email) {
-      return showError('email', 'El correo es obligatorio.');
-    }
-
-    if (!isValidEmail(email)) {
-      return showError('email', 'Ingresá un correo electrónico válido.');
-    }
-
-    if (!password) {
-      return showError('password', 'La contraseña es obligatoria.');
-    }
-
-    if (password.length < 8) {
-      return showError('password', 'La contraseña debe tener al menos 8 caracteres.');
-    }
-
-    if (!passwordConfirm) {
-      return showError('passwordConfirm', 'Confirmá la contraseña.');
-    }
-
-    if (password !== passwordConfirm) {
-      return showError('passwordConfirm', 'Las contraseñas no coinciden.');
+      setClientErrors(errors);
+      return;
     }
 
     setClientErrors({});
@@ -154,23 +104,22 @@ export function UserForm() {
       noValidate
       className="flex min-w-0 flex-1 flex-col pt-6"
     >
-      <div className="w-full max-w-[1185px] px-6 pb-6">
+      <div className="mx-auto w-full px-6 pb-6">
         {state.formError && (
           <p className="border-destructive bg-destructive/10 text-destructive mb-6 rounded-lg border px-4 py-3 text-sm">
             {state.formError}
           </p>
         )}
 
-        <div className="grid grid-cols-1 gap-6 min-[70rem]:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:grid-cols-[minmax(0,1fr)_425px] min-[83rem]:grid-cols-[minmax(0,1fr)_425px]">
-          {/* Columna principal */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_425px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <Card className="gap-4 pt-5 pb-5 [--card-spacing:--spacing(6)]">
-              <CardHeader>
+            <Card className="gap-4 pt-5 pb-5">
+              <CardHeader className="px-6">
                 <CardTitle className="leading-6 font-semibold">Datos personales</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-6">
                 <FieldGroup className="gap-4">
-                  <div className="grid grid-cols-1 gap-4 min-[34rem]:max-md:grid-cols-2 md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:grid-cols-2 min-[50rem]:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <Field className="gap-1.25">
                       <FieldLabel htmlFor="firstName" className="text-xs leading-4">
                         Nombre
@@ -180,6 +129,7 @@ export function UserForm() {
                         name="firstName"
                         placeholder="Ej. Ana"
                         required
+                        maxLength={100}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
                       />
                       <FieldError messages={fieldMessages('firstName')} />
@@ -192,13 +142,13 @@ export function UserForm() {
                         id="lastName"
                         name="lastName"
                         placeholder="Ej. García"
-                        required
+                        maxLength={100}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
                       />
                       <FieldError messages={fieldMessages('lastName')} />
                     </Field>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 min-[34rem]:max-md:grid-cols-2 md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:grid-cols-2 min-[50rem]:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <Field className="gap-1.25">
                       <FieldLabel htmlFor="documentId" className="text-xs leading-4">
                         Documento (Cédula)
@@ -207,7 +157,6 @@ export function UserForm() {
                         id="documentId"
                         name="documentId"
                         placeholder="1.234.567-8"
-                        required
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
                       />
                       <FieldError messages={fieldMessages('documentId')} />
@@ -221,7 +170,7 @@ export function UserForm() {
                         name="email"
                         type="email"
                         placeholder="nombre@gurises-unidos.org.uy"
-                        required
+                        maxLength={254}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
                       />
                       <FieldError messages={fieldMessages('email')} />
@@ -231,11 +180,11 @@ export function UserForm() {
               </CardContent>
             </Card>
 
-            <Card className="gap-4 pt-5 pb-5 [--card-spacing:--spacing(6)]">
-              <CardHeader>
+            <Card className="gap-4 pt-5 pb-5">
+              <CardHeader className="px-6">
                 <CardTitle className="leading-6 font-semibold">Permisos</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-6">
                 <Field className="gap-1.25">
                   <FieldLabel htmlFor="role" className="text-xs leading-4">
                     Rol
@@ -243,7 +192,7 @@ export function UserForm() {
                   <NativeSelect
                     id="role"
                     name="role"
-                    defaultValue="admin"
+                    defaultValue="coordinator"
                     className="[&_select]:text-muted-foreground w-full max-w-81 [&_select]:h-9 [&_select]:rounded-md [&_select]:pt-2 [&_select]:pb-2 [&_select]:pl-3 [&_select]:shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]"
                   >
                     {ROLE_OPTIONS.map((role) => (
@@ -260,11 +209,11 @@ export function UserForm() {
               </CardContent>
             </Card>
 
-            <Card className="gap-4 pt-5 pb-5 [--card-spacing:--spacing(6)]">
-              <CardHeader>
+            <Card className="gap-4 pt-5 pb-5">
+              <CardHeader className="px-6">
                 <CardTitle className="leading-6 font-semibold">Estado</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-6">
                 <RadioGroup name="status" defaultValue="active" className="gap-3.5">
                   {STATUS_OPTIONS.map((status) => (
                     <Label
@@ -275,7 +224,7 @@ export function UserForm() {
                       <RadioGroupItem
                         value={status.value}
                         id={`status-${status.value}`}
-                        className="size-4 border border-[#e5e5e5] bg-white shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] data-checked:border-[#e5e5e5] data-checked:bg-white [&_[data-slot=radio-group-indicator]>span]:size-[6.67px] data-checked:[&_[data-slot=radio-group-indicator]>span]:bg-[#1a1a1a]"
+                        className="border-input bg-background data-checked:border-input data-checked:bg-background data-checked:[&_[data-slot=radio-group-indicator]>span]:bg-foreground size-4 border shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] [&_[data-slot=radio-group-indicator]>span]:size-[6.67px]"
                       />
                       <Badge variant={status.variant} className={cn('px-2.5', status.className)}>
                         {status.label}
@@ -287,43 +236,83 @@ export function UserForm() {
               </CardContent>
             </Card>
 
-            <Card className="gap-4 pt-5 pb-5 [--card-spacing:--spacing(6)]">
-              <CardHeader>
+            <Card className="gap-4 pt-5 pb-5">
+              <CardHeader className="px-6">
                 <CardTitle className="leading-6 font-semibold">Seguridad</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-6">
                 <FieldGroup className="gap-4">
-                  <div className="grid grid-cols-1 gap-4 min-[34rem]:max-md:grid-cols-2 md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:grid-cols-2 min-[50rem]:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <Field className="gap-1.25">
                       <FieldLabel htmlFor="password" className="text-xs leading-4">
                         Contraseña temporal
                       </FieldLabel>
-                      <Input
-                        ref={passwordRef}
-                        id="password"
-                        name="password"
-                        type="password"
-                        placeholder="Se genera automáticamente"
-                        required
-                        minLength={8}
-                        className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                      />
+                      <div className="relative">
+                        <Input
+                          ref={passwordRef}
+                          id="password"
+                          name="password"
+                          type={passwordVisible ? 'text' : 'password'}
+                          placeholder="Se genera automáticamente"
+                          required
+                          minLength={8}
+                          maxLength={72}
+                          className="h-9 rounded-md pr-8 pl-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="absolute top-1/2 right-1 -translate-y-1/2"
+                          aria-label={passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                          aria-controls="password"
+                          onClick={() => setPasswordVisible((visible) => !visible)}
+                        >
+                          {passwordVisible ? (
+                            <EyeOff className="size-3" aria-hidden="true" />
+                          ) : (
+                            <Eye className="size-3" aria-hidden="true" />
+                          )}
+                        </Button>
+                      </div>
                       <FieldError messages={fieldMessages('password')} />
                     </Field>
                     <Field className="gap-1.25">
                       <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">
                         Confirmar contraseña
                       </FieldLabel>
-                      <Input
-                        ref={passwordConfirmRef}
-                        id="passwordConfirm"
-                        name="passwordConfirm"
-                        type="password"
-                        placeholder="Repetí la contraseña"
-                        required
-                        minLength={8}
-                        className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                      />
+                      <div className="relative">
+                        <Input
+                          ref={passwordConfirmRef}
+                          id="passwordConfirm"
+                          name="passwordConfirm"
+                          type={passwordConfirmVisible ? 'text' : 'password'}
+                          placeholder="Repetí la contraseña"
+                          required
+                          minLength={8}
+                          maxLength={72}
+                          className="h-9 rounded-md pr-8 pl-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="absolute top-1/2 right-1 -translate-y-1/2"
+                          aria-label={
+                            passwordConfirmVisible
+                              ? 'Ocultar confirmación de contraseña'
+                              : 'Mostrar confirmación de contraseña'
+                          }
+                          aria-controls="passwordConfirm"
+                          onClick={() => setPasswordConfirmVisible((visible) => !visible)}
+                        >
+                          {passwordConfirmVisible ? (
+                            <EyeOff className="size-3" aria-hidden="true" />
+                          ) : (
+                            <Eye className="size-3" aria-hidden="true" />
+                          )}
+                        </Button>
+                      </div>
                       <FieldError messages={fieldMessages('passwordConfirm')} />
                     </Field>
                   </div>
@@ -345,13 +334,12 @@ export function UserForm() {
             </Card>
           </div>
 
-          {/* Columna lateral */}
           <div className="min-w-0">
-            <Card className="gap-4 pt-5 pb-5 [--card-spacing:--spacing(6)]">
-              <CardHeader>
+            <Card className="gap-4 pt-5 pb-5">
+              <CardHeader className="px-6">
                 <CardTitle className="leading-6 font-semibold">Información</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col gap-4">
+              <CardContent className="flex flex-col gap-4 px-6">
                 <CardDescription className="text-xs leading-4">
                   Se completarán una vez creado el usuario.
                 </CardDescription>
@@ -387,7 +375,7 @@ export function UserForm() {
           href="/users"
           aria-disabled={pending}
           className={cn(
-            buttonVariants({ variant: 'ghost', size: 'lg' }), 
+            buttonVariants({ variant: 'ghost', size: 'lg' }),
             'col-span-2 h-auto min-h-9 w-full px-4 md:order-1 md:mr-auto md:h-9 md:w-auto',
             pending && 'pointer-events-none opacity-50'
           )}
