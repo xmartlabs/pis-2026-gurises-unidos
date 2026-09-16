@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
-import { makeUser, TEST_PASSWORD } from '../fixtures/user';
-import { toAuthUser, verifyUserCredentials } from '@/lib/credentials';
+import { makeUser, TEST_PASSWORD, TEST_PASSWORD_HASH } from '../fixtures/user';
+import { hashPassword, toAuthUser, verifyPassword, verifyUserCredentials } from '@/lib/credentials';
 import prisma from '@/lib/prisma';
 
 describe('toAuthUser', () => {
@@ -123,5 +123,30 @@ describe('verifyUserCredentials', () => {
 
     await expect(verifyUserCredentials('41234567', TEST_PASSWORD)).rejects.toThrow('db down');
     expect(compare).not.toHaveBeenCalled();
+  });
+});
+
+describe('hashPassword', () => {
+  test('returns a bcrypt hash that verifies against the original password', async () => {
+    const hash = await hashPassword('a-new-password');
+
+    expect(hash).toMatch(/^\$2[aby]\$/);
+    await expect(bcrypt.compare('a-new-password', hash)).resolves.toBe(true);
+  });
+
+  test('produces a different hash than a plain dummy comparison', async () => {
+    const hash = await hashPassword(TEST_PASSWORD);
+
+    expect(hash).not.toBe(TEST_PASSWORD_HASH);
+  });
+});
+
+describe('verifyPassword', () => {
+  test('resolves true when the password matches the hash', async () => {
+    await expect(verifyPassword(TEST_PASSWORD, TEST_PASSWORD_HASH)).resolves.toBe(true);
+  });
+
+  test('resolves false when the password does not match the hash', async () => {
+    await expect(verifyPassword('wrong-password', TEST_PASSWORD_HASH)).resolves.toBe(false);
   });
 });
