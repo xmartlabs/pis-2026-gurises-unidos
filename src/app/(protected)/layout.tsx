@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Topbar } from '@/components/topbar';
 
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -18,7 +19,10 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar user={session.user} />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        <Topbar user={session.user} />
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }
