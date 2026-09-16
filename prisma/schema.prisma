@@ -45,6 +45,8 @@ enum AuditAction {
   creation
   update
   deletion
+  passwordChange
+  passwordReset
 }
 
 enum AuditEntity {
@@ -65,6 +67,8 @@ model User {
   role         UserRole
   status       UserStatus
   passwordHash String
+  passwordChangedAt DateTime?
+  mustChangePassword Boolean @default(false)
   lastAccess   DateTime?
   createdAt    DateTime   @default(now())
   createdBy    Int?
