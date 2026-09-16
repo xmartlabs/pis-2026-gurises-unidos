@@ -37,6 +37,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --status-active: oklch(0.9631 0.0320 161.30);
+  --status-active-foreground: oklch(0.6272 0.1690 149.44);
+  --status-pending: oklch(0.9783 0.0322 93.51);
+  --status-pending-foreground: oklch(0.5626 0.1279 62.25);
 }
 
 @theme inline {
@@ -73,6 +77,10 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-status-active: var(--status-active);
+  --color-status-active-foreground: var(--status-active-foreground);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-foreground: var(--status-pending-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -122,6 +130,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --status-active: oklch(0.3925 0.0896 152.54);
+  --status-active-foreground: oklch(0.8003 0.1821 151.71);
+  --status-pending: oklch(0.4210 0.0897 57.71);
+  --status-pending-foreground: oklch(0.8369 0.1644 84.43);
 }
 
 .theme-public {
