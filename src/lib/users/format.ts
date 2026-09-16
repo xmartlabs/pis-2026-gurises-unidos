@@ -1,5 +1,5 @@
 import type { User as PrismaUser } from '@/generated/prisma/client';
-import { ROLE_LABELS, STATUS_LABELS, type SortBy } from '@/features/users/constants';
+import { ROLE_LABELS, STATUS_LABELS, type SortBy } from '@/lib/users/constants';
 
 export type User = Pick<
   PrismaUser,

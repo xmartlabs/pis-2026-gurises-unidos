@@ -38,7 +38,7 @@ import {
   SORT_LABELS,
   SORT_VALUE_LABELS,
   type SortBy,
-} from '@/features/users/constants';
+} from '@/lib/users/constants';
 import {
   fullName,
   formatLastAccess,
@@ -46,7 +46,7 @@ import {
   matchesFilters,
   compareUsers,
   type User,
-} from '@/features/users/format';
+} from '@/lib/users/format';
 
 function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
   return (
