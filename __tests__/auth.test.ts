@@ -90,20 +90,55 @@ describe('authorize', () => {
 });
 
 describe('jwt', () => {
-  test('sets sub and role when a user is present', () => {
+  beforeEach(() => {
+    vi.mocked(prisma.user.findUnique).mockReset();
+  });
+
+  test('sets sub and role when a user is present', async () => {
     const token = { sub: 'old' };
     const user = { id: '42', role: 'coordinator' as const };
 
-    expect(capturedConfig().callbacks?.jwt?.({ token, user } as never)).toEqual({
+    await expect(capturedConfig().callbacks?.jwt?.({ token, user } as never)).resolves.toEqual({
       sub: '42',
       role: 'coordinator',
     });
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
-  test('returns the token unchanged when no user is present', () => {
-    const token = { sub: '1', role: 'admin' as const };
+  test('returns the token unchanged when the user has no sub or iat', async () => {
+    const token = { role: 'admin' as const };
 
-    expect(capturedConfig().callbacks?.jwt?.({ token } as never)).toEqual(token);
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(token);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  test('returns the token unchanged when the password was never changed', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(makeUser({ passwordChangedAt: null }));
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(token);
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+      select: { passwordChangedAt: true },
+    });
+  });
+
+  test('returns the token unchanged when the password changed before the token was issued', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      makeUser({ passwordChangedAt: new Date(500 * 1000) })
+    );
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(token);
+  });
+
+  test('invalidates the session when the password changed after the token was issued', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      makeUser({ passwordChangedAt: new Date(1_500 * 1000) })
+    );
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toBeNull();
   });
 });
 
