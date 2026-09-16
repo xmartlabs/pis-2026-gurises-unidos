@@ -10,3 +10,11 @@ export function getInitials(name: string | null | undefined) {
     .join('')
     .toUpperCase();
 }
+
+/**
+ * Normalize the document id by removing all spaces, dots and dashes
+ * @example "4.123.456-7" -> "41234567"
+ */
+export function normalizeDocumentId(documentId: string) {
+  return documentId.replace(/[ .\-]/g, '');
+}
