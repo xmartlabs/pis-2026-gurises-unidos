@@ -1,17 +1,19 @@
+import { UserRole, UserStatus } from '@/generated/prisma/enums';
+
 export type SortBy = 'name' | 'role' | 'status' | 'lastAccess';
 
-export const ROLE_LABELS: Record<string, string> = {
+export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
   coordinator: 'Coordinador',
 };
 
-export const STATUS_LABELS: Record<string, string> = {
+export const STATUS_LABELS: Record<UserStatus, string> = {
   active: 'Activo',
   pendingInvitation: 'Invitación pendiente',
   disabled: 'Deshabilitado',
 };
 
-export const STATUS_CLASSNAMES: Record<string, string> = {
+export const STATUS_CLASSNAMES: Record<UserStatus, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   pendingInvitation: 'bg-amber-100 text-amber-700',
   disabled: 'bg-muted text-muted-foreground',

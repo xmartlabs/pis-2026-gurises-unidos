@@ -1,5 +1,5 @@
 import type { User as PrismaUser } from '@/generated/prisma/client';
-import type { SortBy } from '@/features/users/constants';
+import { ROLE_LABELS, STATUS_LABELS, type SortBy } from '@/features/users/constants';
 
 export type User = Pick<
   PrismaUser,
@@ -16,6 +16,7 @@ export function formatLastAccess(lastAccess: Date | null) {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    timeZone: 'America/Montevideo',
   });
 }
 
@@ -41,9 +42,15 @@ export function matchesFilters(
 export function compareUsers(a: User, b: User, sortBy: SortBy) {
   switch (sortBy) {
     case 'role':
-      return a.role.localeCompare(b.role);
+      return (
+        ROLE_LABELS[a.role].localeCompare(ROLE_LABELS[b.role]) ||
+        fullName(a).localeCompare(fullName(b))
+      );
     case 'status':
-      return a.status.localeCompare(b.status);
+      return (
+        STATUS_LABELS[a.status].localeCompare(STATUS_LABELS[b.status]) ||
+        fullName(a).localeCompare(fullName(b))
+      );
     case 'lastAccess':
       return (b.lastAccess?.getTime() ?? 0) - (a.lastAccess?.getTime() ?? 0);
     case 'name':

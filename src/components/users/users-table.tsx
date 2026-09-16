@@ -261,7 +261,7 @@ export function UsersTable({
       <div className="hidden w-full overflow-auto rounded-[14px] border md:block md:max-h-130">
         <Table className="table-fixed">
           <TableHeader>
-            <TableRow className="bg-(--surface-subtle,#F5F5F5)">
+            <TableRow className="bg-muted">
               <TableHead className="text-muted-foreground h-10 w-56 px-4 py-2.5">Nombre</TableHead>
               <TableHead className="text-muted-foreground h-10 w-80 px-4 py-2.5">
                 Correo electrónico

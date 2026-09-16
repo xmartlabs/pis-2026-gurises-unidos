@@ -17,6 +17,8 @@ import { UsersTable } from '@/components/users/users-table';
 
 const USERS_MANAGEMENT_FINALIZED = false;
 
+const NOT_DELETED_WHERE = { deletedAt: null };
+
 export default async function UsersPage() {
   const session = await auth();
 
@@ -26,6 +28,7 @@ export default async function UsersPage() {
 
   const [users, total, admins, coordinators, pendingInvitations] = await Promise.all([
     prisma.user.findMany({
+      where: NOT_DELETED_WHERE,
       select: {
         id: true,
         firstName: true,
@@ -38,46 +41,53 @@ export default async function UsersPage() {
       orderBy: [{ id: 'asc' }],
     }),
 
-    prisma.user.count(),
+    prisma.user.count({
+      where: NOT_DELETED_WHERE,
+    }),
 
     prisma.user.count({
       where: {
+        ...NOT_DELETED_WHERE,
         role: 'admin',
       },
     }),
 
     prisma.user.count({
       where: {
+        ...NOT_DELETED_WHERE,
         role: 'coordinator',
       },
     }),
 
     prisma.user.count({
       where: {
+        ...NOT_DELETED_WHERE,
         status: 'pendingInvitation',
       },
     }),
   ]);
 
-  if (total === 1) {
-    return (
-      <div className="mx-auto w-full max-w-296">
-        <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
-          <div className="flex flex-col">
-            <span className="text-muted-foreground text-sm tracking-normal">Administración</span>
-            <span className="text-3xl font-semibold tracking-tight">Usuarios</span>
-            <span className="text-muted-foreground text-sm tracking-normal">
-              Administrá las personas que tienen acceso al sistema.
-            </span>
-          </div>
+  const hasOnlyCurrentAdmin = users.length <= 1;
 
-          {USERS_MANAGEMENT_FINALIZED && (
-            <Button size="lg" className="h-9 gap-2.5 px-4 py-2">
-              + Nuevo usuario
-            </Button>
-          )}
+  return (
+    <div className="mx-auto w-full max-w-296">
+      <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-sm tracking-normal">Administración</span>
+          <span className="text-3xl font-semibold tracking-tight">Usuarios</span>
+          <span className="text-muted-foreground text-sm tracking-normal">
+            Administrá las personas que tienen acceso al sistema.
+          </span>
         </div>
 
+        {USERS_MANAGEMENT_FINALIZED && (
+          <Button size="lg" className="h-9 gap-2.5 px-4 py-2">
+            + Nuevo usuario
+          </Button>
+        )}
+      </div>
+
+      {hasOnlyCurrentAdmin ? (
         <div className="flex w-full flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
           <Empty>
             <EmptyHeader>
@@ -96,27 +106,7 @@ export default async function UsersPage() {
             )}
           </Empty>
         </div>
-      </div>
-    );
-  } else
-    return (
-      <div className="mx-auto w-full max-w-296">
-        <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
-          <div className="flex flex-col">
-            <span className="text-muted-foreground text-sm tracking-normal">Administración</span>
-            <span className="text-3xl font-semibold tracking-tight">Usuarios</span>
-            <span className="text-muted-foreground text-sm tracking-normal">
-              Administrá las personas que tienen acceso al sistema.
-            </span>
-          </div>
-
-          {USERS_MANAGEMENT_FINALIZED && (
-            <Button size="lg" className="h-9 gap-2.5 px-4 py-2">
-              + Nuevo usuario
-            </Button>
-          )}
-        </div>
-
+      ) : (
         <div className="flex w-full flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Card>
@@ -150,6 +140,7 @@ export default async function UsersPage() {
 
           <UsersTable users={users} actionsEnabled={USERS_MANAGEMENT_FINALIZED} />
         </div>
-      </div>
-    );
+      )}
+    </div>
+  );
 }
