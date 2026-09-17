@@ -10,7 +10,7 @@ const REMEMBER_ME_MAX_AGE = 30* 24 * 60 * 60
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: 'jwt',
-    maxAge: REMEMBER_ME_MAX_AGE,
+    maxAge: REMEMBER_ME_MAX_AGE, // cookie ceiling; jwt.encode sets the real maxAge of the session
     updateAge: 0,
   },
   jwt: {

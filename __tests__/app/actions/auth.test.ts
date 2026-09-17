@@ -15,10 +15,13 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }));
 
-function makeFormData(documentId: string, password: string) {
+function makeFormData(documentId: string, password: string, remember = false) {
   const formData = new FormData();
   formData.set('documentId', documentId);
   formData.set('password', password);
+  if (remember) {
+    formData.set('rememberCheck', 'on');
+  }
   return formData;
 }
 
@@ -41,10 +44,23 @@ describe('login', () => {
     expect(signIn).toHaveBeenCalledWith('credentials', {
       documentId: '4.123.456-7',
       password: 'password',
-      remember: false,
+      remember: 'false',
       redirect: false,
     });
     expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
+  });
+
+  test('passes remember: "true" when the checkbox is checked', async () => {
+    vi.mocked(signIn).mockResolvedValue(undefined);
+
+    await expect(
+      login({}, makeFormData('4.123.456-7', 'password', true))
+    ).rejects.toThrow('NEXT_REDIRECT');
+
+    expect(signIn).toHaveBeenCalledWith(
+      'credentials',
+      expect.objectContaining({ remember: 'true' })
+    );
   });
 
   test.each([
@@ -88,7 +104,7 @@ describe('login', () => {
     expect(signIn).toHaveBeenCalledWith('credentials', {
       documentId: '',
       password: null,
-      remember: false,
+      remember: 'false',
       redirect: false,
     });
     expect(redirect).not.toHaveBeenCalled();

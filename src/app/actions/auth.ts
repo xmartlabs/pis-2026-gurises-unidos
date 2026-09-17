@@ -16,7 +16,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     await signIn('credentials', {
       documentId,
       password: formData.get('password'),
-      remember: Boolean(formData.get('rememberCheck')),
+      remember: formData.get('rememberCheck') ? 'true' : 'false',
       redirect: false,
     });
   } catch (error) {

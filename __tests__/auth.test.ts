@@ -3,6 +3,7 @@ import type { NextAuthConfig } from 'next-auth';
 import { makeUser } from './fixtures/user';
 import { toAuthUser, verifyUserCredentials } from '@/lib/credentials';
 import prisma from '@/lib/prisma';
+import { encode } from 'next-auth/jwt';
 
 const authConfig = vi.hoisted(() => ({
   current: undefined as NextAuthConfig | undefined,
@@ -17,6 +18,10 @@ vi.mock('next-auth', () => ({
 
 vi.mock('next-auth/providers/credentials', () => ({
   default: (options: object) => ({ id: 'credentials', ...options }),
+}));
+
+vi.mock('next-auth/jwt', () => ({
+  encode: vi.fn().mockResolvedValue('mock-encoded-token'),
 }));
 
 vi.mock('@/lib/credentials', async (importOriginal) => {
@@ -34,7 +39,7 @@ function capturedConfig() {
 function authorize() {
   const provider = capturedConfig().providers[0] as unknown as {
     authorize: (
-      credentials?: Partial<Record<'documentId' | 'password', unknown>>
+      credentials?: Partial<Record<'documentId' | 'password' | 'remember', unknown>>
     ) => Promise<unknown>;
   };
   return provider.authorize;
@@ -47,6 +52,32 @@ describe('auth config', () => {
       maxAge: 30 * 24 * 60 * 60,
       updateAge: 0,
     });
+  });
+});
+
+describe('jwt.encode', () => {
+  beforeEach(() => {
+    vi.mocked(encode).mockClear();
+  });
+
+  test('uses the 12-hour session length when remember is false', async () => {
+    await capturedConfig().jwt?.encode?.({
+      token: { sub: '1', remember: false },
+      secret: 'secret',
+      salt: 'salt',
+    } as never);
+
+    expect(encode).toHaveBeenCalledWith(expect.objectContaining({ maxAge: 12 * 60 * 60 }));
+  });
+
+  test('uses the 30-day ceiling when remember is true', async () => {
+    await capturedConfig().jwt?.encode?.({
+      token: { sub: '1', remember: true },
+      secret: 'secret',
+      salt: 'salt',
+    } as never);
+
+    expect(encode).toHaveBeenCalledWith(expect.objectContaining({ maxAge: 30 * 24 * 60 * 60 }));
   });
 });
 
@@ -79,6 +110,18 @@ describe('authorize', () => {
       authorize()({ documentId: user.documentId, password: 'password' })
     ).resolves.toEqual({ ...toAuthUser(user), remember: false });
     expect(verifyUserCredentials).toHaveBeenCalledWith(user.documentId, 'password');
+  });
+
+  test('sets remember: true only when credentials.remember is the string "true"', async () => {
+    const user = makeUser();
+    vi.mocked(verifyUserCredentials).mockResolvedValue(user);
+
+    await expect(
+      authorize()({ documentId: user.documentId, password: 'password', remember: 'true' })
+    ).resolves.toEqual({ ...toAuthUser(user), remember: true });
+    await expect(
+      authorize()({ documentId: user.documentId, password: 'password', remember: 'false' })
+    ).resolves.toEqual({ ...toAuthUser(user), remember: false });
   });
 
   test('returns null when verifyUserCredentials returns null', async () => {
