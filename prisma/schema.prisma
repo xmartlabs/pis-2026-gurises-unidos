@@ -59,21 +59,21 @@ enum AuditEntity {
 // ---------- TABLES ----------
 
 model User {
-  id           Int        @id @default(autoincrement())
-  firstName    String
-  lastName     String
-  documentId   String     @unique
-  email        String     @unique
-  role         UserRole
-  status       UserStatus
-  passwordHash String
-  passwordChangedAt DateTime?
-  mustChangePassword Boolean @default(false)
-  lastAccess   DateTime?
-  createdAt    DateTime   @default(now())
-  createdBy    Int?
-  updatedAt    DateTime?  @updatedAt
-  deletedAt    DateTime?
+  id                 Int        @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  documentId         String     @unique
+  email              String     @unique
+  role               UserRole
+  status             UserStatus
+  passwordHash       String
+  passwordChangedAt  DateTime?
+  mustChangePassword Boolean    @default(false)
+  lastAccess         DateTime?
+  createdAt          DateTime   @default(now())
+  createdBy          Int?
+  updatedAt          DateTime?  @updatedAt
+  deletedAt          DateTime?
 
   creator              User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
   createdUsers         User[]               @relation("UserCreatedBy")
