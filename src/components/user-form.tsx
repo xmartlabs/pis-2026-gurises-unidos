@@ -77,6 +77,8 @@ export function UserForm() {
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    setFormErrorDismissed(true);
+
     const formData = new FormData(event.currentTarget);
 
     const result = userFormSchema.safeParse(Object.fromEntries(formData));
@@ -102,7 +104,6 @@ export function UserForm() {
     <form
       action={formAction}
       onSubmit={handleSubmit}
-      onChange={() => state.formError && setFormErrorDismissed(true)}
       noValidate
       className="flex min-w-0 flex-1 flex-col pt-6"
     >
@@ -110,7 +111,7 @@ export function UserForm() {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_425px]">
           <div className="flex min-w-0 flex-col gap-5">
             {state.formError && !formErrorDismissed && (
-              <p className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm">
+              <p className="border-destructive bg-destructive/10 text-destructive hidden rounded-lg border px-4 py-3 text-sm md:block">
                 {state.formError}
               </p>
             )}
@@ -363,22 +364,17 @@ export function UserForm() {
       </div>
 
       <div className="bg-background sticky bottom-0 z-10 mt-auto grid shrink-0 grid-cols-2 gap-x-2 gap-y-3 border-t px-6 py-4 md:flex md:flex-wrap md:items-center md:justify-between">
-        <Button
-          type="submit"
-          name="intent"
-          value="submit"
-          size="lg"
-          className="col-span-2 w-full px-4 md:order-3 md:w-auto"
-          disabled={pending}
-        >
-          Guardar usuario
-        </Button>
+        {state.formError && !formErrorDismissed && (
+          <p className="border-destructive bg-destructive/10 text-destructive col-span-2 rounded-lg border px-4 py-3 text-sm md:hidden">
+            {state.formError}
+          </p>
+        )}
         <Link
-          href="/users/management"
+          href="/dashboard/management/users"
           aria-disabled={pending}
           className={cn(
             buttonVariants({ variant: 'ghost', size: 'lg' }),
-            'col-span-2 h-auto min-h-9 w-full px-4 md:order-1 md:mr-auto md:h-9 md:w-auto',
+            'col-span-1 h-auto min-h-9 w-full px-4 md:order-1 md:mr-auto md:h-9 md:w-auto',
             pending && 'pointer-events-none opacity-50'
           )}
         >
@@ -395,6 +391,16 @@ export function UserForm() {
           disabled={pending}
         >
           Guardar borrador
+        </Button>
+        <Button
+          type="submit"
+          name="intent"
+          value="submit"
+          size="lg"
+          className="col-span-1 w-full px-4 md:order-3 md:w-auto"
+          disabled={pending}
+        >
+          Guardar usuario
         </Button>
       </div>
     </form>

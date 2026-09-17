@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { UserFormState } from '@/lib/validation/user';
 import { createUser } from '@/app/actions/users';
+import { generateTemporaryPassword } from '@/lib/users';
 import { Prisma } from '@/generated/prisma/client';
 
 const { authMock, redirectMock, logAuditMock, transactionMock, hashMock } = vi.hoisted(() => ({
@@ -96,7 +97,7 @@ describe('createUser', () => {
     const { userCreate } = setupTransaction();
 
     await expect(createUser(EMPTY_STATE, buildFormData())).rejects.toThrow(
-      'NEXT_REDIRECT:/users/management'
+      'NEXT_REDIRECT:/dashboard/management/users'
     );
 
     expect(transactionMock).toHaveBeenCalledWith(expect.any(Function));
@@ -134,7 +135,7 @@ describe('createUser', () => {
           email: ' ana@gmail.com ',
         })
       )
-    ).rejects.toThrow('NEXT_REDIRECT:/users/management');
+    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/management/users');
 
     expect(userCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -155,8 +156,8 @@ describe('createUser', () => {
     expect(result.errors?.password).toEqual(
       expect.arrayContaining([
         'La contraseña debe tener al menos 8 caracteres.',
-        'La contraseña debe tener al menos una mayúscula',
-        'La contraseña debe tener al menos una minúscula',
+        'La contraseña debe tener al menos una mayúscula.',
+        'La contraseña debe tener al menos una minúscula.',
       ])
     );
     expect(transactionMock).not.toHaveBeenCalled();
@@ -186,11 +187,11 @@ describe('createUser', () => {
     });
   });
 
-  test('returns a generic error for a non-duplicate Prisma error', async () => {
+  test('returns a session error for an invalid author reference', async () => {
     transactionMock.mockRejectedValue(knownRequestError('P2003', {}));
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
-      formError: 'No se pudo crear el usuario. Intentá de nuevo.',
+      formError: 'Tu sesión ya no es válida. Cerrá sesión y volvé a ingresar.',
     });
   });
 
@@ -207,5 +208,16 @@ describe('createUser', () => {
 
     expect(result).toEqual({});
     expect(transactionMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('generateTemporaryPassword', () => {
+  test('generates a character password with all required character types', () => {
+    const password = generateTemporaryPassword();
+
+    expect(password).toHaveLength(8);
+    expect(password).toMatch(/[A-Z]/);
+    expect(password).toMatch(/[a-z]/);
+    expect(password).toMatch(/[0-9]/);
   });
 });

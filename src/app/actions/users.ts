@@ -10,7 +10,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 export async function createUser(
-  prevState: UserFormState,
+  _prevState: UserFormState,
   formData: FormData
 ): Promise<UserFormState> {
   const session = await auth();
@@ -59,6 +59,7 @@ export async function createUser(
 
       if (isPrismaError) {
         const isDuplicateError = error.code === 'P2002';
+        const isForeignKeyError = error.code === 'P2003';
 
         if (isDuplicateError) {
           const target = error.meta?.target;
@@ -72,11 +73,15 @@ export async function createUser(
             return { formError: 'Ya existe un usuario con ese correo electrónico.' };
           }
         }
+
+        if (isForeignKeyError) {
+          return { formError: 'Tu sesión ya no es válida. Cerrá sesión y volvé a ingresar.' };
+        }
       }
       return { formError: 'No se pudo crear el usuario. Intentá de nuevo.' };
     }
 
-    redirect('/users/management');
+    redirect('/dashboard/management/users');
   }
 
   return {};

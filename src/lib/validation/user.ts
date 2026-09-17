@@ -37,6 +37,7 @@ export const userFormSchema = z
     email: z
       .string()
       .trim()
+      .toLowerCase()
       .min(1, 'El correo es obligatorio.')
       .max(254, 'El correo no puede superar los 254 caracteres.')
       .pipe(z.email({ error: 'Ingresá un correo electrónico válido.' })),
@@ -46,18 +47,11 @@ export const userFormSchema = z
       .string()
       .min(1, 'La contraseña es obligatoria.')
       .min(8, 'La contraseña debe tener al menos 8 caracteres.')
-      .regex(/[A-Z]/, 'La contraseña debe tener al menos una mayúscula')
-      .regex(/[a-z]/, 'La contraseña debe tener al menos una minúscula')
-      .regex(/[0-9]/, 'La contraseña debe tener al menos un número')
+      .regex(/[A-Z]/, 'La contraseña debe tener al menos una mayúscula.')
+      .regex(/[a-z]/, 'La contraseña debe tener al menos una minúscula.')
+      .regex(/[0-9]/, 'La contraseña debe tener al menos un número.')
       .max(72, 'La contraseña no puede superar los 72 caracteres.'),
-    passwordConfirm: z
-      .string()
-      .min(1, 'La contraseña es obligatoria.')
-      .min(8, 'La contraseña debe tener al menos 8 caracteres.')
-      .regex(/[A-Z]/, 'La contraseña debe tener al menos una mayúscula')
-      .regex(/[a-z]/, 'La contraseña debe tener al menos una minúscula')
-      .regex(/[0-9]/, 'La contraseña debe tener al menos un número')
-      .max(72, 'La contraseña no puede superar los 72 caracteres.'),
+    passwordConfirm: z.string().min(1, 'Confirmá la contraseña.'),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     path: ['passwordConfirm'],
