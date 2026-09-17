@@ -1,21 +1,33 @@
 import NextAuth from 'next-auth';
+import { encode } from 'next-auth/jwt';
 import Credentials from 'next-auth/providers/credentials';
 import { toAuthUser, verifyUserCredentials } from './lib/credentials';
 import prisma from './lib/prisma';
 
 const SESSION_MAX_AGE = 12 * 60 * 60; // 12 hours
+const REMEMBER_ME_MAX_AGE = 30* 24 * 60 * 60
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: 'jwt',
-    maxAge: SESSION_MAX_AGE,
+    maxAge: REMEMBER_ME_MAX_AGE,
     updateAge: 0,
+  },
+  jwt: {
+    encode: async ({ token, secret, salt}) =>
+      encode({
+        token,
+        secret,
+        salt,
+        maxAge: token?.remember ? REMEMBER_ME_MAX_AGE : SESSION_MAX_AGE,
+      }),
   },
   providers: [
     Credentials({
       credentials: {
         documentId: {},
         password: {},
+        remember: {},
       },
       authorize: async (credentials) => {
         const documentId = credentials?.documentId;
@@ -27,7 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const user = await verifyUserCredentials(documentId, password);
 
-        return user ? toAuthUser(user) : null;
+        return user ? { ...toAuthUser(user), remember: credentials?.remember === 'true' } : null;
       },
     }),
   ],
@@ -36,6 +48,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.sub = user.id;
         token.role = user.role;
+        token.remember = user.remember;
         return token;
       }
 

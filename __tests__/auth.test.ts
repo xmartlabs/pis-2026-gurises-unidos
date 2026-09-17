@@ -41,10 +41,10 @@ function authorize() {
 }
 
 describe('auth config', () => {
-  test('uses a 12-hour jwt session', () => {
+  test('uses a 30-day jwt session ceiling', () => {
     expect(capturedConfig().session).toMatchObject({
       strategy: 'jwt',
-      maxAge: 12 * 60 * 60,
+      maxAge: 30 * 24 * 60 * 60,
       updateAge: 0,
     });
   });
@@ -77,7 +77,7 @@ describe('authorize', () => {
 
     await expect(
       authorize()({ documentId: user.documentId, password: 'password' })
-    ).resolves.toEqual(toAuthUser(user));
+    ).resolves.toEqual({ ...toAuthUser(user), remember: false });
     expect(verifyUserCredentials).toHaveBeenCalledWith(user.documentId, 'password');
   });
 

@@ -41,6 +41,7 @@ describe('login', () => {
     expect(signIn).toHaveBeenCalledWith('credentials', {
       documentId: '4.123.456-7',
       password: 'password',
+      remember: false,
       redirect: false,
     });
     expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
@@ -87,6 +88,7 @@ describe('login', () => {
     expect(signIn).toHaveBeenCalledWith('credentials', {
       documentId: '',
       password: null,
+      remember: false,
       redirect: false,
     });
     expect(redirect).not.toHaveBeenCalled();
