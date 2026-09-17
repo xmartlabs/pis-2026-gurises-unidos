@@ -14,11 +14,20 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, {});
   const [showPassword, setShowPassword] = useState(false);
   const [valid, setValid] = useState(true);
+  const [credentialsErrorDismissed, setCredentialsErrorDismissed] = useState(false);
+  const [prevState, setPrevState] = useState(state);
+
+  if (state !== prevState) {
+    setPrevState(state);
+    setCredentialsErrorDismissed(false);
+  }
+
+  const showCredentialsError = state.error && !credentialsErrorDismissed;
 
   function validateDocumentFormat(documentId: string) {
-    documentId = normalizeDocumentId(documentId);
+    const normalizedDocumentId = normalizeDocumentId(documentId);
 
-    const isValidFormat = /^\d{7,8}$/.test(documentId);
+    const isValidFormat = /^\d{7,8}$/.test(normalizedDocumentId);
     setValid(isValidFormat);
     return isValidFormat;
   }
@@ -39,7 +48,7 @@ export function LoginForm() {
         <Field className="gap-1.5">
           <FieldLabel
             htmlFor="documentId"
-            className="text-sm leading-5 font-medium tracking-normal text-[#0A0A0A]"
+            className="text-sm leading-5 font-medium tracking-normal text-primary"
           >
             Cédula
           </FieldLabel>
@@ -51,27 +60,33 @@ export function LoginForm() {
             defaultValue={state.documentId}
             required
             autoComplete="username"
+            onChange={() => {
+              setValid(true);
+              setCredentialsErrorDismissed(true);
+            }}
+            onBlur={(e) => validateDocumentFormat(e.target.value)}
             placeholder="Ej. 4.123.456-7"
-            aria-invalid={state.error || !valid ? 'true' : 'false'}
-            className="shadow-blur-2 rounded-md border-[#E5E5E7] px-3 py-1 shadow-xs/10 shadow-[#0000001A] placeholder:text-[#A1A1AA] focus-visible:border-2 focus-visible:border-[#1A1A1A] focus-visible:ring-0 aria-invalid:border-[#FF4342] aria-invalid:ring-0"
+            aria-invalid={showCredentialsError || !valid ? 'true' : 'false'}
+            className="rounded-md px-3 py-1 shadow-xs/10 placeholder:text-secondary focus-visible:border-2 focus-visible:border-primary-bg focus-visible:ring-0 aria-invalid:ring-0"
           />
           {!valid && (
-            <FieldDescription className="py-1 font-sans text-xs leading-4 font-normal tracking-normal text-[#FF4342]">
+            <FieldDescription className="py-1 font-sans text-xs leading-4 font-normal tracking-normal text-destructive">
               La cédula debe tener 7 u 8 dígitos
             </FieldDescription>
           )}
         </Field>
         <Field className="gap-1.5">
           <FieldLabel htmlFor="password">Contraseña</FieldLabel>
-          <InputGroup className="shadow-blur-2 rounded-md border border-[#E5E5E7] shadow-xs/10 shadow-[#0000001A] has-[[data-slot=input-group-control]:focus-visible]:border-2 has-[[data-slot=input-group-control]:focus-visible]:border-[#1A1A1A] has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:border-[#FF4342] has-[[data-slot][aria-invalid=true]]:ring-0">
+          <InputGroup className="rounded-md border shadow-xs/10 has-[[data-slot=input-group-control]:focus-visible]:border-2 has-[[data-slot=input-group-control]:focus-visible]:border-primary-bg has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:ring-0">
             <InputGroupInput
               id="password"
               type={showPassword ? 'text' : 'password'}
               name="password"
               required
               placeholder="Tu contraseña"
-              className="px-3 py-1 placeholder:text-[#A1A1AA]"
-              aria-invalid={state.error ? 'true' : 'false'}
+              className="px-3 py-1 placeholder:text-secondary"
+              onChange={() => setCredentialsErrorDismissed(true)}
+              aria-invalid={showCredentialsError ? 'true' : 'false'}
             />
             <InputGroupAddon align="inline-end">
               <button
@@ -82,20 +97,20 @@ export function LoginForm() {
                 {showPassword ? (
                   <EyeIcon
                     strokeWidth={1}
-                    className="h-6 w-6 text-[#0A0A0A] md:text-[#737373] lg:h-4.5 lg:w-4.5"
+                    className="h-6 w-6 text-primary md:text-secondary lg:h-4.5 lg:w-4.5"
                   />
                 ) : (
                   <EyeOffIcon
                     strokeWidth={1}
-                    className="h-6 w-6 text-[#0A0A0A] lg:h-4.5 lg:w-4.5 lg:text-[#737373]"
+                    className="h-6 w-6 text-primary lg:h-4.5 lg:w-4.5 lg:text-secondary"
                   />
                 )}
               </button>
             </InputGroupAddon>
           </InputGroup>
 
-          {state.error && (
-            <FieldDescription className="py-1 font-sans text-xs leading-4 font-normal tracking-normal text-[#FF4342]">
+          {showCredentialsError && (
+            <FieldDescription className="py-1 font-sans text-xs leading-4 font-normal tracking-normal text-destructive">
               Credenciales incorrectas
             </FieldDescription>
           )}
@@ -107,19 +122,22 @@ export function LoginForm() {
             <Checkbox
               id="rememberCheck"
               name="rememberCheck"
-              className="shadow-blur-2 h-4 w-4 rounded-sm border-[#E5E5E5] bg-[#FFFFFF] shadow-xs/10 shadow-[#0000001A]"
+              className="h-4 w-4 rounded-sm bg-background shadow-xs/10"
             />
             <FieldLabel
               htmlFor="rememberCheck"
-              className="text-sm leading-5 font-medium tracking-normal text-[#0A0A0A]"
+              className="text-sm leading-5 font-medium tracking-normal text-primary"
             >
               Recordarme
             </FieldLabel>
           </Field>
         </FieldGroup>
         <Link
-          href="/resetPassword"
-          className="hidden shrink-0 cursor-pointer font-sans text-sm leading-5 font-medium tracking-normal text-[#0A0A0A] hover:underline lg:flex"
+          href="/reset-password"
+          aria-disabled="true"
+          tabIndex={-1}
+          onClick={(e) => e.preventDefault()}
+          className="hidden shrink-0 font-sans text-sm leading-5 font-medium tracking-normal text-primary lg:flex"
         >
           ¿Olvidaste tu contraseña?
         </Link>
@@ -128,9 +146,9 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="shadow-blur-2 h-9 w-full gap-2.5 rounded-lg bg-[#1A1A1A] px-4 py-2 shadow-xs/10 shadow-[#000000]"
+        className="h-9 w-full gap-2.5 rounded-lg bg-primary-bg px-4 py-2 shadow-xs/10 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <p className="font-sans text-sm leading-5 font-medium tracking-normal text-[#FFFFFF]">
+        <p className="font-sans text-sm leading-5 font-medium tracking-normal text-primary-foreground">
           Ingresar
         </p>
       </button>
