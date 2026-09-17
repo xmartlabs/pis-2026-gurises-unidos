@@ -46,7 +46,7 @@ function leftColumn() {
           Plataforma interna de gestión de Gurises Unidos.
         </p>
         <p className="font-sans text-xs leading-4 font-normal tracking-normal text-[#A1A1AA]">
-          Versión {version}
+          Versión v{version}
         </p>
       </footer>
     </div>
@@ -94,7 +94,7 @@ async function rightColumn() {
       </div>
       <Image src={red} className="hidden aspect-auto w-150 lg:flex" alt="Red de Impacto" />
       <div className="flex flex-row gap-3 pt-2 lg:gap-10 lg:pt-0">
-        <Stat value={String(activeProjects)} label="Proyectos Activos" />
+        <Stat value={String(activeProjects)} label="Proyectos activos" />
         <Stat value={`+${formatNumber(totalReach)}`} label="Personas alcanzadas" />
         <Stat value={String(territories)} label="Territorios" />
       </div>
@@ -112,7 +112,7 @@ export default async function LoginPage() {
           Plataforma interna de gestión de Gurises Unidos.
         </p>
         <p className="font-sans text-xs leading-4 font-normal tracking-normal text-[#A1A1AA]">
-          Version v{version}
+          Versión v{version}
         </p>
       </footer>
     </div>
