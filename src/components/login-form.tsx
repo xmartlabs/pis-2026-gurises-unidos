@@ -44,6 +44,7 @@ export function LoginForm() {
             Cédula
           </FieldLabel>
           <Input
+            key={state.documentId}
             id="documentId"
             type="text"
             name="documentId"
@@ -95,7 +96,7 @@ export function LoginForm() {
 
           {state.error && (
             <FieldDescription className="py-1 font-sans text-xs leading-4 font-normal tracking-normal text-[#FF4342]">
-              <p>Credenciales incorrectas</p>
+              Credenciales incorrectas
             </FieldDescription>
           )}
         </Field>
