@@ -18,16 +18,16 @@ const changePasswordSchema = z
     path: ['confirmNewPassword'],
   });
 
-export type ChangePasswordFormState = {
+export type PasswordFormState = {
   errors?: Record<string, string[]>;
   formError?: string;
   success?: boolean;
 };
 
 export async function changePassword(
-  _prevState: ChangePasswordFormState,
+  _prevState: PasswordFormState,
   formData: FormData
-): Promise<ChangePasswordFormState> {
+): Promise<PasswordFormState> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -91,16 +91,10 @@ const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 
-export type ResetPasswordFormState = {
-  errors?: Record<string, string[]>;
-  formError?: string;
-  success?: boolean;
-};
-
 export async function resetPassword(
-  _prevState: ResetPasswordFormState,
+  _prevState: PasswordFormState,
   formData: FormData
-): Promise<ResetPasswordFormState> {
+): Promise<PasswordFormState> {
   const session = await auth();
 
   if (!session?.user || session.user.role !== 'admin') {
