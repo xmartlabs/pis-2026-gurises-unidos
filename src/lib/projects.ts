@@ -1,47 +1,74 @@
 export type BeneficiaryCategory =
-  | "nna"
-  | "nnaIndirect"
-  | "youth"
-  | "families"
-  | "teachers"
-  | "otherAdults"
-  | "institutions"
+  'nna' | 'nnaIndirect' | 'youth' | 'families' | 'teachers' | 'otherAdults' | 'institutions';
 
 export type Project = {
-  slug: string
-  name: string
-  territory: string
-  intensity: "alta" | "media" | "baja"
-  startYear: number
-  summary: string
-  beneficiaries: Record<BeneficiaryCategory, number>
-  history: number[]
-}
+  slug: string;
+  name: string;
+  territory: string;
+  intensity: 'alta' | 'media' | 'baja';
+  startYear: number;
+  summary: string;
+  beneficiaries: Record<BeneficiaryCategory, number>;
+};
 
 export const BENEFICIARY_CATEGORIES: {
-  key: BeneficiaryCategory
-  label: string
-  definition: string
+  key: BeneficiaryCategory;
+  label: string;
+  definition: string;
 }[] = [
-  { key: "nna", label: "NNA", definition: "Niñas, niños y adolescentes que se benefician de forma directa del acompañamiento y de las acciones socioeducativas, promocionales o de asistencia social de un equipo técnico." },
-  { key: "nnaIndirect", label: "NNA indirectos", definition: "Niñas, niños y adolescentes alcanzados a través de otra persona o institución que sí recibe acciones del equipo técnico." },
-  { key: "youth", label: "Jóvenes", definition: "Personas de 18 a 29 años que se benefician de forma directa de alguna de las acciones." },
-  { key: "families", label: "Familias", definition: "Conjunto de individuos unidos por vínculos filiales que se benefician de forma directa de alguna de las acciones." },
-  { key: "teachers", label: "Docentes y educadores", definition: "Funcionarios de servicios básicos para las infancias —docentes, policías, personal de salud, educación no formal y programas sociales— que participan de instancias de formación." },
-  { key: "otherAdults", label: "Referentes y vecinos", definition: "Personas que reciben de forma directa acciones de sensibilización, prevención y promoción." },
-  { key: "institutions", label: "Instituciones", definition: "Referentes de instituciones con las que la organización coordina acciones de promoción de derechos." },
-]
-
-export const REACH_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
+  {
+    key: 'nna',
+    label: 'NNA',
+    definition:
+      'Niñas, niños y adolescentes que se benefician de forma directa del acompañamiento y de las acciones socioeducativas, promocionales o de asistencia social de un equipo técnico.',
+  },
+  {
+    key: 'nnaIndirect',
+    label: 'NNA indirectos',
+    definition:
+      'Niñas, niños y adolescentes alcanzados a través de otra persona o institución que sí recibe acciones del equipo técnico.',
+  },
+  {
+    key: 'youth',
+    label: 'Jóvenes',
+    definition:
+      'Personas de 18 a 29 años que se benefician de forma directa de alguna de las acciones.',
+  },
+  {
+    key: 'families',
+    label: 'Familias',
+    definition:
+      'Conjunto de individuos unidos por vínculos filiales que se benefician de forma directa de alguna de las acciones.',
+  },
+  {
+    key: 'teachers',
+    label: 'Docentes y educadores',
+    definition:
+      'Funcionarios de servicios básicos para las infancias —docentes, policías, personal de salud, educación no formal y programas sociales— que participan de instancias de formación.',
+  },
+  {
+    key: 'otherAdults',
+    label: 'Referentes y vecinos',
+    definition:
+      'Personas que reciben de forma directa acciones de sensibilización, prevención y promoción.',
+  },
+  {
+    key: 'institutions',
+    label: 'Instituciones',
+    definition:
+      'Referentes de instituciones con las que la organización coordina acciones de promoción de derechos.',
+  },
+];
 
 export const PROJECTS: Project[] = [
   {
-    slug: "el-resorte",
-    name: "El Resorte",
-    territory: "Montevideo — Casavalle",
-    intensity: "alta",
+    slug: 'el-resorte',
+    name: 'El Resorte',
+    territory: 'Montevideo — Casavalle',
+    intensity: 'alta',
     startYear: 2004,
-    summary: "Centro de referencia barrial: acompañamiento educativo y trabajo con familias en Casavalle.",
+    summary:
+      'Centro de referencia barrial: acompañamiento educativo y trabajo con familias en Casavalle.',
     beneficiaries: {
       nna: 595,
       nnaIndirect: 184,
@@ -51,15 +78,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 66,
       institutions: 10,
     },
-    history: [1073, 1042, 1131, 1061, 1191, 1150, 1105],
   },
   {
-    slug: "revuelos",
-    name: "Revuelos",
-    territory: "Montevideo — Cerro",
-    intensity: "alta",
+    slug: 'revuelos',
+    name: 'Revuelos',
+    territory: 'Montevideo — Cerro',
+    intensity: 'alta',
     startYear: 2011,
-    summary: "Espacio socioeducativo para adolescentes que sostienen su trayectoria liceal.",
+    summary: 'Espacio socioeducativo para adolescentes que sostienen su trayectoria liceal.',
     beneficiaries: {
       nna: 486,
       nnaIndirect: 150,
@@ -69,15 +95,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 54,
       institutions: 9,
     },
-    history: [979, 848, 852, 814, 846, 851, 903],
   },
   {
-    slug: "molinillo",
-    name: "Molinillo",
-    territory: "Canelones",
-    intensity: "alta",
+    slug: 'molinillo',
+    name: 'Molinillo',
+    territory: 'Canelones',
+    intensity: 'alta',
     startYear: 2016,
-    summary: "Primera infancia y crianza: talleres con familias y articulación con CAIF.",
+    summary: 'Primera infancia y crianza: talleres con familias y articulación con CAIF.',
     beneficiaries: {
       nna: 549,
       nnaIndirect: 170,
@@ -87,15 +112,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 61,
       institutions: 10,
     },
-    history: [970, 1063, 953, 1088, 1074, 947, 1020],
   },
   {
-    slug: "cnpi-bitacoras",
-    name: "CNPI — Bitácoras",
-    territory: "Nacional",
-    intensity: "media",
+    slug: 'cnpi-bitacoras',
+    name: 'CNPI — Bitácoras',
+    territory: 'Nacional',
+    intensity: 'media',
     startYear: 2019,
-    summary: "Sistematización de prácticas de promoción de derechos junto al Comité Nacional.",
+    summary: 'Sistematización de prácticas de promoción de derechos junto al Comité Nacional.',
     beneficiaries: {
       nna: 267,
       nnaIndirect: 157,
@@ -105,15 +129,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 42,
       institutions: 12,
     },
-    history: [346, 503, 780, 796, 831, 896, 833],
   },
   {
-    slug: "marcando-la-cancha",
-    name: "Marcando la Cancha",
-    territory: "Montevideo — Casavalle",
-    intensity: "media",
+    slug: 'marcando-la-cancha',
+    name: 'Marcando la Cancha',
+    territory: 'Montevideo — Casavalle',
+    intensity: 'media',
     startYear: 2021,
-    summary: "Deporte como puerta de entrada: fútbol, convivencia y derechos. Con Fundación FIFA.",
+    summary: 'Deporte como puerta de entrada: fútbol, convivencia y derechos. Con Fundación FIFA.',
     beneficiaries: {
       nna: 240,
       nnaIndirect: 141,
@@ -123,15 +146,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 38,
       institutions: 11,
     },
-    history: [0, 0, 314, 488, 623, 813, 750],
   },
   {
-    slug: "apoyando-trayectorias-educativas",
-    name: "Apoyando Trayectorias Educativas",
-    territory: "Montevideo",
-    intensity: "alta",
+    slug: 'apoyando-trayectorias-educativas',
+    name: 'Apoyando Trayectorias Educativas',
+    territory: 'Montevideo',
+    intensity: 'alta',
     startYear: 2018,
-    summary: "Tutorías y becas para revertir el desvínculo escolar en el ciclo básico.",
+    summary: 'Tutorías y becas para revertir el desvínculo escolar en el ciclo básico.',
     beneficiaries: {
       nna: 577,
       nnaIndirect: 178,
@@ -141,15 +163,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 64,
       institutions: 10,
     },
-    history: [719, 905, 1026, 1005, 1159, 1163, 1071],
   },
   {
-    slug: "centro-juvenil",
-    name: "Centro Juvenil",
-    territory: "Montevideo — Cerro",
-    intensity: "alta",
+    slug: 'centro-juvenil',
+    name: 'Centro Juvenil',
+    territory: 'Montevideo — Cerro',
+    intensity: 'alta',
     startYear: 2009,
-    summary: "Centro juvenil de tiempo completo: talleres, egreso y orientación laboral.",
+    summary: 'Centro juvenil de tiempo completo: talleres, egreso y orientación laboral.',
     beneficiaries: {
       nna: 648,
       nnaIndirect: 200,
@@ -159,15 +180,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 71,
       institutions: 11,
     },
-    history: [1233, 1179, 1318, 1313, 1245, 1143, 1202],
   },
   {
-    slug: "en-ruta",
-    name: "En Ruta",
-    territory: "Salto",
-    intensity: "media",
+    slug: 'en-ruta',
+    name: 'En Ruta',
+    territory: 'Salto',
+    intensity: 'media',
     startYear: 2020,
-    summary: "Acompañamiento a adolescentes en situación de calle y a sus referentes.",
+    summary: 'Acompañamiento a adolescentes en situación de calle y a sus referentes.',
     beneficiaries: {
       nna: 182,
       nnaIndirect: 107,
@@ -177,15 +197,15 @@ export const PROJECTS: Project[] = [
       otherAdults: 28,
       institutions: 7,
     },
-    history: [0, 279, 361, 547, 545, 583, 566],
   },
   {
-    slug: "guia-vshnna",
-    name: "Guía VSHNNA",
-    territory: "Nacional",
-    intensity: "baja",
+    slug: 'guia-vshnna',
+    name: 'Guía VSHNNA',
+    territory: 'Nacional',
+    intensity: 'baja',
     startYear: 2022,
-    summary: "Guía de actuación frente a violencia sexual hacia NNA, con el Ministerio del Interior.",
+    summary:
+      'Guía de actuación frente a violencia sexual hacia NNA, con el Ministerio del Interior.',
     beneficiaries: {
       nna: 17,
       nnaIndirect: 54,
@@ -195,15 +215,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 17,
       institutions: 4,
     },
-    history: [0, 0, 0, 109, 179, 226, 257],
   },
   {
-    slug: "capacitacion-ciemsa",
-    name: "Capacitación CIEMSA",
-    territory: "Nacional",
-    intensity: "baja",
+    slug: 'capacitacion-ciemsa',
+    name: 'Capacitación CIEMSA',
+    territory: 'Nacional',
+    intensity: 'baja',
     startYear: 2023,
-    summary: "Formación a funcionarios del sistema educativo medio en enfoque de derechos.",
+    summary: 'Formación a funcionarios del sistema educativo medio en enfoque de derechos.',
     beneficiaries: {
       nna: 15,
       nnaIndirect: 47,
@@ -213,15 +232,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 15,
       institutions: 4,
     },
-    history: [0, 0, 0, 0, 107, 154, 225],
   },
   {
-    slug: "habilidades-digitales",
-    name: "Habilidades Digitales",
-    territory: "Paysandú",
-    intensity: "media",
+    slug: 'habilidades-digitales',
+    name: 'Habilidades Digitales',
+    territory: 'Paysandú',
+    intensity: 'media',
     startYear: 2022,
-    summary: "Alfabetización digital para jóvenes que buscan su primer empleo. Con Inefop.",
+    summary: 'Alfabetización digital para jóvenes que buscan su primer empleo. Con Inefop.',
     beneficiaries: {
       nna: 236,
       nnaIndirect: 139,
@@ -231,15 +249,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 36,
       institutions: 10,
     },
-    history: [0, 0, 0, 346, 516, 633, 736],
   },
   {
-    slug: "despegue-digital",
-    name: "Despegue Digital",
-    territory: "Rivera",
-    intensity: "media",
+    slug: 'despegue-digital',
+    name: 'Despegue Digital',
+    territory: 'Rivera',
+    intensity: 'media',
     startYear: 2023,
-    summary: "Segunda edición del programa digital, ampliada al norte del país. Con Inefop.",
+    summary: 'Segunda edición del programa digital, ampliada al norte del país. Con Inefop.',
     beneficiaries: {
       nna: 244,
       nnaIndirect: 144,
@@ -249,15 +266,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 39,
       institutions: 11,
     },
-    history: [0, 0, 0, 0, 364, 487, 764],
   },
   {
-    slug: "activate",
-    name: "Activate",
-    territory: "Montevideo",
-    intensity: "media",
+    slug: 'activate',
+    name: 'Activate',
+    territory: 'Montevideo',
+    intensity: 'media',
     startYear: 2021,
-    summary: "Participación juvenil: los jóvenes diseñan y ejecutan proyectos en su barrio.",
+    summary: 'Participación juvenil: los jóvenes diseñan y ejecutan proyectos en su barrio.',
     beneficiaries: {
       nna: 241,
       nnaIndirect: 142,
@@ -267,15 +283,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 38,
       institutions: 11,
     },
-    history: [0, 0, 371, 489, 623, 806, 754],
   },
   {
-    slug: "formacion-eti",
-    name: "Formación ETI",
-    territory: "Nacional",
-    intensity: "baja",
+    slug: 'formacion-eti',
+    name: 'Formación ETI',
+    territory: 'Nacional',
+    intensity: 'baja',
     startYear: 2020,
-    summary: "Formación a equipos técnicos sobre explotación y trata de NNA.",
+    summary: 'Formación a equipos técnicos sobre explotación y trata de NNA.',
     beneficiaries: {
       nna: 15,
       nnaIndirect: 47,
@@ -285,15 +300,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 15,
       institutions: 4,
     },
-    history: [0, 107, 157, 198, 232, 225, 226],
   },
   {
-    slug: "aula-tecnologica-eti",
-    name: "Aula Tecnológica ETI",
-    territory: "Montevideo",
-    intensity: "baja",
+    slug: 'aula-tecnologica-eti',
+    name: 'Aula Tecnológica ETI',
+    territory: 'Montevideo',
+    intensity: 'baja',
     startYear: 2021,
-    summary: "Aula equipada para talleres de prevención con adolescentes.",
+    summary: 'Aula equipada para talleres de prevención con adolescentes.',
     beneficiaries: {
       nna: 23,
       nnaIndirect: 71,
@@ -303,15 +317,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 22,
       institutions: 6,
     },
-    history: [0, 0, 151, 220, 311, 364, 342],
   },
   {
-    slug: "ceibal-pc",
-    name: "Ceibal-pc",
-    territory: "Nacional",
-    intensity: "media",
+    slug: 'ceibal-pc',
+    name: 'Ceibal-pc',
+    territory: 'Nacional',
+    intensity: 'media',
     startYear: 2019,
-    summary: "Entrega y soporte de equipamiento junto a Plan Ceibal.",
+    summary: 'Entrega y soporte de equipamiento junto a Plan Ceibal.',
     beneficiaries: {
       nna: 261,
       nnaIndirect: 153,
@@ -321,15 +334,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 41,
       institutions: 11,
     },
-    history: [354, 556, 775, 801, 733, 825, 814],
   },
   {
-    slug: "aula-digital-mig",
-    name: "Aula Digital MIG",
-    territory: "Montevideo",
-    intensity: "baja",
+    slug: 'aula-digital-mig',
+    name: 'Aula Digital MIG',
+    territory: 'Montevideo',
+    intensity: 'baja',
     startYear: 2022,
-    summary: "Aula digital en el marco del Modelo de Inclusión Garantizada.",
+    summary: 'Aula digital en el marco del Modelo de Inclusión Garantizada.',
     beneficiaries: {
       nna: 24,
       nnaIndirect: 76,
@@ -339,15 +351,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 24,
       institutions: 6,
     },
-    history: [0, 0, 0, 170, 257, 309, 365],
   },
   {
-    slug: "steam-club-de-ninos",
-    name: "STEAM — Club de Niños",
-    territory: "Canelones",
-    intensity: "media",
+    slug: 'steam-club-de-ninos',
+    name: 'STEAM — Club de Niños',
+    territory: 'Canelones',
+    intensity: 'media',
     startYear: 2022,
-    summary: "Ciencia y tecnología con enfoque de género en clubes de niños.",
+    summary: 'Ciencia y tecnología con enfoque de género en clubes de niños.',
     beneficiaries: {
       nna: 184,
       nnaIndirect: 108,
@@ -357,15 +368,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 28,
       institutions: 8,
     },
-    history: [0, 0, 0, 239, 420, 514, 574],
   },
   {
-    slug: "somos-equidad",
-    name: "Somos Equidad",
-    territory: "Nacional",
-    intensity: "media",
+    slug: 'somos-equidad',
+    name: 'Somos Equidad',
+    territory: 'Nacional',
+    intensity: 'media',
     startYear: 2020,
-    summary: "Masculinidades y equidad de género con adolescentes y docentes.",
+    summary: 'Masculinidades y equidad de género con adolescentes y docentes.',
     beneficiaries: {
       nna: 167,
       nnaIndirect: 98,
@@ -375,15 +385,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 26,
       institutions: 7,
     },
-    history: [0, 222, 360, 462, 475, 492, 518],
   },
   {
-    slug: "unfpa-msp",
-    name: "UNFPA — MSP",
-    territory: "Nacional",
-    intensity: "baja",
+    slug: 'unfpa-msp',
+    name: 'UNFPA — MSP',
+    territory: 'Nacional',
+    intensity: 'baja',
     startYear: 2023,
-    summary: "Salud sexual y reproductiva adolescente junto a UNFPA y el MSP.",
+    summary: 'Salud sexual y reproductiva adolescente junto a UNFPA y el MSP.',
     beneficiaries: {
       nna: 18,
       nnaIndirect: 55,
@@ -393,15 +402,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 17,
       institutions: 5,
     },
-    history: [0, 0, 0, 0, 119, 188, 264],
   },
   {
-    slug: "metejon",
-    name: "MetejON",
-    territory: "Montevideo — Casavalle",
-    intensity: "alta",
+    slug: 'metejon',
+    name: 'MetejON',
+    territory: 'Montevideo — Casavalle',
+    intensity: 'alta',
     startYear: 2017,
-    summary: "Fútbol infantil y trabajo con familias: la cancha como espacio de derechos.",
+    summary: 'Fútbol infantil y trabajo con familias: la cancha como espacio de derechos.',
     beneficiaries: {
       nna: 409,
       nnaIndirect: 126,
@@ -411,15 +419,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 45,
       institutions: 6,
     },
-    history: [686, 701, 712, 722, 743, 724, 757],
   },
   {
-    slug: "ru-bienestar-socioemocional",
-    name: "RU Bienestar Socioemocional",
-    territory: "Tacuarembó",
-    intensity: "media",
+    slug: 'ru-bienestar-socioemocional',
+    name: 'RU Bienestar Socioemocional',
+    territory: 'Tacuarembó',
+    intensity: 'media',
     startYear: 2021,
-    summary: "Convivencia y bienestar socioemocional en centros educativos rurales.",
+    summary: 'Convivencia y bienestar socioemocional en centros educativos rurales.',
     beneficiaries: {
       nna: 201,
       nnaIndirect: 117,
@@ -429,15 +436,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 31,
       institutions: 9,
     },
-    history: [0, 0, 286, 398, 576, 601, 625],
   },
   {
-    slug: "upm-habilidades-socioemocionales",
-    name: "UPM Habilidades Socioemocionales",
-    territory: "Paysandú",
-    intensity: "media",
+    slug: 'upm-habilidades-socioemocionales',
+    name: 'UPM Habilidades Socioemocionales',
+    territory: 'Paysandú',
+    intensity: 'media',
     startYear: 2022,
-    summary: "Habilidades socioemocionales en escuelas de la zona de influencia de UPM.",
+    summary: 'Habilidades socioemocionales en escuelas de la zona de influencia de UPM.',
     beneficiaries: {
       nna: 204,
       nnaIndirect: 120,
@@ -447,15 +453,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 31,
       institutions: 9,
     },
-    history: [0, 0, 0, 271, 383, 554, 636],
   },
   {
-    slug: "mesas-barriales",
-    name: "Mesas Barriales",
-    territory: "Montevideo",
-    intensity: "media",
+    slug: 'mesas-barriales',
+    name: 'Mesas Barriales',
+    territory: 'Montevideo',
+    intensity: 'media',
     startYear: 2015,
-    summary: "Articulación comunitaria: vecinos e instituciones en la misma mesa.",
+    summary: 'Articulación comunitaria: vecinos e instituciones en la misma mesa.',
     beneficiaries: {
       nna: 161,
       nnaIndirect: 94,
@@ -465,15 +470,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 25,
       institutions: 6,
     },
-    history: [492, 507, 459, 495, 549, 547, 500],
   },
   {
-    slug: "poli-ball",
-    name: "Poli Ball",
-    territory: "Canelones",
-    intensity: "media",
+    slug: 'poli-ball',
+    name: 'Poli Ball',
+    territory: 'Canelones',
+    intensity: 'media',
     startYear: 2023,
-    summary: "Deporte y vínculo con la policía comunitaria. Con Unicef.",
+    summary: 'Deporte y vínculo con la policía comunitaria. Con Unicef.',
     beneficiaries: {
       nna: 160,
       nnaIndirect: 94,
@@ -483,15 +487,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 25,
       institutions: 6,
     },
-    history: [0, 0, 0, 0, 245, 359, 497],
   },
   {
-    slug: "cuidarte-esta-en-juego",
-    name: "Cuidarte Está en Juego",
-    territory: "Nacional",
-    intensity: "baja",
+    slug: 'cuidarte-esta-en-juego',
+    name: 'Cuidarte Está en Juego',
+    territory: 'Nacional',
+    intensity: 'baja',
     startYear: 2024,
-    summary: "Prevención del abuso a través del juego, en centros de primera infancia.",
+    summary: 'Prevención del abuso a través del juego, en centros de primera infancia.',
     beneficiaries: {
       nna: 14,
       nnaIndirect: 44,
@@ -501,15 +504,14 @@ export const PROJECTS: Project[] = [
       otherAdults: 14,
       institutions: 4,
     },
-    history: [0, 0, 0, 0, 0, 86, 212],
   },
   {
-    slug: "yo-estudio-y-trabajo",
-    name: "Yo Estudio y Trabajo",
-    territory: "Nacional",
-    intensity: "media",
+    slug: 'yo-estudio-y-trabajo',
+    name: 'Yo Estudio y Trabajo',
+    territory: 'Nacional',
+    intensity: 'media',
     startYear: 2019,
-    summary: "Primera experiencia laboral formal para estudiantes de 16 a 20 años.",
+    summary: 'Primera experiencia laboral formal para estudiantes de 16 a 20 años.',
     beneficiaries: {
       nna: 177,
       nnaIndirect: 104,
@@ -519,9 +521,8 @@ export const PROJECTS: Project[] = [
       otherAdults: 27,
       institutions: 7,
     },
-    history: [265, 361, 527, 561, 532, 552, 551],
   },
-]
+];
 
 export const ANNUAL_REACH = [
   { year: 2019, reach: 7117 },
@@ -531,24 +532,18 @@ export const ANNUAL_REACH = [
   { year: 2023, reach: 14878 },
   { year: 2024, reach: 16192 },
   { year: 2025, reach: 17067 },
-]
+];
 
 export function getTotals() {
   return BENEFICIARY_CATEGORIES.map((category) => ({
     ...category,
     total: PROJECTS.reduce((sum, project) => sum + project.beneficiaries[category.key], 0),
-  }))
+  }));
 }
 
 export function getProjectReach(project: Project) {
   return BENEFICIARY_CATEGORIES.reduce(
     (sum, category) => sum + project.beneficiaries[category.key],
-    0,
-  )
-}
-
-export function getTopProjects(count: number) {
-  return [...PROJECTS]
-    .sort((a, b) => getProjectReach(b) - getProjectReach(a))
-    .slice(0, count)
+    0
+  );
 }

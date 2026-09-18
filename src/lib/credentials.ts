@@ -1,11 +1,17 @@
 import type { User } from '@/generated/prisma/client';
 import bcrypt from 'bcryptjs';
 import prisma from './prisma';
+import { normalizeDocumentId } from './utils';
 
 const DUMMY_PASSWORD_HASH = '$2b$10$qYzMcJ.E4lnDm6ffrfnKjuksp7QvpqWK1L476sVjmNEqsJyQMuz.O';
 
-export async function verifyUserCredentials(email: string, password: string): Promise<User | null> {
-  const user = await prisma.user.findUnique({ where: { email } });
+export async function verifyUserCredentials(
+  documentId: string,
+  password: string
+): Promise<User | null> {
+  const user = await prisma.user.findUnique({
+    where: { documentId: normalizeDocumentId(documentId) },
+  });
 
   if (!user || user.deletedAt || user.status !== 'active') {
     // Compare against dummy password hash to avoid timing attacks

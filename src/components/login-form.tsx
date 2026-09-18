@@ -9,15 +9,14 @@ export function LoginForm() {
   return (
     <form action={formAction} className="mt-8 flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm">
-        Correo
+        Documento
         <input
-          type="email"
-          name="email"
-          defaultValue={state.email}
+          type="text"
+          name="documentId"
+          defaultValue={state.documentId}
           required
-          autoComplete="email"
-          placeholder="nombre@gurisesunidos.org.uy"
-          className="border-line bg-surface text-ink focus-visible:border-ink-3 focus-visible:ring-accent/40 rounded-lg border px-3.5 py-2.5 outline-none focus-visible:ring-2"
+          autoComplete="username"
+          className="border-border bg-card text-foreground focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border px-3.5 py-2.5 outline-none focus-visible:ring-2"
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm">
@@ -27,18 +26,18 @@ export function LoginForm() {
           name="password"
           required
           autoComplete="current-password"
-          className="border-line bg-surface text-ink focus-visible:border-ink-3 focus-visible:ring-accent/40 rounded-lg border px-3.5 py-2.5 outline-none focus-visible:ring-2"
+          className="border-border bg-card text-foreground focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border px-3.5 py-2.5 outline-none focus-visible:ring-2"
         />
       </label>
 
       {state.error ? (
-        <p className="text-sm text-red-500">Correo o contraseña incorrectos.</p>
+        <p className="text-destructive text-sm">Documento o contraseña incorrectos.</p>
       ) : null}
 
       <button
         type="submit"
         disabled={pending}
-        className="bg-deep text-on-deep mt-2 rounded-full px-6 py-3 text-sm hover:opacity-90 disabled:opacity-60"
+        className="bg-primary text-primary-foreground mt-2 rounded-full px-6 py-3 text-sm hover:opacity-90 disabled:opacity-60"
       >
         Entrar
       </button>
