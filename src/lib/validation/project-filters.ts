@@ -3,12 +3,13 @@ import { z } from 'zod';
 export const PROJECT_LIST_PAGE_SIZE = 20;
 export const PROJECT_LIST_MAX_PAGE_SIZE = 100;
 export const PROJECT_MIN_START_YEAR = 1989;
+export const PROJECT_SEARCH_MAX_LENGTH = 100;
 
 const optionalYear = z.coerce
   .number()
   .int()
   .min(PROJECT_MIN_START_YEAR)
-  .max(new Date().getFullYear())
+  .refine((year) => year <= new Date().getFullYear())
   .optional()
   .catch(undefined);
 
@@ -19,10 +20,9 @@ export const projectFiltersSchema = z
     search: z
       .string()
       .trim()
-      .max(100)
       .optional()
       .catch(undefined)
-      .transform((value) => value || undefined),
+      .transform((value) => value?.slice(0, PROJECT_SEARCH_MAX_LENGTH) || undefined),
     status: z.enum(['active', 'inProgress', 'completed', 'archived']).optional().catch(undefined),
     intensity: z.enum(['high', 'medium', 'low']).optional().catch(undefined),
     leadCoordinatorId: optionalPositiveInt,
@@ -34,8 +34,8 @@ export const projectFiltersSchema = z
       .number()
       .int()
       .positive()
-      .max(PROJECT_LIST_MAX_PAGE_SIZE)
-      .catch(PROJECT_LIST_PAGE_SIZE),
+      .catch(PROJECT_LIST_PAGE_SIZE)
+      .transform((size) => Math.min(size, PROJECT_LIST_MAX_PAGE_SIZE)),
   })
   .transform((filters) => {
     if (

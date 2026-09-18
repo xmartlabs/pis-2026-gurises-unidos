@@ -106,7 +106,7 @@ export async function listProjects(filters: ProjectFilters): Promise<ProjectList
 export async function listProjectFilterOptions() {
   const [coordinators, departments] = await Promise.all([
     prisma.user.findMany({
-      where: { deletedAt: null, ledProjects: { some: {} } },
+      where: { ledProjects: { some: {} } },
       select: { id: true, firstName: true, lastName: true },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     }),

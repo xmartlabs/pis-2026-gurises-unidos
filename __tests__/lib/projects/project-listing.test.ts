@@ -1,9 +1,10 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { prismaMock } from '../../mocks/prisma';
 import { listProjectFilterOptions, listProjects } from '@/lib/projects/list';
 import {
   PROJECT_LIST_MAX_PAGE_SIZE,
   PROJECT_LIST_PAGE_SIZE,
+  PROJECT_SEARCH_MAX_LENGTH,
   parseProjectFilters,
   type RawProjectFilters,
 } from '@/lib/validation/project-filters';
@@ -62,7 +63,7 @@ function findManyArgs() {
   return prismaMock.project.findMany.mock.calls[0][0];
 }
 
-describe('AC1: listado paginado con los datos de cada proyecto', () => {
+describe('AC1: paginated listing with each project data', () => {
   test('exposes name, status, lead coordinator, start year, territory, intensity and beneficiaries', async () => {
     const { items } = await listWith({});
 
@@ -114,18 +115,18 @@ describe('AC1: listado paginado con los datos de cada proyecto', () => {
     expect(findManyArgs()).toMatchObject({ skip: 40, take: 20 });
   });
 
-  test('ignores invalid page values and caps the page size', async () => {
-    const result = await listWith({ page: '-2', pageSize: '5000' });
+  test('ignores invalid page values and clamps the page size to the maximum', async () => {
+    const result = await listWith({ page: '-2', pageSize: 'lots' });
 
     expect(result).toMatchObject({ page: 1, pageSize: PROJECT_LIST_PAGE_SIZE });
 
-    const capped = await listWith({ pageSize: String(PROJECT_LIST_MAX_PAGE_SIZE + 1) });
+    const clamped = await listWith({ pageSize: String(PROJECT_LIST_MAX_PAGE_SIZE + 1) });
 
-    expect(capped.pageSize).toBe(PROJECT_LIST_PAGE_SIZE);
+    expect(clamped.pageSize).toBe(PROJECT_LIST_MAX_PAGE_SIZE);
   });
 });
 
-describe('AC2: filtros', () => {
+describe('AC2: filters', () => {
   test('by status', async () => {
     await listWith({ status: 'completed' });
 
@@ -212,7 +213,7 @@ describe('AC2: filtros', () => {
   });
 });
 
-describe('AC3: sin proyectos', () => {
+describe('AC3: no projects', () => {
   test('returns an empty page with a single page when there are no projects', async () => {
     const result = await listWith({}, []);
 
@@ -251,6 +252,22 @@ describe('parseProjectFilters', () => {
     expect(filters.startYearTo).toBe(2022);
   });
 
+  test('truncates a long search instead of dropping it', () => {
+    const search = 'a'.repeat(PROJECT_SEARCH_MAX_LENGTH + 20);
+
+    expect(parseProjectFilters({ search })?.search).toBe('a'.repeat(PROJECT_SEARCH_MAX_LENGTH));
+  });
+
+  test('accepts the current year as read at parse time', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2031-01-01T12:00:00.000Z'));
+
+    expect(parseProjectFilters({ startYearFrom: '2031' }).startYearFrom).toBe(2031);
+    expect(parseProjectFilters({ startYearFrom: '2032' }).startYearFrom).toBeUndefined();
+
+    vi.useRealTimers();
+  });
+
   test('uses the first value of repeated params', () => {
     expect(parseProjectFilters({ status: ['completed', 'active'] }).status).toBe('completed');
   });
@@ -266,7 +283,7 @@ describe('listProjectFilterOptions', () => {
       departments: [MONTEVIDEO],
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { deletedAt: null, ledProjects: { some: {} } } })
+      expect.objectContaining({ where: { ledProjects: { some: {} } } })
     );
     expect(prismaMock.department.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { projects: { some: {} } } })
