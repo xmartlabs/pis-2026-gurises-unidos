@@ -40,7 +40,7 @@ export function ErrorScreen({ code, title, description, reference, actions }: Er
   const copy = ERROR_COPY[code] ?? FALLBACK_COPY;
 
   return (
-    <div className="bg-background fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto px-6 py-24 text-center">
+    <div className="flex min-h-full flex-1 flex-col items-center justify-center-safe px-6 py-24 text-center">
       <p className="text-muted-foreground text-7xl font-semibold tracking-tight tabular-nums sm:text-8xl">
         {code}
       </p>
