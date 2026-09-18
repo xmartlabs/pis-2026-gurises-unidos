@@ -1,9 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProject, updateProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
+import {
+  projectFormSchema,
+  readProjectFormData,
+  splitProjectFormData,
+} from '@/lib/validation/project-form';
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
+  findUser: vi.fn(),
+  findCoordinator: vi.fn(),
+  findProject: vi.fn(),
+  countTopics: vi.fn(),
   transaction: vi.fn(),
   createProject: vi.fn(),
   updateProject: vi.fn(),
@@ -16,12 +25,20 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/auth', () => ({ auth: mocks.auth }));
-vi.mock('@/lib/prisma', () => ({ default: { $transaction: mocks.transaction } }));
+vi.mock('@/lib/prisma', () => ({
+  default: { $transaction: mocks.transaction, user: { findUnique: mocks.findUser } },
+}));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
 
 const TX = {
-  project: { create: mocks.createProject, update: mocks.updateProject },
+  project: {
+    create: mocks.createProject,
+    update: mocks.updateProject,
+    findUnique: mocks.findProject,
+  },
+  user: { findFirst: mocks.findCoordinator },
+  topic: { count: mocks.countTopics },
   projectBeneficiary: {
     create: mocks.createBeneficiary,
     findUnique: mocks.findBeneficiary,
@@ -69,7 +86,11 @@ function databaseError(code: string, meta?: Record<string, unknown>) {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.auth.mockResolvedValue({ user: { id: '7' } });
+  mocks.auth.mockResolvedValue({ user: { id: '7', role: 'admin' } });
+  mocks.findUser.mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null });
+  mocks.findCoordinator.mockResolvedValue({ id: 2 });
+  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, projectTopics: [] });
+  mocks.countTopics.mockResolvedValue(0);
   mocks.redirect.mockImplementation((path: string) => {
     throw new Error(`Redirect: ${path}`);
   });
@@ -223,7 +244,13 @@ describe('updateProject persistence', () => {
       });
       expect(mocks.audit).toHaveBeenCalledTimes(2);
       expect(mocks.audit).toHaveBeenNthCalledWith(1, {
-        data: { authorId: 7, action: 'update', entity: 'project', entityId: 10 },
+        data: {
+          authorId: 7,
+          action: 'update',
+          entity: 'project',
+          entityId: 10,
+          details: { changedFields: expect.any(Array) },
+        },
       });
       expect(mocks.audit).toHaveBeenNthCalledWith(2, {
         data: {
@@ -231,6 +258,7 @@ describe('updateProject persistence', () => {
           action: exists ? 'update' : 'creation',
           entity: 'beneficiary',
           entityId: 20,
+          details: { year: 2024, changedFields: expect.any(Array) },
         },
       });
       expect(mocks.revalidatePath.mock.calls).toEqual([
@@ -357,4 +385,203 @@ describe('updateProject persistence', () => {
       }
     }
   );
+});
+
+function unchangedRecords() {
+  const { projectData, beneficiaryData } = splitProjectFormData(
+    projectFormSchema.parse(readProjectFormData(formData()))
+  );
+  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, projectTopics: [] });
+  mocks.findBeneficiary.mockResolvedValue({ id: 20, ...beneficiaryData });
+}
+
+describe('project review regressions', () => {
+  it.each([
+    { role: 'coordinator', id: 7 },
+    { role: 'coordinator', id: 3 },
+  ])('rejects an unrelated coordinator $id even with an admin JWT', async (user) => {
+    mocks.findUser.mockResolvedValue({ ...user, status: 'active', deletedAt: null });
+    expect(await updateProject(10, {}, formData())).toEqual({
+      formError: 'No tenés permiso para editar este proyecto.',
+    });
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it('allows the current responsible coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 2,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    await expect(updateProject(10, {}, formData())).rejects.toThrow(
+      'Redirect: /dashboard/projects/10'
+    );
+    expect(mocks.updateProject).toHaveBeenCalled();
+  });
+
+  it.each([
+    null,
+    { id: 7, role: 'admin', status: 'disabled', deletedAt: null },
+    { id: 7, role: 'admin', status: 'active', deletedAt: new Date() },
+  ])('rejects inactive or deleted session users', async (user) => {
+    mocks.findUser.mockResolvedValue(user);
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect: /login');
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('reports a project missing before the update', async () => {
+    mocks.findProject.mockResolvedValue(null);
+    expect((await updateProject(10, {}, formData())).formError).toBe(
+      'El proyecto no existe o fue eliminado.'
+    );
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('preserves the current coordinator without requiring its previous role', async () => {
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
+    expect(mocks.findCoordinator).toHaveBeenCalledWith({ where: { id: 2 }, select: { id: true } });
+  });
+
+  it.each([createProject.bind(null, {}), updateProject.bind(null, 10, {})])(
+    'rejects invalid replacement coordinators before writing',
+    async (submit) => {
+      mocks.findCoordinator.mockResolvedValue(null);
+      expect(await submit(formData({ leadCoordinatorId: '9' }))).toEqual({
+        errors: { leadCoordinatorId: ['Elegí un coordinador válido'] },
+      });
+      expect(mocks.findCoordinator).toHaveBeenCalledWith({
+        where: { id: 9, role: 'coordinator', status: 'active', deletedAt: null },
+        select: { id: true },
+      });
+      expect(mocks.createProject).not.toHaveBeenCalled();
+      expect(mocks.updateProject).not.toHaveBeenCalled();
+      expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+    }
+  );
+
+  it('does not update timestamps or audit when normalized values are unchanged', async () => {
+    unchangedRecords();
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it('audits only beneficiary changes with the year and changed fields', async () => {
+    unchangedRecords();
+    await expect(updateProject(10, {}, formData({ families: '31' }))).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.audit).toHaveBeenCalledExactlyOnceWith({
+      data: {
+        authorId: 7,
+        action: 'update',
+        entity: 'beneficiary',
+        entityId: 20,
+        details: { year: 2024, changedFields: ['families'] },
+      },
+    });
+  });
+
+  it('creates the selected year without updating another year', async () => {
+    unchangedRecords();
+    mocks.findBeneficiary.mockResolvedValue(null);
+    await expect(updateProject(10, {}, formData({ year: '2026' }))).rejects.toThrow('Redirect:');
+    expect(mocks.upsertBeneficiary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { projectId_year: { projectId: 10, year: 2026 } },
+        create: expect.objectContaining({ year: 2026 }),
+      })
+    );
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('saves multiple unique topics and audits a topic-only change', async () => {
+    unchangedRecords();
+    mocks.countTopics.mockResolvedValue(2);
+    const data = formData();
+    for (const id of ['4', '2', '4']) data.append('topicIds', id);
+    await expect(updateProject(10, {}, data)).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          projectTopics: { deleteMany: {}, create: [{ topicId: 2 }, { topicId: 4 }] },
+        }),
+      })
+    );
+    expect(mocks.audit).toHaveBeenCalledExactlyOnceWith({
+      data: {
+        authorId: 7,
+        action: 'update',
+        entity: 'project',
+        entityId: 10,
+        details: { changedFields: ['topicIds'] },
+      },
+    });
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+  });
+
+  it('creates topic relations in the same project write', async () => {
+    mocks.countTopics.mockResolvedValue(2);
+    const data = formData();
+    data.append('topicIds', '2');
+    data.append('topicIds', '4');
+    await expect(createProject({}, data)).rejects.toThrow('Redirect:');
+    expect(mocks.createProject).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        projectTopics: { create: [{ topicId: 2 }, { topicId: 4 }] },
+      }),
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/dashboard/projects');
+  });
+
+  it('rejects a nonexistent topic before any writes', async () => {
+    const data = formData();
+    data.append('topicIds', '999');
+    expect(await updateProject(10, {}, data)).toEqual({
+      errors: { topicIds: ['Elegí temáticas válidas'] },
+    });
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+  });
+
+  it('removes all topics when none are selected', async () => {
+    const { projectData } = splitProjectFormData(
+      projectFormSchema.parse(readProjectFormData(formData()))
+    );
+    mocks.findProject.mockResolvedValue({ ...projectData, projectTopics: [{ topicId: 2 }] });
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ projectTopics: { deleteMany: {}, create: [] } }),
+      })
+    );
+  });
+
+  it('preserves topics regardless of ordering without audit', async () => {
+    unchangedRecords();
+    const { projectData } = splitProjectFormData(
+      projectFormSchema.parse(readProjectFormData(formData()))
+    );
+    mocks.findProject.mockResolvedValue({
+      ...projectData,
+      projectTopics: [{ topicId: 4 }, { topicId: 2 }],
+    });
+    mocks.countTopics.mockResolvedValue(2);
+    const data = formData();
+    data.append('topicIds', '2');
+    data.append('topicIds', '4');
+    await expect(updateProject(10, {}, data)).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it('ignores forged cover photo updates', async () => {
+    await expect(
+      updateProject(10, {}, formData({ coverPhoto: 'https://invalid.test/photo.png' }))
+    ).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject.mock.calls[0][0].data).not.toHaveProperty('coverPhoto');
+  });
 });

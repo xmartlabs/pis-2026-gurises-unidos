@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { ProjectForm } from '@/components/project-form';
+import { ProjectForm } from '@/components/projects/form/project-form';
 
 it('submits prefilled values and the recorded year, preserves edits on failure, and allows retry', async () => {
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
+      topics={[]}
+      currentYear={2026}
       mode="edit"
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
@@ -56,16 +58,19 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
 
 it('keeps the original creation appearance separate from edit styling', () => {
   const { container } = render(
-    <ProjectForm coordinators={[]} departments={[]} submitAction={vi.fn()} />
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[]}
+      departments={[]}
+      submitAction={vi.fn()}
+    />
   );
   expect(container.querySelector('form')?.classList.contains('bg-muted/30')).toBe(true);
   expect(screen.queryByText('Cobertura')).toBeNull();
   expect(screen.queryByText('Ver vista pública →')).toBeNull();
   expect(screen.getByLabelText('Nombre del proyecto').classList.contains('md:text-sm')).toBe(true);
-  expect(
-    screen.getByText('Clic para subir imagen (JPG, PNG, máx. 5MB)').closest('label')?.style
-      .backgroundImage
-  ).toBe('');
+  expect((screen.getByLabelText('Foto de portada') as HTMLInputElement).disabled).toBe(true);
   expect(
     screen
       .getByText('Información básica')
@@ -77,4 +82,34 @@ it('keeps the original creation appearance separate from edit styling', () => {
       .getByRole('button', { name: 'Guardar borrador' })
       .classList.contains('disabled:opacity-100')
   ).toBe(false);
+});
+
+it('sends all checked topics and keeps them after a failed save', async () => {
+  const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
+  const { container } = render(
+    <ProjectForm
+      currentYear={2026}
+      topics={[
+        { id: 1, name: 'Education' },
+        { id: 2, name: 'Health' },
+      ]}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        topicIds: ['1', '2'],
+      }}
+      submitAction={submitAction}
+    />
+  );
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+  expect(submitAction.mock.calls[0][1].getAll('topicIds')).toEqual(['1', '2']);
+  expect((screen.getByLabelText('Education') as HTMLInputElement).checked).toBe(true);
+  expect((screen.getByLabelText('Health') as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(screen.getByLabelText('Education'));
+  expect(new FormData(container.querySelector('form')!).getAll('topicIds')).toEqual(['2']);
 });

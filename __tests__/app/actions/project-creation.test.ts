@@ -13,7 +13,17 @@ const { authMock, redirectMock, logAuditMock, transactionMock } = vi.hoisted(() 
 vi.mock('@/auth', () => ({ auth: authMock }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 vi.mock('@/lib/audit-log', () => ({ logAudit: logAuditMock }));
-vi.mock('@/lib/prisma', () => ({ default: { $transaction: transactionMock } }));
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    $transaction: transactionMock,
+    user: {
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null }),
+    },
+  },
+}));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 import { createProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
@@ -61,6 +71,8 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
 
   transactionMock.mockImplementation(async (callback) =>
     callback({
+      user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      topic: { count: vi.fn().mockResolvedValue(0) },
       project: { create: projectCreate },
       projectBeneficiary: { create: beneficiaryCreate },
     })
@@ -140,6 +152,7 @@ describe('createProject', () => {
         publicDescription: null,
         internalNotes: null,
         createdBy: 7,
+        projectTopics: { create: [] },
       },
     });
     expect(beneficiaryCreate).toHaveBeenCalledWith({

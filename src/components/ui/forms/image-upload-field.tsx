@@ -71,13 +71,13 @@ export function ImageUploadField({
               ? undefined
               : imageUrl
                 ? `url(${JSON.stringify(imageUrl)})`
-                : 'linear-gradient(172deg, #e7f0e9 7.14%, #f9f1e2 46.43%, #f5e8db 78.57%)',
+                : undefined,
         }}
         htmlFor={id}
         className={cn(
           'peer-focus-visible:ring-ring flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2',
           variant === 'detailed'
-            ? 'text-secondary-foreground bg-cover bg-center'
+            ? 'text-secondary-foreground bg-project-cover bg-cover bg-center'
             : 'border-input bg-muted text-muted-foreground hover:bg-accent border'
         )}
       >
