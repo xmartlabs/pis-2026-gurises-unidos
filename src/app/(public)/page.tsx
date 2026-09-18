@@ -2,9 +2,12 @@ import Link from 'next/link';
 import { ProjectCarousel } from '@/components/project-carousel';
 import { formatNumber } from '@/lib/format';
 import { ANNUAL_REACH, PROJECTS, getProjectReach, getTotals } from '@/lib/projects';
+import { Redirect } from 'next';
+import { redirect } from 'next/navigation';
 
 const HEADLINE_KEYS = ['nna', 'families', 'teachers', 'institutions'];
 
+/*
 export default function Home() {
   const totals = getTotals();
   const totalReach = ANNUAL_REACH[ANNUAL_REACH.length - 1].reach;
@@ -73,4 +76,9 @@ export default function Home() {
       </section>
     </main>
   );
+}
+*/
+
+export default function Home(){
+  return redirect('/login')
 }
