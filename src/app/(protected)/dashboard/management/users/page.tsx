@@ -15,7 +15,6 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { UsersTable } from '@/components/users/users-table';
 
-const USERS_MANAGEMENT_FINALIZED = false;
 
 const NOT_DELETED_WHERE = { deletedAt: null };
 
@@ -80,7 +79,7 @@ export default async function UsersPage() {
           </span>
         </div>
 
-        {USERS_MANAGEMENT_FINALIZED && (
+        {(
           <Button size="lg" className="h-9 gap-2.5 px-4 py-2">
             + Nuevo usuario
           </Button>
@@ -99,7 +98,7 @@ export default async function UsersPage() {
                 Cuando agregues personas al sistema, vas a verlas listadas acá con su rol y estado.
               </EmptyDescription>
             </EmptyHeader>
-            {USERS_MANAGEMENT_FINALIZED && (
+            {(
               <EmptyContent>
                 <Button>Crear primer usuario</Button>
               </EmptyContent>
@@ -138,7 +137,7 @@ export default async function UsersPage() {
             </Card>
           </div>
 
-          <UsersTable users={users} actionsEnabled={USERS_MANAGEMENT_FINALIZED} />
+          <UsersTable users={users}/>
         </div>
       )}
     </div>
