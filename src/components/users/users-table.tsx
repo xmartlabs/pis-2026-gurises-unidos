@@ -48,12 +48,12 @@ import {
   type User,
 } from '@/lib/users/format';
 
-function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
+function UserActionsMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" disabled={!actionsEnabled}>
+          <Button variant="ghost" size="icon">
             <MoreHorizontal />
           </Button>
         }
@@ -83,13 +83,7 @@ function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
   );
 }
 
-export function UsersTable({
-  users,
-  actionsEnabled = true,
-}: {
-  users: User[];
-  actionsEnabled?: boolean;
-}) {
+export function UsersTable({ users }: { users: User[] }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -246,7 +240,7 @@ export function UsersTable({
                 <p className="text-muted-foreground truncate text-sm">{user.email}</p>
                 <p className="text-foreground mt-1 text-sm">{ROLE_LABELS[user.role]}</p>
               </div>
-              <UserActionsMenu actionsEnabled={actionsEnabled} />
+              <UserActionsMenu />
             </CardContent>
             <CardContent className="flex items-center justify-between gap-3 px-4">
               <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
@@ -302,7 +296,7 @@ export function UsersTable({
                   {formatLastAccess(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
-                  <UserActionsMenu actionsEnabled={actionsEnabled} />
+                  <UserActionsMenu />
                 </TableCell>
               </TableRow>
             ))}
