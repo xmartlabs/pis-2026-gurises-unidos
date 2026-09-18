@@ -34,7 +34,11 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
         <DropdownMenuItem disabled className="text-muted-foreground text-xs">
           {user?.email ?? ''}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => logout()}>Cerrar sesión</DropdownMenuItem>
+        <form action={logout}>
+          <DropdownMenuItem nativeButton render={<button type="submit" className="w-full" />}>
+            Cerrar sesión
+          </DropdownMenuItem>
+        </form>
       </DropdownMenuContent>
     </DropdownMenu>
   );

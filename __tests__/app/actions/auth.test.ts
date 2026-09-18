@@ -98,11 +98,11 @@ describe('logout', () => {
     vi.mocked(signOut).mockReset();
   });
 
-  test('calls signOut with redirectTo: /', async () => {
+  test('calls signOut with redirectTo: /login', async () => {
     vi.mocked(signOut).mockResolvedValue(undefined);
 
     await logout();
 
-    expect(signOut).toHaveBeenCalledWith({ redirectTo: '/' });
+    expect(signOut).toHaveBeenCalledWith({ redirectTo: '/login' });
   });
 });
