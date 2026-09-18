@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { UserForm } from '@/components/user-form';
-import {Link} from "next/link";
 
 export default async function NewUserPage() {
   const session = await auth();
@@ -21,11 +20,10 @@ export default async function NewUserPage() {
           <p className="text-muted-foreground h-5 text-sm leading-5 font-normal tracking-normal">
             Administración
           </p>
-          <Link href="/users/new">
-            <h1 className="text-popover-foreground h-9 text-3xl leading-9 font-bold tracking-normal">
-              Nuevo usuario
-            </h1>
-          </Link>
+
+          <h1 className="text-popover-foreground h-9 text-3xl leading-9 font-bold tracking-normal">
+            Nuevo usuario
+          </h1>
 
           <p className="text-muted-foreground h-4.5 text-sm leading-4.5 font-normal tracking-normal">
             Administrá el acceso de las personas que utilizan el sistema.
