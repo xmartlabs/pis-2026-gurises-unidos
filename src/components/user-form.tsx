@@ -24,6 +24,20 @@ const initialState: UserFormState = {};
 
 type UserFormProps = {
   mode?: 'create' | 'edit';
+  initialValues?: {
+    firstName: string;
+    lastName: string;
+    documentId: string;
+    email: string;
+    role: 'admin' | 'coordinator';
+    status: 'active' | 'pendingInvitation' | 'disabled';
+    information: {
+      createdAt: string;
+      lastAccess: string;
+      createdBy: string;
+      updatedAt: string;
+    };
+  };
 };
 
 const ROLE_OPTIONS = [
@@ -32,11 +46,11 @@ const ROLE_OPTIONS = [
 ];
 
 const INFO_ROWS = [
-  { label: 'Fecha de creación' },
-  { label: 'Último acceso' },
-  { label: 'Creado por' },
-  { label: 'Última modificación' },
-];
+  { key: 'createdAt', label: 'Fecha de creación' },
+  { key: 'lastAccess', label: 'Último acceso' },
+  { key: 'createdBy', label: 'Creado por' },
+  { key: 'updatedAt', label: 'Última modificación' },
+] as const;
 
 const STATUS_OPTIONS = [
   {
@@ -61,7 +75,7 @@ function FieldError({ messages }: { messages?: string[] }) {
   return <p className="text-destructive text-xs leading-4">{messages[0]}</p>;
 }
 
-export function UserForm({ mode = 'create' }: UserFormProps) {
+export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const isEditing = mode === 'edit';
   const [state, formAction, pending] = useActionState(createUser, initialState);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
@@ -139,6 +153,7 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                       <Input
                         id="firstName"
                         name="firstName"
+                        defaultValue={initialValues?.firstName}
                         placeholder={isEditing ? 'Nombre' : 'Ej. Ana'}
                         required
                         maxLength={100}
@@ -153,6 +168,7 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                       <Input
                         id="lastName"
                         name="lastName"
+                        defaultValue={initialValues?.lastName}
                         placeholder={isEditing ? 'Apellido' : 'Ej. García'}
                         maxLength={100}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
@@ -168,6 +184,7 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                       <Input
                         id="documentId"
                         name="documentId"
+                        defaultValue={initialValues?.documentId}
                         placeholder="1.234.567-8"
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
                       />
@@ -181,6 +198,7 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                         id="email"
                         name="email"
                         type="email"
+                        defaultValue={initialValues?.email}
                         placeholder="nombre@gurises-unidos.org.uy"
                         maxLength={254}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
@@ -204,7 +222,7 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                   <NativeSelect
                     id="role"
                     name="role"
-                    defaultValue="coordinator"
+                    defaultValue={initialValues?.role ?? 'coordinator'}
                     className="[&_select]:text-muted-foreground w-full max-w-81 [&_select]:h-9 [&_select]:rounded-md [&_select]:pt-2 [&_select]:pb-2 [&_select]:pl-3 [&_select]:shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]"
                   >
                     {ROLE_OPTIONS.map((role) => (
@@ -226,7 +244,11 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                 <CardTitle className="leading-6 font-semibold">Estado</CardTitle>
               </CardHeader>
               <CardContent className="px-6">
-                <RadioGroup name="status" defaultValue="active" className="gap-3.5">
+                <RadioGroup
+                  name="status"
+                  defaultValue={initialValues?.status ?? 'active'}
+                  className="gap-3.5"
+                >
                   {STATUS_OPTIONS.map((status) => (
                     <Label
                       key={status.value}
@@ -375,7 +397,9 @@ export function UserForm({ mode = 'create' }: UserFormProps) {
                       className="flex items-center justify-between text-xs leading-4 font-medium"
                     >
                       <dt className="text-foreground">{row.label}</dt>
-                      <dd className="text-foreground">—</dd>
+                      <dd className="text-foreground">
+                        {initialValues?.information[row.key] ?? '—'}
+                      </dd>
                     </div>
                   ))}
                 </dl>

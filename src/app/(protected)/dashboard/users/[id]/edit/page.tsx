@@ -1,8 +1,10 @@
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import prisma from '@/lib/prisma';
+import { formatLastAccess, formatUserDate } from '@/lib/users/format';
 import { UserForm } from '@/components/user-form';
 
-export default async function EditUserPage() {
+export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
 
   if (!session?.user) {
@@ -12,6 +14,42 @@ export default async function EditUserPage() {
   if (session.user.role !== 'admin') {
     redirect('/dashboard/projects');
   }
+
+  const { id } = await params;
+  const userId = Number(id);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    notFound();
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      documentId: true,
+      email: true,
+      role: true,
+      status: true,
+      lastAccess: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+      creator: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+  });
+
+  if (!user || user.deletedAt) {
+    notFound();
+  }
+
+  const creatorName = user.creator ? `${user.creator.firstName} ${user.creator.lastName}` : '—';
 
   return (
     <div className="bg-primary-foreground flex w-full flex-1 flex-col">
@@ -31,7 +69,24 @@ export default async function EditUserPage() {
         </header>
 
         <div className="flex flex-1 flex-col">
-          <UserForm mode="edit" />
+          <UserForm
+            key={user.id}
+            mode="edit"
+            initialValues={{
+              firstName: user.firstName,
+              lastName: user.lastName,
+              documentId: user.documentId,
+              email: user.email,
+              role: user.role,
+              status: user.status,
+              information: {
+                createdAt: formatUserDate(user.createdAt),
+                lastAccess: formatLastAccess(user.lastAccess),
+                createdBy: creatorName,
+                updatedAt: formatUserDate(user.updatedAt),
+              },
+            }}
+          />
         </div>
       </div>
     </div>
