@@ -7,7 +7,7 @@ import { version } from '@/lib/version';
 import { formatNumber } from '@/lib/format';
 import prisma from '@/lib/prisma';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { connection } from 'next/server'
+import { connection } from 'next/server';
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
@@ -19,7 +19,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 async function Stats() {
-  await connection()
+  await connection();
   const [activeProjects, { _sum }, territories] = await Promise.all([
     prisma.project.count({
       where: {
