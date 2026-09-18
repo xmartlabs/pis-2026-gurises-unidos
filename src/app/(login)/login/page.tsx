@@ -10,10 +10,8 @@ import prisma from '@/lib/prisma';
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col gap-0.5 lg:gap-1">
-      <p className="text-3xl leading-9 font-bold tracking-normal text-foreground">{value}</p>
-      <p className="font-sans text-sm leading-5 font-normal tracking-normal text-[#A1A1AA]">
-        {label}
-      </p>
+      <p className="text-foreground text-3xl leading-9 font-bold tracking-normal">{value}</p>
+      <p className="text-muted-foreground text-sm leading-5 font-normal tracking-normal">{label}</p>
     </div>
   );
 }
@@ -47,9 +45,9 @@ async function Stats() {
     (_sum.coordinatedInstitutions ?? 0) +
     (_sum.communityLeaders ?? 0) +
     (_sum.basicServiceStaff ?? 0);
-    
-    return (
-      <div className="flex flex-row gap-3 pt-2 lg:gap-10 lg:pt-0">
+
+  return (
+    <div className="flex flex-row gap-3 pt-2 lg:gap-10 lg:pt-0">
       <Stat value={String(activeProjects)} label="Proyectos activos" />
       <Stat value={`+${formatNumber(totalReach)}`} label="Personas alcanzadas" />
       <Stat value={String(territories)} label="Territorios" />
@@ -69,15 +67,15 @@ function StatsFallback() {
 
 function RightColumn() {
   return (
-    <div className="theme-public flex grow flex-col place-content-center gap-4.5 bg-background pt-8 pr-6 pb-8 pl-6 lg:gap-12 lg:p-18">
+    <div className="theme-public bg-background flex grow flex-col place-content-center gap-4.5 pt-8 pr-6 pb-8 pl-6 lg:gap-12 lg:p-18">
       <div className="flex flex-col gap-4">
-        <p className="text-xs leading-4 font-medium tracking-[6%] text-primary">
+        <p className="text-primary text-xs leading-4 font-medium tracking-[6%]">
           PLATAFORMA DE GESTIÓN E IMPACTO
         </p>
-        <p className="font-sans text-3xl leading-10 font-bold tracking-normal text-foreground lg:text-4xl">
+        <p className="text-foreground text-3xl leading-10 font-bold tracking-normal lg:text-4xl">
           Cada dato cuenta una historia de impacto.
         </p>
-        <p className="font-sans text-base leading-6 font-normal tracking-normal text-muted-foreground">
+        <p className="text-muted-foreground text-base leading-6 font-normal tracking-normal">
           Gestioná proyectos, territorios y las personas que Gurises Unidos acompaña — todo en un
           mismo lugar.
         </p>
@@ -92,32 +90,32 @@ function RightColumn() {
 
 function LeftColumn() {
   return (
-    <div className="lg:w-140 2xl:min-w-[33%] flex flex-col justify-between gap-6 bg-background pt-10 pr-6 pb-8 pl-6 lg:min-w-140 lg:gap-0 lg:pt-14 lg:pr-18 lg:pb-10 lg:pl-18">
+    <div className="bg-background flex flex-col justify-between gap-6 pt-10 pr-6 pb-8 pl-6 lg:w-140 lg:min-w-140 lg:gap-0 lg:pt-14 lg:pr-18 lg:pb-10 lg:pl-18 2xl:min-w-[33%]">
       <div className="flex h-11 flex-row gap-2.5 lg:gap-3">
         <Image src={icon} className="h-11 basis-11 rounded-xl" alt="Logo" />
         <div className="flex flex-col gap-1">
-          <p className="font-sans text-base leading-6 font-semibold tracking-normal text-primary">
+          <p className="text-primary text-base leading-6 font-semibold tracking-normal">
             Gurises Unidos
           </p>
-          <p className="font-sans text-xs leading-4 font-normal tracking-normal text-muted-foreground">
+          <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
             ONG Uruguay
           </p>
         </div>
       </div>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1.5 lg:gap-2">
-          <p className="text-3xl leading-9 font-bold tracking-normal text-primary">Bienvenido</p>
-          <p className="text-sm leading-5 font-normal tracking-normal text-muted-foreground">
+          <p className="text-primary text-3xl leading-9 font-bold tracking-normal">Bienvenido</p>
+          <p className="text-muted-foreground text-sm leading-5 font-normal tracking-normal">
             Ingresá con tu cuenta para acceder al panel de gestión institucional.
           </p>
         </div>
         <LoginForm />
       </div>
       <footer className="hidden flex-col gap-2 lg:flex">
-        <p className="font-sans text-xs leading-4 font-normal tracking-normal text-muted-foreground">
+        <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
           Plataforma interna de gestión de Gurises Unidos.
         </p>
-        <p className="font-sans text-xs leading-4 font-normal tracking-normal text-muted-foreground">
+        <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
           Versión v{version}
         </p>
       </footer>
@@ -130,11 +128,11 @@ export default function LoginPage() {
     <div className="flex min-h-screen w-full flex-col font-sans lg:h-screen lg:flex-row">
       <LeftColumn />
       <RightColumn />
-      <footer className="theme-login flex flex-col gap-0.5 bg-background p-6 pt-5 lg:hidden">
-        <p className="font-sans text-xs leading-4 font-normal tracking-normal text-muted">
+      <footer className="bg-background flex flex-col gap-0.5 p-6 pt-5 lg:hidden">
+        <p className="text-muted text-xs leading-4 font-normal tracking-normal">
           Plataforma interna de gestión de Gurises Unidos.
         </p>
-        <p className="font-sans text-xs leading-4 font-normal tracking-normal text-muted">
+        <p className="text-muted text-xs leading-4 font-normal tracking-normal">
           Versión v{version}
         </p>
       </footer>
