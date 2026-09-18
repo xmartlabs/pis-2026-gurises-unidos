@@ -239,6 +239,25 @@ describe('resetPassword', () => {
     expect(result).toEqual({ success: true });
   });
 
+  test('allows resetting the password of a disabled account', async () => {
+    authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
+    findUniqueMock.mockResolvedValue(makeUser({ id: 9, status: 'disabled' }));
+    hashPasswordMock.mockResolvedValue('new-hash');
+    const { userUpdate } = setupTransaction();
+
+    const result = await resetPassword({}, buildFormData(VALID_FIELDS));
+
+    expect(userUpdate).toHaveBeenCalledWith({
+      where: { id: 9 },
+      data: {
+        passwordHash: 'new-hash',
+        passwordChangedAt: expect.any(Date),
+        mustChangePassword: true,
+      },
+    });
+    expect(result).toEqual({ success: true });
+  });
+
   test('returns a form error when the transaction fails', async () => {
     authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
     findUniqueMock.mockResolvedValue(makeUser({ id: 9 }));
