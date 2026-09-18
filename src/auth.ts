@@ -48,7 +48,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         select: { passwordChangedAt: true },
       });
 
-      if (currentUser?.passwordChangedAt && currentUser.passwordChangedAt.getTime() > token.iat * 1000) {
+      if (
+        currentUser?.passwordChangedAt &&
+        currentUser.passwordChangedAt.getTime() > token.iat * 1000
+      ) {
         return null;
       }
 
