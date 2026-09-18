@@ -8,42 +8,24 @@ import { Input } from '@/components/ui/input';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { normalizeDocumentId } from '@/lib/utils';
+import { Button } from '@/components/ui/button'
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, {});
   const [showPassword, setShowPassword] = useState(false);
-  const [valid, setValid] = useState(true);
-  const [credentialsErrorDismissed, setCredentialsErrorDismissed] = useState(false);
+  const [serverErrorDismissed, setServerErrorDismissed] = useState(false);
   const [prevState, setPrevState] = useState(state);
 
   if (state !== prevState) {
     setPrevState(state);
-    setCredentialsErrorDismissed(false);
+    setServerErrorDismissed(false);
   }
 
-  const showCredentialsError = state.error && !credentialsErrorDismissed;
-
-  function validateDocumentFormat(documentId: string) {
-    const normalizedDocumentId = normalizeDocumentId(documentId);
-
-    const isValidFormat = /^\d{7,8}$/.test(normalizedDocumentId);
-    setValid(isValidFormat);
-    return isValidFormat;
-  }
-
-  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-    const formData = new FormData(e.currentTarget);
-    const documentId = formData.get('documentId') as string;
-
-    const isValidFormat = validateDocumentFormat(documentId);
-    if (!isValidFormat) {
-      e.preventDefault();
-    }
-  }
+  const documentIdError = !serverErrorDismissed ? state.errors?.documentId?.[0] : undefined;
+  const showCredentialsError = state.formError && !serverErrorDismissed;
 
   return (
-    <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form action={formAction} className="flex flex-col gap-6">
       <div className="flex flex-col gap-4.5">
         <Field className="gap-1.5">
           <FieldLabel
@@ -60,18 +42,14 @@ export function LoginForm() {
             defaultValue={state.documentId}
             required
             autoComplete="username"
-            onChange={() => {
-              setValid(true);
-              setCredentialsErrorDismissed(true);
-            }}
-            onBlur={(e) => validateDocumentFormat(e.target.value)}
+            onChange={() => setServerErrorDismissed(true)}
             placeholder="Ej. 4.123.456-7"
-            aria-invalid={showCredentialsError || !valid ? 'true' : 'false'}
-            className="rounded-md px-3 py-1 shadow-xs/10 placeholder:text-secondary focus-visible:border-2 focus-visible:border-primary-bg focus-visible:ring-0 aria-invalid:ring-0"
+            aria-invalid={showCredentialsError || documentIdError ? 'true' : 'false'}
+            className="rounded-md px-3 py-1 shadow-xs/10 placeholder:text-muted-foreground focus-visible:border-2 focus-visible:border-primary-bg focus-visible:ring-0 aria-invalid:ring-0"
           />
-          {!valid && (
+          {documentIdError && (
             <FieldDescription className="py-1 font-sans text-xs leading-4 font-normal tracking-normal text-destructive">
-              La cédula debe tener 7 u 8 dígitos
+              {documentIdError}
             </FieldDescription>
           )}
         </Field>
@@ -84,8 +62,8 @@ export function LoginForm() {
               name="password"
               required
               placeholder="Tu contraseña"
-              className="px-3 py-1 placeholder:text-secondary"
-              onChange={() => setCredentialsErrorDismissed(true)}
+              className="px-3 py-1 placeholder:text-muted-foreground"
+              onChange={() => setServerErrorDismissed(true)}
               aria-invalid={showCredentialsError ? 'true' : 'false'}
             />
             <InputGroupAddon align="inline-end">
@@ -97,12 +75,12 @@ export function LoginForm() {
                 {showPassword ? (
                   <EyeIcon
                     strokeWidth={1}
-                    className="h-6 w-6 text-primary md:text-secondary lg:h-4.5 lg:w-4.5"
+                    className="h-6 w-6 text-primary md:text-muted-foreground lg:h-4.5 lg:w-4.5"
                   />
                 ) : (
                   <EyeOffIcon
                     strokeWidth={1}
-                    className="h-6 w-6 text-primary lg:h-4.5 lg:w-4.5 lg:text-secondary"
+                    className="h-6 w-6 text-primary lg:h-4.5 lg:w-4.5 lg:text-muted-foreground"
                   />
                 )}
               </button>
@@ -137,21 +115,18 @@ export function LoginForm() {
           aria-disabled="true"
           tabIndex={-1}
           onClick={(e) => e.preventDefault()}
-          className="hidden shrink-0 font-sans text-sm leading-5 font-medium tracking-normal text-primary lg:flex"
+          className="hidden shrink-0 font-sans text-sm leading-5 font-medium tracking-normal text-primary lg:flex hover:underline"
         >
           ¿Olvidaste tu contraseña?
         </Link>
       </div>
-
-      <button
+      <Button
         type="submit"
         disabled={pending}
-        className="h-9 w-full gap-2.5 rounded-lg bg-primary-bg px-4 py-2 shadow-xs/10 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-9 w-full shadow-xs/10"
       >
-        <p className="font-sans text-sm leading-5 font-medium tracking-normal text-primary-foreground">
-          Ingresar
-        </p>
-      </button>
+        Ingresar
+      </Button>
     </form>
   );
 }

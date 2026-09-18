@@ -5,7 +5,7 @@ import { toAuthUser, verifyUserCredentials } from './lib/credentials';
 import prisma from './lib/prisma';
 
 const SESSION_MAX_AGE = 12 * 60 * 60; // 12 hours
-const REMEMBER_ME_MAX_AGE = 30* 24 * 60 * 60
+const REMEMBER_ME_MAX_AGE = 30 * 24 * 60 * 60
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
