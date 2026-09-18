@@ -6,6 +6,8 @@ import loginImage from '@/assets/login-image.png';
 import { version } from '@/lib/version';
 import { formatNumber } from '@/lib/format';
 import prisma from '@/lib/prisma';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { connection } from 'next/server'
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
@@ -17,6 +19,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 async function Stats() {
+  await connection()
   const [activeProjects, { _sum }, territories] = await Promise.all([
     prisma.project.count({
       where: {
@@ -81,9 +84,11 @@ function RightColumn() {
         </p>
       </div>
       <Image src={loginImage} className="hidden aspect-auto w-150 lg:flex" alt="Red de Impacto" />
-      <Suspense fallback={<StatsFallback />}>
-        <Stats />
-      </Suspense>
+      <ErrorBoundary fallback={<StatsFallback />}>
+        <Suspense fallback={<StatsFallback />}>
+          <Stats />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }
@@ -129,10 +134,10 @@ export default function LoginPage() {
       <LeftColumn />
       <RightColumn />
       <footer className="bg-background flex flex-col gap-0.5 p-6 pt-5 lg:hidden">
-        <p className="text-muted text-xs leading-4 font-normal tracking-normal">
+        <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
           Plataforma interna de gestión de Gurises Unidos.
         </p>
-        <p className="text-muted text-xs leading-4 font-normal tracking-normal">
+        <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
           Versión v{version}
         </p>
       </footer>
