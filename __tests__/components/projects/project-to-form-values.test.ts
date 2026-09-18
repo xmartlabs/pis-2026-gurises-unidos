@@ -1,0 +1,68 @@
+import { expect, it } from 'vitest';
+import { projectToFormValues } from '@/components/projects/form/project-to-form-values';
+
+const PROJECT = {
+  id: 10,
+  name: 'Project',
+  status: 'active' as const,
+  intensity: 'high' as const,
+  startYear: 2024,
+  leadCoordinatorId: 2,
+  departmentId: 3,
+  zone: 'city' as const,
+  localityNeighborhood: null,
+  generalObjective: null,
+  publicDescription: null,
+  internalNotes: null,
+  coverPhoto: '/cover.png',
+  createdAt: new Date('2024-01-01'),
+  createdBy: 1,
+  updatedAt: null,
+  projectTopics: [
+    { projectId: 10, topicId: 1 },
+    { projectId: 10, topicId: 2 },
+  ],
+  projectBeneficiaries: [
+    {
+      id: 1,
+      projectId: 10,
+      year: 2025,
+      families: 30,
+      directChildrenAdolescents: 10,
+      indirectChildrenAdolescents: 20,
+      youth18To29: 2,
+      coordinatedInstitutions: 3,
+      communityLeaders: 4,
+      basicServiceStaff: 5,
+      authorId: 1,
+      recordedAt: new Date('2025-01-01'),
+    },
+  ],
+};
+
+it('defaults to the current year without copying historical beneficiary counts', () => {
+  expect(projectToFormValues(PROJECT, 2026)).toMatchObject({
+    year: '2026',
+    families: '0',
+    directChildrenAdolescents: '0',
+    topicIds: ['1', '2'],
+    coverPhotoUrl: '/cover.png',
+    internalNotes: '',
+  });
+});
+
+it('maps all counts from the requested year without mutating the project', () => {
+  const original = structuredClone(PROJECT);
+  const values = projectToFormValues(PROJECT, 2025);
+  expect(values).toMatchObject({
+    year: '2025',
+    families: '30',
+    directChildrenAdolescents: '10',
+    indirectChildrenAdolescents: '20',
+    youth18To29: '2',
+    coordinatedInstitutions: '3',
+    communityLeaders: '4',
+    basicServiceStaff: '5',
+  });
+  expect(PROJECT).toEqual(original);
+});

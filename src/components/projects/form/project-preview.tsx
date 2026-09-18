@@ -46,14 +46,7 @@ export function ProjectPreview({
         >
           Vista previa de la tarjeta pública
         </p>
-        <p
-          className={cn(
-            'text-xs leading-4',
-            variant === 'detailed' ? 'text-text-muted' : 'text-muted-foreground'
-          )}
-        >
-          Actualización automática
-        </p>
+        <p className="text-muted-foreground text-xs leading-4">Actualización automática</p>
       </div>
       <div
         className={cn(
@@ -65,14 +58,8 @@ export function ProjectPreview({
           <div
             className={cn(
               'relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden',
-              variant === 'default' && 'bg-muted'
+              variant === 'default' ? 'bg-muted' : 'bg-project-cover'
             )}
-            style={{
-              backgroundImage:
-                variant === 'detailed'
-                  ? 'linear-gradient(154deg, #e7f0e9 7.14%, #f9f1e2 46.43%, #f5e8db 78.57%)'
-                  : undefined,
-            }}
           >
             {values.coverPhotoUrl ? (
               <Image
@@ -116,12 +103,7 @@ export function ProjectPreview({
             </div>
           </div>
         </Card>
-        <p
-          className={cn(
-            'text-center text-xs leading-4',
-            variant === 'detailed' ? 'text-text-muted' : 'text-muted-foreground'
-          )}
-        >
+        <p className="text-muted-foreground text-center text-xs leading-4">
           Así se verá en el listado público
         </p>
         {variant === 'detailed' && (

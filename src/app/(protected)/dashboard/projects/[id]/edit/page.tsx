@@ -1,37 +1,44 @@
 import { ProjectHistory } from '@/components/projects/form/project-history';
 import { STATUS_LABEL, INTENSITY_LABEL } from '@/lib/project-display';
 import { notFound, redirect } from 'next/navigation';
-import { auth } from '@/auth';
+import { requireUser } from '@/lib/auth/require-user';
+import { canEditProject } from '@/lib/projects/permissions';
+import { parseId } from '@/lib/validation/ids';
 import { updateProject } from '@/app/actions/projects';
-import { EditProjectForm } from '@/components/edit-project-form';
+import { ProjectForm } from '@/components/projects/form/project-form';
+import { projectToFormValues } from '@/components/projects/form/project-to-form-values';
 import prisma from '@/lib/prisma';
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect('/login');
-  }
+  const user = await requireUser();
 
   const { id } = await params;
-  const projectId = Number(id);
+  const projectId = parseId(id);
 
-  if (!Number.isInteger(projectId) || projectId <= 0 || projectId > 2_147_483_647) {
+  if (!projectId) {
     notFound();
   }
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { projectBeneficiaries: { orderBy: { year: 'desc' }, take: 1 } },
+    include: { projectBeneficiaries: { orderBy: { year: 'desc' } }, projectTopics: true },
   });
 
   if (!project) {
     notFound();
   }
 
-  const [coordinators, departments, history] = await Promise.all([
+  if (!canEditProject(user, project)) redirect(`/dashboard/projects/${project.id}`);
+  const currentYear = new Date().getFullYear();
+
+  const [coordinators, departments, history, topics] = await Promise.all([
     prisma.user.findMany({
-      where: { OR: [{ role: 'coordinator' }, { id: project.leadCoordinatorId }] },
+      where: {
+        OR: [
+          { role: 'coordinator', status: 'active', deletedAt: null },
+          { id: project.leadCoordinatorId },
+        ],
+      },
       orderBy: { firstName: 'asc' },
       select: { id: true, firstName: true, lastName: true },
     }),
@@ -47,6 +54,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         author: { select: { firstName: true, lastName: true } },
       },
     }),
+    prisma.topic.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
   ]);
 
   const submitAction = updateProject.bind(null, project.id);
@@ -61,26 +69,30 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
             className={
               project.status === 'active'
                 ? 'bg-status-success size-2 rounded-full'
-                : 'bg-text-muted size-2 rounded-full'
+                : 'bg-muted-foreground size-2 rounded-full'
             }
           />
           <span className={project.status === 'active' ? 'text-status-success' : undefined}>
             {STATUS_LABEL[project.status]}
           </span>
-          <span className="text-text-muted">•</span>
+          <span className="text-muted-foreground">•</span>
           <span>{INTENSITY_LABEL[project.intensity]} intensidad</span>
         </div>
       </div>
-      <EditProjectForm
+      <ProjectForm
         key={project.id}
-        project={project}
+        mode="edit"
+        initialValues={projectToFormValues(project, currentYear)}
+        beneficiaryRecords={project.projectBeneficiaries}
+        topics={topics}
+        currentYear={currentYear}
         coordinators={coordinators}
         departments={departments}
         cancelHref={`/dashboard/projects/${project.id}`}
         submitAction={submitAction}
       >
         <ProjectHistory entries={history} />
-      </EditProjectForm>
+      </ProjectForm>
     </div>
   );
 }
