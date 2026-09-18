@@ -30,7 +30,7 @@ export async function changePassword(
 ): Promise<ChangePasswordFormState> {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return { formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.' };
   }
 
