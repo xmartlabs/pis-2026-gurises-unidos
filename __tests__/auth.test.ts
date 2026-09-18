@@ -137,13 +137,14 @@ describe('jwt', () => {
     vi.mocked(prisma.user.findUnique).mockReset();
   });
 
-  test('sets sub and role when a user is present', async () => {
+  test('sets sub, role, and remember when a user is present', async () => {
     const token = { sub: 'old' };
-    const user = { id: '42', role: 'coordinator' as const };
+    const user = { id: '42', role: 'coordinator' as const, remember: true };
 
     await expect(capturedConfig().callbacks?.jwt?.({ token, user } as never)).resolves.toEqual({
       sub: '42',
       role: 'coordinator',
+      remember: true,
     });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
