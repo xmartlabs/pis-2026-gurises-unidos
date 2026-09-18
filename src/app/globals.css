@@ -72,9 +72,6 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-primary-bg: var(--primary-bg);
-  --color-brand-deep: var(--brand-deep);
-  --color-on-dark: var(--on-dark);
-  --color-dark-muted: var(--dark-muted);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -166,21 +163,6 @@
   --sidebar-accent-foreground: #f5970c;
   --sidebar-border: #a9c2b833;
   --sidebar-ring: #f5970c;
-}
-
-.theme-login {
-  --background: #ffffff;
-  --primary: #0a0a0a;
-  --primary-bg: #1a1a1a;
-  --primary-foreground: #ffffff;
-  --secondary: #737373;
-  --muted: #a1a1aa;
-  --input: #e5e5e7;
-  --destructive: #ff4342;
-  --brand-deep: #0e3a2e;
-  --on-dark: #ededed;
-  --accent: #f5970c;
-  --dark-muted: #a9c2b8;
 }
 
 @layer base {
