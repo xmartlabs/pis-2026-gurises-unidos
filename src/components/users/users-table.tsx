@@ -64,7 +64,7 @@ function UserActionsMenu({ user }: { user: User }) {
           Acciones
         </DropdownMenuItem>
         <DropdownMenuItem
-          render={<Link href={`/dashboard/management/users/${user.id}/edit`} />}
+          render={<Link href={`/management/users/${user.id}/edit`} />}
           className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
         >
           Editar

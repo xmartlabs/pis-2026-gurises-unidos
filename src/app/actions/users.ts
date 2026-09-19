@@ -81,7 +81,7 @@ export async function createUser(
       return { formError: 'No se pudo crear el usuario. Intentá de nuevo.' };
     }
 
-    redirect('/dashboard/management/users');
+    redirect('/management/users');
   }
 
   return {};

@@ -24,7 +24,7 @@ vi.mock('@/app/actions/users', () => ({
   createUser: vi.fn(async () => ({})),
 }));
 
-import EditUserPage from '@/app/(protected)/dashboard/management/users/[id]/edit/page';
+import EditUserPage from '@/app/(protected)/management/users/[id]/edit/page';
 
 beforeEach(() => {
   authMock.mockReset();

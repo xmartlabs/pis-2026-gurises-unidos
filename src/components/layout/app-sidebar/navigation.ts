@@ -90,7 +90,7 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
       {
         id: 'users',
         title: 'Usuarios',
-        href: '/dashboard/management/users',
+        href: '/management/users',
         icon: Users,
       },
     ],
