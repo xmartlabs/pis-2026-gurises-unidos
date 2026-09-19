@@ -6,12 +6,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { logout } from '@/app/actions/auth';
 import { getInitials } from '@/lib/utils';
 import Image from 'next/image';
+import { UserRound } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 interface TopbarProps {
@@ -25,7 +27,7 @@ interface TopbarProps {
 export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   const userMenu = (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger aria-label="Abrir menú de usuario">
         <Avatar className="size-8 cursor-pointer">
           <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
         </Avatar>
@@ -34,6 +36,11 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
         <DropdownMenuItem disabled className="text-muted-foreground text-xs">
           {user?.email ?? ''}
         </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/dashboard/profile" />}>
+          <UserRound />
+          Mi perfil
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => logout()}>Cerrar sesión</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
