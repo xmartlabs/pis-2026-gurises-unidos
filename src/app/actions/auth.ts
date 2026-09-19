@@ -6,9 +6,10 @@ import { flattenError } from 'zod';
 import { signIn, signOut } from '@/auth';
 import { loginSchema, type LoginFormState } from '@/lib/validation/auth';
 
-export type LoginState = LoginFormState;
-
-export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
+export async function login(
+  _prevState: LoginFormState,
+  formData: FormData
+): Promise<LoginFormState> {
   const rawDocumentId = String(formData.get('documentId') ?? '');
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
 
