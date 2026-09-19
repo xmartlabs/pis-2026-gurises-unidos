@@ -15,7 +15,6 @@ const PROJECT_LIST_SELECT = {
   department: { select: { id: true, name: true } },
   projectBeneficiaries: {
     orderBy: { year: 'desc' },
-    take: 1,
     select: {
       year: true,
       directChildrenAdolescents: true,
@@ -32,7 +31,7 @@ const PROJECT_LIST_SELECT = {
 type ProjectListRow = Prisma.ProjectGetPayload<{ select: typeof PROJECT_LIST_SELECT }>;
 
 export type ProjectListItem = Omit<ProjectListRow, 'projectBeneficiaries'> & {
-  beneficiaries: { year: number; total: number } | null;
+  beneficiaries: (ProjectListRow['projectBeneficiaries'][number] & { total: number })[];
 };
 
 export type ProjectListPage = {
@@ -69,11 +68,12 @@ export function buildProjectWhere(filters: ProjectFilters): Prisma.ProjectWhereI
 }
 
 function toListItem({ projectBeneficiaries, ...project }: ProjectListRow): ProjectListItem {
-  const latest = projectBeneficiaries[0];
-
   return {
     ...project,
-    beneficiaries: latest ? { year: latest.year, total: sumBeneficiaries(latest) } : null,
+    beneficiaries: projectBeneficiaries.map((record) => ({
+      ...record,
+      total: sumBeneficiaries(record),
+    })),
   };
 }
 

@@ -36,6 +36,16 @@ const PROJECTS = [
         communityLeaders: 4,
         basicServiceStaff: 6,
       },
+      {
+        year: 2024,
+        directChildrenAdolescents: 8,
+        indirectChildrenAdolescents: 0,
+        youth18To29: 0,
+        families: 2,
+        coordinatedInstitutions: 0,
+        communityLeaders: 0,
+        basicServiceStaff: 0,
+      },
     ],
   },
   {
@@ -77,9 +87,21 @@ describe('AC1: paginated listing with each project data', () => {
       localityNeighborhood: 'Cerro',
       leadCoordinator: CARLOS,
       department: MONTEVIDEO,
-      beneficiaries: { year: 2025, total: 31 },
+      beneficiaries: [
+        { ...PROJECTS[0].projectBeneficiaries[0], total: 31 },
+        { ...PROJECTS[0].projectBeneficiaries[1], total: 10 },
+      ],
     });
-    expect(items[1].beneficiaries).toBeNull();
+    expect(items[1].beneficiaries).toEqual([]);
+  });
+
+  test('requests every beneficiary year, newest first', async () => {
+    await listWith({});
+
+    const { projectBeneficiaries } = findManyArgs().select;
+
+    expect(projectBeneficiaries.orderBy).toEqual({ year: 'desc' });
+    expect(projectBeneficiaries).not.toHaveProperty('take');
   });
 
   test('lists projects alphabetically by name', async () => {
