@@ -32,7 +32,7 @@ function ProjectCardSkeleton() {
 
 export function ProjectsCardListSkeleton() {
   return (
-    <div className="bg-background flex h-screen w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
+    <div className="bg-background flex h-fit w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
       <div className="flex flex-row items-center justify-between gap-3">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="hidden h-8 w-32 rounded-md lg:block" />

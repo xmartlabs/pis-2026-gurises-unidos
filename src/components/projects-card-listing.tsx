@@ -65,7 +65,7 @@ function ProjectCard({
     <Link href={`/dashboard/projects/${id}`} className="block">
       <Card className="bg-card flex flex-col gap-3.5 rounded-lg px-5 py-4.5 hover:shadow-sm/10">
         <CardHeader className="text-primary flex flex-row justify-between p-0! text-[16px] font-semibold">
-          <h1>{name}</h1>
+          <h2>{name}</h2>
           <Badge
             variant={statusMeta.badgeVariant}
             className="h-5.5 gap-2.5 rounded-lg px-5.5 py-0.5 text-xs leading-4 font-medium tracking-normal"
@@ -138,7 +138,7 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
   );
 
   return (
-    <div className="bg-background flex h-screen w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
+    <div className="bg-background flex h-fit w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
       <div className="flex flex-row items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <p className="text-muted-foreground block text-xs leading-4 font-medium lg:hidden">
