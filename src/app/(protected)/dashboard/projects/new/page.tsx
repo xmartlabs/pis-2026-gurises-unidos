@@ -1,18 +1,14 @@
-import { redirect } from 'next/navigation';
+import { createProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
-import { auth } from '@/auth';
-import { ProjectForm } from '@/components/project-form';
+import { requireUser } from '@/lib/auth/require-user';
+import { ProjectForm } from '@/components/projects/form/project-form';
 
 export default async function NewProjectPage() {
-  const session = await auth();
+  await requireUser();
 
-  if (!session?.user) {
-    redirect('/login');
-  }
-
-  const [coordinators, departments] = await Promise.all([
+  const [coordinators, departments, topics] = await Promise.all([
     prisma.user.findMany({
-      where: { role: 'coordinator' },
+      where: { role: 'coordinator', status: 'active', deletedAt: null },
       orderBy: { firstName: 'asc' },
       select: { id: true, firstName: true, lastName: true },
     }),
@@ -20,7 +16,16 @@ export default async function NewProjectPage() {
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
     }),
+    prisma.topic.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
   ]);
 
-  return <ProjectForm coordinators={coordinators} departments={departments} />;
+  return (
+    <ProjectForm
+      topics={topics}
+      currentYear={new Date().getFullYear()}
+      coordinators={coordinators}
+      departments={departments}
+      submitAction={createProject}
+    />
+  );
 }
