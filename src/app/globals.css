@@ -132,7 +132,7 @@
   --sidebar-ring: oklch(0.556 0 0);
   --status-active: oklch(0.3925 0.0896 152.54);
   --status-active-foreground: oklch(0.8003 0.1821 151.71);
-  --status-pending: oklch(0.4210 0.0897 57.71);
+  --status-pending: oklch(0.421 0.0897 57.71);
   --status-pending-foreground: oklch(0.8369 0.1644 84.43);
 }
 

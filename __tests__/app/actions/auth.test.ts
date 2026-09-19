@@ -15,10 +15,13 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }));
 
-function makeFormData(documentId: string, password: string) {
+function makeFormData(documentId: string, password: string, remember = false) {
   const formData = new FormData();
   formData.set('documentId', documentId);
   formData.set('password', password);
+  if (remember) {
+    formData.set('rememberCheck', 'on');
+  }
   return formData;
 }
 
@@ -31,19 +34,33 @@ describe('login', () => {
     });
   });
 
-  test('signs in with credentials and redirects to the dashboard', async () => {
+  test('signs in with the normalized document id and redirects to the dashboard', async () => {
     vi.mocked(signIn).mockResolvedValue(undefined);
 
-    await expect(login({}, makeFormData('4.123.456-7', 'password'))).rejects.toThrow(
+    await expect(login({}, makeFormData('1.111.111-1', 'password'))).rejects.toThrow(
       'NEXT_REDIRECT'
     );
 
     expect(signIn).toHaveBeenCalledWith('credentials', {
-      documentId: '4.123.456-7',
+      documentId: '11111111',
       password: 'password',
+      remember: 'false',
       redirect: false,
     });
     expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
+  });
+
+  test('passes remember: "true" when the checkbox is checked', async () => {
+    vi.mocked(signIn).mockResolvedValue(undefined);
+
+    await expect(login({}, makeFormData('1.111.111-1', 'password', true))).rejects.toThrow(
+      'NEXT_REDIRECT'
+    );
+
+    expect(signIn).toHaveBeenCalledWith(
+      'credentials',
+      expect.objectContaining({ remember: 'true' })
+    );
   });
 
   test.each([
@@ -52,9 +69,9 @@ describe('login', () => {
   ])('returns invalid credentials with the raw document id on %s', async (_name, makeError) => {
     vi.mocked(signIn).mockRejectedValue(makeError());
 
-    await expect(login({}, makeFormData('4.123.456-7', 'wrong'))).resolves.toEqual({
-      error: 'Invalid credentials',
-      documentId: '4.123.456-7',
+    await expect(login({}, makeFormData('1.111.111-1', 'wrong'))).resolves.toEqual({
+      formError: 'Invalid credentials',
+      documentId: '1.111.111-1',
     });
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -62,7 +79,7 @@ describe('login', () => {
   test('rethrows errors that are not AuthError', async () => {
     vi.mocked(signIn).mockRejectedValue(new Error('network'));
 
-    await expect(login({}, makeFormData('41234567', 'password'))).rejects.toThrow('network');
+    await expect(login({}, makeFormData('11111111', 'password'))).rejects.toThrow('network');
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -70,25 +87,27 @@ describe('login', () => {
     vi.mocked(signIn).mockRejectedValue(new AuthError());
 
     await expect(
-      login({ error: 'old', documentId: 'old' }, makeFormData('4.123.456-7', 'wrong'))
+      login({ formError: 'old', documentId: 'old' }, makeFormData('1.111.111-1', 'wrong'))
     ).resolves.toEqual({
-      error: 'Invalid credentials',
-      documentId: '4.123.456-7',
+      formError: 'Invalid credentials',
+      documentId: '1.111.111-1',
     });
   });
 
-  test('forwards empty documentId and a null password when fields are missing', async () => {
-    vi.mocked(signIn).mockRejectedValue(new AuthError());
+  test('rejects a document id that fails the Uruguayan checksum without calling signIn', async () => {
+    const result = await login({}, makeFormData('41234567', 'password'));
 
-    await expect(login({}, new FormData())).resolves.toEqual({
-      error: 'Invalid credentials',
-      documentId: '',
-    });
-    expect(signIn).toHaveBeenCalledWith('credentials', {
-      documentId: '',
-      password: null,
-      redirect: false,
-    });
+    expect(result.errors?.documentId).toBeDefined();
+    expect(signIn).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test('returns validation errors when fields are missing, without calling signIn', async () => {
+    const result = await login({}, new FormData());
+
+    expect(result.errors?.documentId).toBeDefined();
+    expect(result.errors?.password).toBeDefined();
+    expect(signIn).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
 });
