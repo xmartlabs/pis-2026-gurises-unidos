@@ -52,7 +52,7 @@ type ProjectCardProps = {
   coordinator: string;
   intensity: ProjectWithRelations['intensity'];
   year: number;
-  totalReach: number | null;
+  totalReach: number;
 };
 
 function ProjectCard({
@@ -106,10 +106,10 @@ function ProjectCard({
         <Separator />
         <CardDescription className="flex flex-row items-center justify-between">
           <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
-            {totalReach !== null ? `Beneficiarios ${year}` : 'Sin datos'}
+            Beneficiarios {year}
           </p>
           <p className="text-primary text-[20px] leading-7 font-bold tracking-normal">
-            {totalReach !== null ? formatNumber(totalReach) : '—'}
+            {formatNumber(totalReach)}
           </p>
         </CardDescription>
       </Card>
@@ -136,7 +136,9 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
   const current = STATUS_FILTERS.find((f) => f.value === status)!;
 
   const filtered = projects.filter(
-    (p) => status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status
+    (p) =>
+      (status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status) &&
+      p.projectBeneficiaries.some((b) => b.year === year)
   );
 
   return (
@@ -213,7 +215,7 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
             {filtered.length} proyectos
           </p>
         </div>
-        <div className="hidden items-center gap-1.5 lg:flex flex-row">
+        <div className="hidden flex-row items-center gap-1.5 lg:flex">
           <Tabs value={year} onValueChange={(value) => setYear(value as number)}>
             <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
               <TabsList>
@@ -240,10 +242,8 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
         {filtered.map((p) => {
-          if (year === undefined) return null;
-
-          const yearBeneficiaries = p.projectBeneficiaries.find((b) => b.year === year);
-          const totalReach = yearBeneficiaries ? sumBeneficiaries(yearBeneficiaries) : null;
+          const yearBeneficiaries = p.projectBeneficiaries.find((b) => b.year === year)!;
+          const totalReach = sumBeneficiaries(yearBeneficiaries);
           return (
             <ProjectCard
               key={p.id}
@@ -253,7 +253,7 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
               territory={p.department}
               coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
               intensity={p.intensity}
-              year={year}
+              year={year!}
               totalReach={totalReach}
             />
           );
