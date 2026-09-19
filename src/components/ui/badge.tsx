@@ -17,7 +17,7 @@ const badgeVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         active: 'bg-status-active text-status-active-foreground',
         pending: 'bg-status-pending text-status-pending-foreground',
-        disabled: 'bg-secondary text-foreground'
+        disabled: 'bg-secondary text-foreground',
       },
     },
     defaultVariants: {
