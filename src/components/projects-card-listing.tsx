@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Prisma } from '@/generated/prisma/client';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -15,18 +14,13 @@ import { cn } from 'cn';
 import { Card, CardDescription, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { sumBeneficiaries, INTENSITY_LABEL } from '@/lib/project-display';
+import { INTENSITY_LABEL } from '@/lib/project-display';
 import { formatNumber } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
+import type { ProjectListItem } from '@/lib/projects/list';
 import type { ProjectStatus } from '@/generated/prisma/enums';
 
-type ProjectWithRelations = Prisma.ProjectGetPayload<{
-  include: {
-    leadCoordinator: { select: { firstName: true; lastName: true } };
-    department: true;
-    projectBeneficiaries: true;
-  };
-}>;
+type ProjectWithRelations = ProjectListItem;
 
 type ProjectStatusDisplay = 'active' | 'paused' | 'closed';
 
@@ -130,7 +124,7 @@ type StatusFilterValue = (typeof STATUS_FILTERS)[number]['value'];
 
 export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[] }) {
   const projectYears = Array.from(
-    new Set(projects.flatMap((p) => p.projectBeneficiaries.map((b) => b.year)))
+    new Set(projects.flatMap((p) => p.beneficiaries.map((b) => b.year)))
   ).sort((a, b) => b - a);
 
   const [status, setStatus] = useState<StatusFilterValue>('all');
@@ -140,7 +134,7 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
   const filtered = projects.filter(
     (p) =>
       (status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status) &&
-      p.projectBeneficiaries.some((b) => b.year === year)
+      p.beneficiaries.some((b) => b.year === year)
   );
 
   return (
@@ -249,8 +243,8 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const yearBeneficiaries = p.projectBeneficiaries.find((b) => b.year === year)!;
-            const totalReach = sumBeneficiaries(yearBeneficiaries);
+            const yearBeneficiaries = p.beneficiaries.find((b) => b.year === year)!;
+            const totalReach = yearBeneficiaries.total;
             return (
               <ProjectCard
                 key={p.id}
