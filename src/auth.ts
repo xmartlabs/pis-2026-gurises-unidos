@@ -43,17 +43,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return token;
       }
 
+      const userId = Number(token.sub);
+
+      if (!Number.isSafeInteger(userId) || userId <= 0) {
+        return null;
+      }
+
       const currentUser = await prisma.user.findUnique({
-        where: { id: Number(token.sub) },
-        select: { passwordChangedAt: true },
+        where: { id: userId },
+        select: {
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          status: true,
+          passwordChangedAt: true,
+          deletedAt: true,
+        },
       });
 
+      if (!currentUser || currentUser.deletedAt || currentUser.status !== 'active') {
+        return null;
+      }
+
       if (
-        currentUser?.passwordChangedAt &&
+        currentUser.passwordChangedAt &&
         currentUser.passwordChangedAt.getTime() > token.iat * 1000
       ) {
         return null;
       }
+
+      token.name = `${currentUser.firstName} ${currentUser.lastName}`;
+      token.email = currentUser.email;
+      token.role = currentUser.role;
 
       return token;
     },
