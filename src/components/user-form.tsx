@@ -422,7 +422,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
           </p>
         )}
         <Link
-          href="/dashboard/management/users"
+          href="/management/users"
           aria-disabled={pending}
           className={cn(
             buttonVariants({ variant: 'ghost', size: 'lg' }),
