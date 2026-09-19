@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AppBreadcrumb } from '@/components/breadcrumb';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -15,14 +15,13 @@ import Image from 'next/image';
 import logo from '@/assets/logo.png';
 
 interface TopbarProps {
-  breadcrumb?: string;
   user?: {
     name?: string | null;
     email?: string | null;
   };
 }
 
-export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
+export function Topbar({ user }: TopbarProps) {
   const userMenu = (
     <DropdownMenu>
       <DropdownMenuTrigger>
@@ -44,7 +43,7 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
   );
 
   return (
-    <header className="border-border bg-background flex h-[60px] items-center justify-between gap-4 border-b px-4 md:px-6">
+    <header className="border-border bg-background sticky top-0 z-10 flex h-[60px] items-center justify-between gap-4 border-b px-4 md:px-6">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
         <Image
@@ -55,13 +54,7 @@ export function Topbar({ breadcrumb = 'Vista general', user }: TopbarProps) {
           height={32}
         />
         <span className="text-sm font-semibold md:hidden">Gurises Unidos</span>
-        <div className="hidden items-baseline gap-2 text-sm md:flex">
-          <Link href="/dashboard/projects" className="font-medium hover:underline">
-            Dashboard
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-muted-foreground">{breadcrumb}</span>
-        </div>
+        <AppBreadcrumb />
       </div>
 
       {/* TODO: re-enable search, year toggle, and country select once real filtering is implemented */}

@@ -83,7 +83,7 @@ export default async function UsersPage() {
           size="lg"
           className="h-9 gap-2.5 px-4 py-2"
           nativeButton={false}
-          render={<Link href="/dashboard/management/users/new" />}
+          render={<Link href="/management/users/new" />}
         >
           + Nuevo usuario
         </Button>
@@ -102,7 +102,7 @@ export default async function UsersPage() {
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button nativeButton={false} render={<Link href="/dashboard/management/users/new" />}>
+              <Button nativeButton={false} render={<Link href="/management/users/new" />}>
                 Crear primer usuario
               </Button>
             </EmptyContent>
