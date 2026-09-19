@@ -104,6 +104,9 @@ Requiere en el repo (Settings → Secrets and variables → Actions): los secret
 _variable_ y no como secret a propósito: como secret, GitHub lo enmascara y los logs quedan con
 `/srv/pis-***` en vez de la ruta real.
 
+Los workflows de datos de staging necesitan además el secret `SEED_USER_PASSWORD`, pero en el
+**environment `staging`** (Settings → Environments → `staging`), no a nivel repo.
+
 ### Ver logs y estado en la VM
 
 ```bash
@@ -171,6 +174,29 @@ cd /srv/pis-main
 COMPOSE_PROJECT_NAME=pis-main docker compose exec db \
   psql -U postgres -d app -c "SELECT migration_name, finished_at FROM _prisma_migrations ORDER BY finished_at;"
 ```
+
+### Datos de staging
+
+Dos workflows manuales (Actions → correr con **Run workflow**) dejan la base de staging en un
+estado conocido. Los dos usan el mismo túnel SSH que las migraciones y comparten el grupo de
+concurrencia `deploy-staging`, así que nunca corren en paralelo con un deploy.
+
+| Workflow          | Qué hace                                                            |
+| ----------------- | ------------------------------------------------------------------- |
+| **Seed staging**  | Carga el dataset de prueba: 19 departamentos, 6 usuarios, 25 proyectos con 1 a 4 años de beneficiarios (4 quedan sin ninguno). Es idempotente: correrlo de nuevo no duplica nada. |
+| **Clean staging** | Vacía la base. Input `mode`: `reset` borra todo y recrea el admin, `wipe` borra todo sin dejar admin. |
+
+El admin es `admin@gurisesunidos.test` (documento `11111111`) y su contraseña es el secret
+`SEED_USER_PASSWORD` del environment `staging`.
+
+Después de un `wipe` no se puede entrar a la app hasta correr **Seed staging** o
+**Clean staging** en modo `reset`.
+
+`Clean staging` pide escribir `staging` en el input `confirm` para arrancar. Es a propósito: como
+no hay backups, un `wipe` no se deshace.
+
+El dataset vive en `prisma/seed-staging.ts`, separado del seed local (`prisma/seed.ts`). El único
+fixture compartido es el admin, en `prisma/fixtures.ts`.
 
 ### Pendiente
 
