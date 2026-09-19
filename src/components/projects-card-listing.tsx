@@ -242,25 +242,31 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
         {filtered.length} proyectos
       </p>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
-        {filtered.map((p) => {
-          const yearBeneficiaries = p.projectBeneficiaries.find((b) => b.year === year)!;
-          const totalReach = sumBeneficiaries(yearBeneficiaries);
-          return (
-            <ProjectCard
-              key={p.id}
-              id={p.id}
-              name={p.name}
-              status={p.status}
-              territory={p.department}
-              coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
-              intensity={p.intensity}
-              year={year!}
-              totalReach={totalReach}
-            />
-          );
-        })}
-      </div>
+      {filtered.length === 0 ? (
+        <p className="text-muted-foreground py-10 text-center text-sm">
+          No hay proyectos con estas características.
+        </p>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
+          {filtered.map((p) => {
+            const yearBeneficiaries = p.projectBeneficiaries.find((b) => b.year === year)!;
+            const totalReach = sumBeneficiaries(yearBeneficiaries);
+            return (
+              <ProjectCard
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                status={p.status}
+                territory={p.department}
+                coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
+                intensity={p.intensity}
+                year={year!}
+                totalReach={totalReach}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
