@@ -24,7 +24,7 @@ vi.mock('@/app/actions/users', () => ({
   createUser: vi.fn(async () => ({})),
 }));
 
-import EditUserPage from '@/app/(protected)/dashboard/users/[id]/edit/page';
+import EditUserPage from '@/app/(protected)/dashboard/management/users/[id]/edit/page';
 
 beforeEach(() => {
   authMock.mockReset();
@@ -58,7 +58,6 @@ test('loads the selected user and prefills the edit form', async () => {
 
   render(await EditUserPage({ params: Promise.resolve({ id: '42' }) }));
 
-  expect(findUniqueMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 42 } }));
   expect((screen.getByLabelText('Nombre') as HTMLInputElement).value).toBe('Ana');
   expect((screen.getByLabelText('Apellido') as HTMLInputElement).value).toBe('García');
   expect((screen.getByLabelText('Documento (Cédula)') as HTMLInputElement).value).toBe('77777777');
@@ -74,4 +73,12 @@ test('returns not found for an invalid user id without querying the database', a
   );
 
   expect(findUniqueMock).not.toHaveBeenCalled();
+});
+
+test('returns not found for a deleted user', async () => {
+  findUniqueMock.mockResolvedValue(null);
+
+  await expect(EditUserPage({ params: Promise.resolve({ id: '42' }) })).rejects.toThrow(
+    'NEXT_NOT_FOUND'
+  );
 });

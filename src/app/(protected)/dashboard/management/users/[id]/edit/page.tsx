@@ -23,7 +23,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, deletedAt: null },
     select: {
       id: true,
       firstName: true,
@@ -35,7 +35,6 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
       lastAccess: true,
       createdAt: true,
       updatedAt: true,
-      deletedAt: true,
       creator: {
         select: {
           firstName: true,
@@ -45,7 +44,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
     },
   });
 
-  if (!user || user.deletedAt) {
+  if (!user) {
     notFound();
   }
 

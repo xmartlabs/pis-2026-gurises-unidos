@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
 import { UserForm } from '@/components/user-form';
 
@@ -6,15 +6,19 @@ vi.mock('@/app/actions/users', () => ({
   createUser: vi.fn(async () => ({})),
 }));
 
-test('shows required field errors when submitting an empty user edit form', () => {
+test('disables or hides unavailable user editing actions', () => {
   render(<UserForm mode="edit" />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Guardar usuario' }));
+  const saveButton = screen.getByRole('button', {
+    name: 'Guardar usuario (próximamente)',
+  }) as HTMLButtonElement;
+  const resetPasswordButton = screen.getByRole('button', {
+    name: 'Restablecer contraseña (próximamente)',
+  }) as HTMLButtonElement;
 
-  expect(screen.getByText('El nombre es obligatorio.')).toBeDefined();
-  expect(screen.getByText('El apellido es obligatorio.')).toBeDefined();
-  expect(screen.getByText('El documento es obligatorio.')).toBeDefined();
-  expect(screen.getByText('El correo es obligatorio.')).toBeDefined();
+  expect(saveButton.disabled).toBe(true);
+  expect(resetPasswordButton.disabled).toBe(true);
+  expect(screen.queryByRole('button', { name: 'Guardar borrador' })).toBeNull();
 });
 
 test('prefills the user edit form and information', () => {

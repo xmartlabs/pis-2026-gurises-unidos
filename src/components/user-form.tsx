@@ -277,8 +277,14 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
               <CardContent className="px-6">
                 <FieldGroup className="gap-4">
                   {isEditing ? (
-                    <Button type="button" variant="outline" size="lg" className="w-fit px-4">
-                      Restablecer contraseña
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="w-fit px-4"
+                      disabled
+                    >
+                      Restablecer contraseña (próximamente)
                     </Button>
                   ) : (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -427,7 +433,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
           Cancelar
         </Link>
         <Button
-          hidden={!isEditing}
+          hidden
           type={isEditing ? 'button' : 'submit'}
           name="intent"
           value="draft"
@@ -439,14 +445,14 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
           Guardar borrador
         </Button>
         <Button
-          type="submit"
+          type={isEditing ? 'button' : 'submit'}
           name="intent"
           value="submit"
           size="lg"
           className="col-span-1 w-full px-4 md:order-3 md:w-auto"
-          disabled={pending}
+          disabled={pending || isEditing}
         >
-          Guardar usuario
+          {isEditing ? 'Guardar usuario (próximamente)' : 'Guardar usuario'}
         </Button>
       </div>
     </form>
