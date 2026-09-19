@@ -84,7 +84,7 @@ function ProjectCard({
             <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
               Territorio
             </p>
-            <p className="text-body text-xs leading-4 font-medium tracking-normal">
+            <p className="text-foreground text-xs leading-4 font-medium tracking-normal">
               {territory.name}
             </p>
           </CardDescription>
@@ -92,13 +92,15 @@ function ProjectCard({
             <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
               Coordinador/a
             </p>
-            <p className="text-body text-xs leading-4 font-medium tracking-normal">{coordinator}</p>
+            <p className="text-foreground text-xs leading-4 font-medium tracking-normal">
+              {coordinator}
+            </p>
           </CardDescription>
           <CardDescription className="flex flex-row justify-between">
             <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
               Intensidad
             </p>
-            <p className="text-body text-xs leading-4 font-medium tracking-normal">
+            <p className="text-foreground text-xs leading-4 font-medium tracking-normal">
               {INTENSITY_LABEL[intensity]}
             </p>
           </CardDescription>
