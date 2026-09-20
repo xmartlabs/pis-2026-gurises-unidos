@@ -1,10 +1,10 @@
 import {
-  ChartNoAxesColumn,
-  FileChartColumnIncreasing,
+  // ChartNoAxesColumn,
+  // FileChartColumnIncreasing,
   FolderKanban,
   HomeIcon,
   type LucideIcon,
-  Newspaper,
+  // Newspaper,
   Users,
 } from 'lucide-react';
 
@@ -55,32 +55,32 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
             href: '/dashboard/projects',
             icon: FolderKanban,
           },
-          {
-            id: 'metrics',
-            title: 'Métricas',
-            href: '#',
-            icon: ChartNoAxesColumn,
-          },
-          {
-            id: 'beneficiaries',
-            title: 'Beneficiarios',
-            href: '#',
-            icon: Users,
-          },
+          // {
+          //   id: 'metrics',
+          //   title: 'Métricas',
+          //   href: '#',
+          //   icon: ChartNoAxesColumn,
+          // },
+          // {
+          //   id: 'beneficiaries',
+          //   title: 'Beneficiarios',
+          //   href: '#',
+          //   icon: Users,
+          // },
         ],
       },
-      {
-        id: 'publications',
-        title: 'Publicaciones',
-        href: '#',
-        icon: Newspaper,
-      },
-      {
-        id: 'reports',
-        title: 'Reportes',
-        href: '#',
-        icon: FileChartColumnIncreasing,
-      },
+      // {
+      //   id: 'publications',
+      //   title: 'Publicaciones',
+      //   href: '#',
+      //   icon: Newspaper,
+      // },
+      // {
+      //   id: 'reports',
+      //   title: 'Reportes',
+      //   href: '#',
+      //   icon: FileChartColumnIncreasing,
+      // },
     ],
   },
   {
@@ -90,7 +90,7 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
       {
         id: 'users',
         title: 'Usuarios',
-        href: '/dashboard/management/users',
+        href: '/management/users',
         icon: Users,
       },
     ],

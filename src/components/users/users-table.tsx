@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { MoreHorizontal, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,12 +49,12 @@ import {
   type User,
 } from '@/lib/users/format';
 
-function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
+function UserActionsMenu({ user }: { user: User }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" disabled={!actionsEnabled}>
+          <Button variant="ghost" size="icon" aria-label={`Acciones para ${fullName(user)}`}>
             <MoreHorizontal />
           </Button>
         }
@@ -62,34 +63,31 @@ function UserActionsMenu({ actionsEnabled }: { actionsEnabled: boolean }) {
         <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Acciones
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
+        <DropdownMenuItem
+          render={<Link href={`/management/users/${user.id}/edit`} />}
+          className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
+        >
           Editar
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
+        {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Restablecer contraseña
-        </DropdownMenuItem>
-        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
+        </DropdownMenuItem> */}
+        {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
           Desactivar
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuSeparator />
-        <DropdownMenuItem
+        {/* <DropdownMenuItem
           variant="destructive"
           className="h-8 w-54 gap-2 rounded-sm px-2 py-1.5 font-sans text-sm leading-5 font-medium tracking-normal"
         >
           Eliminar
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export function UsersTable({
-  users,
-  actionsEnabled = true,
-}: {
-  users: User[];
-  actionsEnabled?: boolean;
-}) {
+export function UsersTable({ users }: { users: User[] }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -246,7 +244,7 @@ export function UsersTable({
                 <p className="text-muted-foreground truncate text-sm">{user.email}</p>
                 <p className="text-foreground mt-1 text-sm">{ROLE_LABELS[user.role]}</p>
               </div>
-              <UserActionsMenu actionsEnabled={actionsEnabled} />
+              <UserActionsMenu user={user} />
             </CardContent>
             <CardContent className="flex items-center justify-between gap-3 px-4">
               <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
@@ -302,7 +300,7 @@ export function UsersTable({
                   {formatLastAccess(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
-                  <UserActionsMenu actionsEnabled={actionsEnabled} />
+                  <UserActionsMenu user={user} />
                 </TableCell>
               </TableRow>
             ))}

@@ -12,7 +12,12 @@ export function fullName(user: User) {
 
 export function formatLastAccess(lastAccess: Date | null) {
   if (!lastAccess) return 'Nunca';
-  return new Date(lastAccess).toLocaleDateString('es-UY', {
+  return formatUserDate(lastAccess);
+}
+
+export function formatUserDate(date: Date | null) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('es-UY', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

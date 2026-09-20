@@ -97,7 +97,7 @@ describe('createUser', () => {
     const { userCreate } = setupTransaction();
 
     await expect(createUser(EMPTY_STATE, buildFormData())).rejects.toThrow(
-      'NEXT_REDIRECT:/dashboard/management/users'
+      'NEXT_REDIRECT:/management/users'
     );
 
     expect(transactionMock).toHaveBeenCalledWith(expect.any(Function));
@@ -135,7 +135,7 @@ describe('createUser', () => {
           email: ' ana@gmail.com ',
         })
       )
-    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/management/users');
+    ).rejects.toThrow('NEXT_REDIRECT:/management/users');
 
     expect(userCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({

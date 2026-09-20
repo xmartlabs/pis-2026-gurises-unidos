@@ -1,0 +1,93 @@
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import prisma from '@/lib/prisma';
+import { formatLastAccess, formatUserDate } from '@/lib/users/format';
+import { UserForm } from '@/components/user-form';
+
+export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  if (session.user.role !== 'admin') {
+    redirect('/dashboard/projects');
+  }
+
+  const { id } = await params;
+  const userId = Number(id);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    notFound();
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId, deletedAt: null },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      documentId: true,
+      email: true,
+      role: true,
+      status: true,
+      lastAccess: true,
+      createdAt: true,
+      updatedAt: true,
+      creator: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    notFound();
+  }
+
+  const creatorName = user.creator ? `${user.creator.firstName} ${user.creator.lastName}` : '—';
+
+  return (
+    <div className="bg-primary-foreground flex w-full flex-1 flex-col">
+      <div className="flex w-full flex-1 flex-col">
+        <header className="flex h-30 w-full flex-col gap-1.5 px-6 pt-6 pb-2.5">
+          <p className="text-muted-foreground h-5 text-sm leading-5 font-normal tracking-normal">
+            Administración
+          </p>
+
+          <h1 className="text-popover-foreground h-9 text-3xl leading-9 font-bold tracking-normal">
+            Editar usuario
+          </h1>
+
+          <p className="text-muted-foreground h-4.5 text-sm leading-4.5 font-normal tracking-normal">
+            Administrá el acceso de las personas que utilizan el sistema.
+          </p>
+        </header>
+
+        <div className="flex flex-1 flex-col">
+          <UserForm
+            key={user.id}
+            mode="edit"
+            initialValues={{
+              firstName: user.firstName,
+              lastName: user.lastName,
+              documentId: user.documentId,
+              email: user.email,
+              role: user.role,
+              status: user.status,
+              information: {
+                createdAt: formatUserDate(user.createdAt),
+                lastAccess: formatLastAccess(user.lastAccess),
+                createdBy: creatorName,
+                updatedAt: formatUserDate(user.updatedAt),
+              },
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

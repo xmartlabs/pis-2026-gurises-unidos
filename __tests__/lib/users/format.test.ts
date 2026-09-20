@@ -3,6 +3,7 @@ import { makeUser } from '../../fixtures/user';
 import {
   compareUsers,
   formatLastAccess,
+  formatUserDate,
   formatUserCount,
   fullName,
   matchesFilters,
@@ -21,6 +22,16 @@ describe('formatLastAccess', () => {
 
   test('formats the date as dd/mm/yyyy in the Montevideo timezone', () => {
     expect(formatLastAccess(new Date('2026-03-05T12:00:00.000Z'))).toBe('05/03/2026');
+  });
+});
+
+describe('formatUserDate', () => {
+  test('returns a dash when there is no date', () => {
+    expect(formatUserDate(null)).toBe('—');
+  });
+
+  test('formats the date as dd/mm/yyyy in the Montevideo timezone', () => {
+    expect(formatUserDate(new Date('2026-09-18T12:00:00.000Z'))).toBe('18/09/2026');
   });
 });
 

@@ -4,9 +4,9 @@ import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
-import { projectSchema, type ProjectFormState } from '@/lib/validation/project';
-import { projectBeneficiarySchema } from '@/lib/validation/project-beneficiary';
 import { logAudit } from '@/lib/audit-log';
+import type { ProjectFormState } from '@/lib/validation/project';
+import { projectFormSchema } from '@/lib/validation/project-form';
 
 export async function createProject(
   _prevState: ProjectFormState,
@@ -19,7 +19,7 @@ export async function createProject(
   }
 
   const rawFormData = Object.fromEntries(formData);
-  const parsed = projectSchema.extend(projectBeneficiarySchema.shape).safeParse(rawFormData);
+  const parsed = projectFormSchema.safeParse(rawFormData);
 
   if (!parsed.success) {
     return { errors: parsed.error.flatten().fieldErrors };
