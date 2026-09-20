@@ -29,13 +29,13 @@ const PROJECT_STATUS_META: Record<
   {
     displayStatus: ProjectStatusDisplay;
     label: string;
-    badgeVariant: 'active' | 'pending' | 'disabled';
+    badgeVariant: 'active' | 'pending' | 'neutral';
   }
 > = {
   active: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
   inProgress: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
   archived: { displayStatus: 'paused', label: 'Pausado', badgeVariant: 'pending' },
-  completed: { displayStatus: 'closed', label: 'Cerrado', badgeVariant: 'disabled' },
+  completed: { displayStatus: 'closed', label: 'Cerrado', badgeVariant: 'neutral' },
 };
 
 type ProjectCardProps = {
@@ -45,8 +45,8 @@ type ProjectCardProps = {
   territory: ProjectWithRelations['department'];
   coordinator: string;
   intensity: ProjectWithRelations['intensity'];
-  year: number;
-  totalReach: number;
+  year: number | undefined;
+  totalReach: number | null;
 };
 
 function ProjectCard({
@@ -102,10 +102,10 @@ function ProjectCard({
         <Separator />
         <CardDescription className="flex flex-row items-center justify-between">
           <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
-            Beneficiarios {year}
+            {totalReach !== null ? `Beneficiarios ${year}` : 'Sin datos'}
           </p>
           <p className="text-primary text-[20px] leading-7 font-bold tracking-normal">
-            {formatNumber(totalReach)}
+            {totalReach !== null ? formatNumber(totalReach) : '—'}
           </p>
         </CardDescription>
       </Card>
@@ -128,13 +128,11 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
   ).sort((a, b) => b - a);
 
   const [status, setStatus] = useState<StatusFilterValue>('all');
-  const [year, setYear] = useState<number | undefined>(projectYears[0]);
+  const [year, setYear] = useState<number>(projectYears[0] ?? new Date().getFullYear());
   const current = STATUS_FILTERS.find((f) => f.value === status)!;
 
   const filtered = projects.filter(
-    (p) =>
-      (status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status) &&
-      p.beneficiaries.some((b) => b.year === year)
+    (p) => status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status
   );
 
   return (
@@ -243,8 +241,9 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const yearBeneficiaries = p.beneficiaries.find((b) => b.year === year)!;
-            const totalReach = yearBeneficiaries.total;
+            const yearBeneficiaries =
+              p.beneficiaries.find((b) => b.year === year) ?? p.beneficiaries[0];
+            const totalReach = yearBeneficiaries ? yearBeneficiaries.total : null;
             return (
               <ProjectCard
                 key={p.id}
@@ -254,7 +253,7 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
                 territory={p.department}
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
-                year={year!}
+                year={yearBeneficiaries?.year}
                 totalReach={totalReach}
               />
             );
