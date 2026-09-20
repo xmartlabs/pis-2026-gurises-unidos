@@ -142,10 +142,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const latestBeneficiaries = p.beneficiaries.reduce<
-              (typeof p.beneficiaries)[number] | null
-            >((latest, b) => (latest === null || b.year > latest.year ? b : latest), null);
-            const totalReach = latestBeneficiaries ? latestBeneficiaries.total : null;
+            const latestBeneficiaries = p.beneficiaries.at(0);
             return (
               <ProjectCard
                 key={p.id}
@@ -156,7 +153,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
                 year={latestBeneficiaries?.year ?? year}
-                totalReach={totalReach}
+                totalReach={latestBeneficiaries?.total ?? null}
               />
             );
           })}
