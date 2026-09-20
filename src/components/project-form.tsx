@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import type { ProjectFormState } from '@/lib/validation/project';
 import { cn } from 'cn';
+// import { Button } from '@/components/ui/button';
 import {
   BENEFICIARY_FIELDS,
   FIRST_PROJECT_YEAR,
@@ -433,11 +434,11 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         cancelHref="/dashboard/projects"
         submitLabel="Guardar cambios"
         pending={pending}
-        // secondaryAction={
-        //   <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
-        //     Guardar borrador
-        //   </Button>
-        // }
+        secondaryAction={
+          // <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
+          //   Guardar borrador
+          // </Button>
+        }
       />
     </form>
   );
