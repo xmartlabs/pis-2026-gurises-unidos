@@ -122,7 +122,12 @@ const STATUS_FILTERS = [
 
 type StatusFilterValue = (typeof STATUS_FILTERS)[number]['value'];
 
-export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[] }) {
+type ProjectsCardListProps = {
+  projects: ProjectWithRelations[];
+  total: number;
+};
+
+export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
   const projectYears = Array.from(
     new Set(projects.flatMap((p) => p.beneficiaries.map((b) => b.year)))
   ).sort((a, b) => b - a);
@@ -233,6 +238,12 @@ export function ProjectsCardList({ projects }: { projects: ProjectWithRelations[
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
         {filtered.length} proyectos
       </p>
+
+      {total > projects.length && (
+        <p className="text-muted-foreground text-xs">
+          Mostrando los primeros {projects.length} de {total} proyectos en total.
+        </p>
+      )}
 
       {filtered.length === 0 ? (
         <p className="text-muted-foreground py-10 text-center text-sm">

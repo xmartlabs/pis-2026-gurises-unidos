@@ -8,9 +8,9 @@ import { PROJECT_LIST_MAX_PAGE_SIZE, parseProjectFilters } from '@/lib/validatio
 
 async function Projects() {
   const filters = parseProjectFilters({ pageSize: String(PROJECT_LIST_MAX_PAGE_SIZE) });
-  const { items } = await listProjects(filters);
+  const { items, total } = await listProjects(filters);
 
-  return <ProjectsCardList projects={items} />;
+  return <ProjectsCardList projects={items} total={total} />;
 }
 
 export default async function ProjectsPage() {
