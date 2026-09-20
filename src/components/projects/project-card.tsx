@@ -14,7 +14,7 @@ export type ProjectCardProps = {
   territory: ProjectListItem['department'];
   coordinator: string;
   intensity: ProjectListItem['intensity'];
-  year: number;
+  year: number | null;
   totalReach: number | null;
 };
 

@@ -3,13 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
 import { ProjectCard } from '@/components/projects/project-card';
@@ -26,12 +19,7 @@ type ProjectsCardListProps = {
 };
 
 export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
-  const projectYears = Array.from(
-    new Set(projects.flatMap((p) => p.beneficiaries.map((b) => b.year)))
-  ).sort((a, b) => b - a);
-
   const [status, setStatus] = useState<StatusFilterValue>('all');
-  const [year, setYear] = useState<number>(projectYears[0] ?? new Date().getFullYear());
   const current = STATUS_FILTERS.find((f) => f.value === status)!;
 
   const filtered = projects.filter(
@@ -62,68 +50,30 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             {current.title}
           </h1>
         </div>
-        <div className="flex flex-col items-end gap-3">
-          <div className="block lg:hidden">
-            <Select value={year} onValueChange={(value) => setYear(value as number)}>
-              <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">
-                <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={true}>
-                {projectYears.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {newProjectButton}
-        </div>
+        {newProjectButton}
       </div>
-      <div className="flex flex-row justify-between">
-        <div className="flex flex-row items-center gap-1.5">
-          <Tabs value={status} onValueChange={(value) => setStatus(value as StatusFilterValue)}>
-            <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
-              <TabsList aria-label="Filtrar por estado">
-                {STATUS_FILTERS.map((f) => (
-                  <TabsTrigger
-                    key={f.value}
-                    value={f.value}
-                    className={cn(
-                      'text-muted-foreground h-7.25 cursor-pointer gap-2.5 rounded-md px-2 py-1 text-sm font-medium',
-                      'data-active:bg-card data-active:text-primary data-active:border-border data-active:shadow-sm/10'
-                    )}
-                  >
-                    {f.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </Tabs>
-          <p className="text-muted-foreground hidden text-sm leading-5 font-normal tracking-normal lg:block">
-            {filteredCountLabel}
-          </p>
-        </div>
-        <div className="hidden flex-row items-center gap-1.5 lg:flex">
-          <Tabs value={year} onValueChange={(value) => setYear(value as number)}>
-            <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
-              <TabsList aria-label="Filtrar por año">
-                {projectYears.map((y) => (
-                  <TabsTrigger
-                    key={y}
-                    value={y}
-                    className={cn(
-                      'text-muted-foreground h-7.25 cursor-pointer gap-2.5 rounded-md px-2 py-1 text-sm font-medium',
-                      'data-active:bg-card data-active:text-primary data-active:border-border data-active:shadow-sm/10'
-                    )}
-                  >
-                    {y}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </Tabs>
-        </div>
+      <div className="flex flex-row items-center gap-1.5">
+        <Tabs value={status} onValueChange={(value) => setStatus(value as StatusFilterValue)}>
+          <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
+            <TabsList aria-label="Filtrar por estado">
+              {STATUS_FILTERS.map((f) => (
+                <TabsTrigger
+                  key={f.value}
+                  value={f.value}
+                  className={cn(
+                    'text-muted-foreground h-7.25 cursor-pointer gap-2.5 rounded-md px-2 py-1 text-sm font-medium',
+                    'data-active:bg-card data-active:text-primary data-active:border-border data-active:shadow-sm/10'
+                  )}
+                >
+                  {f.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </Tabs>
+        <p className="text-muted-foreground hidden text-sm leading-5 font-normal tracking-normal lg:block">
+          {filteredCountLabel}
+        </p>
       </div>
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
         {filteredCountLabel}
@@ -142,8 +92,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const yearBeneficiaries = p.beneficiaries.find((b) => b.year === year);
-            const totalReach = yearBeneficiaries ? yearBeneficiaries.total : null;
+            const latestBeneficiaries = p.beneficiaries[0];
             return (
               <ProjectCard
                 key={p.id}
@@ -153,8 +102,8 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
                 territory={p.department}
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
-                year={year}
-                totalReach={totalReach}
+                year={latestBeneficiaries?.year ?? null}
+                totalReach={latestBeneficiaries?.total ?? null}
               />
             );
           })}
