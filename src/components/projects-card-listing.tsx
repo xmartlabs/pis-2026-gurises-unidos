@@ -142,10 +142,21 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
 
   const filteredCountLabel = `${filtered.length} ${filtered.length === 1 ? 'proyecto' : 'proyectos'}`;
 
+  const newProjectButton = (
+    <Button
+      variant="outline"
+      className="h-8 gap-2.5 rounded-md px-3 shadow-xs/10"
+      nativeButton={false}
+      render={<Link href="/dashboard/projects/new" />}
+    >
+      <p className="text-primary text-sm leading-5 font-medium tracking-normal">Nuevo proyecto</p>
+    </Button>
+  );
+
   return (
     <div className="bg-background flex h-fit w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
-      <div className="flex flex-row items-center justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
+      <div className="flex flex-row items-start justify-between gap-3 lg:items-center">
+        <div className="flex flex-col justify-center gap-0.5">
           <p className="text-muted-foreground block text-xs leading-4 font-medium lg:hidden">
             Proyectos
           </p>
@@ -153,44 +164,23 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             {current.title}
           </h1>
         </div>
-        <div className="block lg:hidden">
-          <Select value={year} onValueChange={(value) => setYear(value as number)}>
-            <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">
-              <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />
-            </SelectTrigger>
-            <SelectContent alignItemWithTrigger={true}>
-              {projectYears.map((y) => (
-                <SelectItem key={y} value={y}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col items-end gap-3">
+          <div className="block lg:hidden">
+            <Select value={year} onValueChange={(value) => setYear(value as number)}>
+              <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">
+                <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={true}>
+                {projectYears.map((y) => (
+                  <SelectItem key={y} value={y}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {newProjectButton}
         </div>
-        <div className="hidden justify-end lg:flex">
-          <Button
-            variant="outline"
-            className="h-8 gap-2.5 rounded-md px-3 shadow-xs/10"
-            nativeButton={false}
-            render={<Link href="/dashboard/projects/new" />}
-          >
-            <p className="text-primary text-sm leading-5 font-medium tracking-normal">
-              + Nuevo proyecto
-            </p>
-          </Button>
-        </div>
-      </div>
-      <div className="flex justify-end lg:hidden">
-        <Button
-          variant="outline"
-          className="h-8 gap-2.5 rounded-md px-3 shadow-xs/10"
-          nativeButton={false}
-          render={<Link href="/dashboard/projects/new" />}
-        >
-          <p className="text-primary text-sm leading-5 font-medium tracking-normal">
-            Nuevo proyecto
-          </p>
-        </Button>
       </div>
       <div className="flex flex-row justify-between">
         <div className="flex flex-row items-center gap-1.5">
