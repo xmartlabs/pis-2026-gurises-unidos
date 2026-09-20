@@ -140,6 +140,8 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
     (p) => status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status
   );
 
+  const filteredCountLabel = `${filtered.length} ${filtered.length === 1 ? 'proyecto' : 'proyectos'}`;
+
   return (
     <div className="bg-background flex h-fit w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
       <div className="flex flex-row items-center justify-between gap-3">
@@ -194,7 +196,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
         <div className="flex flex-row items-center gap-1.5">
           <Tabs value={status} onValueChange={(value) => setStatus(value as StatusFilterValue)}>
             <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
-              <TabsList>
+              <TabsList aria-label="Filtrar por estado">
                 {STATUS_FILTERS.map((f) => (
                   <TabsTrigger
                     key={f.value}
@@ -211,13 +213,13 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             </div>
           </Tabs>
           <p className="text-muted-foreground hidden text-sm leading-5 font-normal tracking-normal lg:block">
-            {filtered.length} proyectos
+            {filteredCountLabel}
           </p>
         </div>
         <div className="hidden flex-row items-center gap-1.5 lg:flex">
           <Tabs value={year} onValueChange={(value) => setYear(value as number)}>
             <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
-              <TabsList>
+              <TabsList aria-label="Filtrar por año">
                 {projectYears.map((y) => (
                   <TabsTrigger
                     key={y}
@@ -236,7 +238,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
         </div>
       </div>
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
-        {filtered.length} proyectos
+        {filteredCountLabel}
       </p>
 
       {total > projects.length && (
