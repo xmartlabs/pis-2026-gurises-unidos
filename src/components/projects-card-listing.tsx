@@ -142,8 +142,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const yearBeneficiaries =
-              p.beneficiaries.find((b) => b.year === year) ?? p.beneficiaries[0];
+            const yearBeneficiaries = p.beneficiaries.find((b) => b.year === year);
             const totalReach = yearBeneficiaries ? yearBeneficiaries.total : null;
             return (
               <ProjectCard
@@ -154,7 +153,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
                 territory={p.department}
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
-                year={yearBeneficiaries?.year}
+                year={year}
                 totalReach={totalReach}
               />
             );
