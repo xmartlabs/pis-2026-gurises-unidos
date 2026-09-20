@@ -18,25 +18,13 @@ import { INTENSITY_LABEL } from '@/lib/project-display';
 import { formatNumber } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import type { ProjectListItem } from '@/lib/projects/list';
-import type { ProjectStatus } from '@/generated/prisma/enums';
+import {
+  PROJECT_STATUS_META,
+  STATUS_FILTERS,
+  type StatusFilterValue,
+} from '@/lib/projects/constants';
 
 type ProjectWithRelations = ProjectListItem;
-
-type ProjectStatusDisplay = 'active' | 'paused' | 'closed';
-
-const PROJECT_STATUS_META: Record<
-  ProjectStatus,
-  {
-    displayStatus: ProjectStatusDisplay;
-    label: string;
-    badgeVariant: 'active' | 'pending' | 'neutral';
-  }
-> = {
-  active: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
-  inProgress: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
-  archived: { displayStatus: 'paused', label: 'Pausado', badgeVariant: 'pending' },
-  completed: { displayStatus: 'closed', label: 'Cerrado', badgeVariant: 'neutral' },
-};
 
 type ProjectCardProps = {
   id: number;
@@ -112,15 +100,6 @@ function ProjectCard({
     </Link>
   );
 }
-
-const STATUS_FILTERS = [
-  { value: 'all', label: 'Todos', title: 'Proyectos' },
-  { value: 'active', label: 'Activos', title: 'Proyectos activos' },
-  { value: 'paused', label: 'Pausados', title: 'Proyectos pausados' },
-  { value: 'closed', label: 'Cerrados', title: 'Proyectos cerrados' },
-] as const;
-
-type StatusFilterValue = (typeof STATUS_FILTERS)[number]['value'];
 
 type ProjectsCardListProps = {
   projects: ProjectWithRelations[];
