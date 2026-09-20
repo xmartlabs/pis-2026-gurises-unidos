@@ -434,11 +434,11 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         cancelHref="/dashboard/projects"
         submitLabel="Guardar cambios"
         pending={pending}
-        secondaryAction={
+        // secondaryAction={
           // <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
           //   Guardar borrador
           // </Button>
-        }
+        //}
       />
     </form>
   );
