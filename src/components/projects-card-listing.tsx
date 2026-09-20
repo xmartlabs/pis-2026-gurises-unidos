@@ -63,7 +63,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
           </h1>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="block lg:hidden">
+          <div className="hidden">
             <Select value={year} onValueChange={(value) => setYear(value as number)}>
               <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">
                 <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />
@@ -104,7 +104,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             {filteredCountLabel}
           </p>
         </div>
-        <div className="hidden flex-row items-center gap-1.5 lg:flex">
+        <div className="hidden">
           <Tabs value={year} onValueChange={(value) => setYear(value as number)}>
             <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
               <TabsList aria-label="Filtrar por año">
@@ -142,8 +142,10 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const yearBeneficiaries = p.beneficiaries.find((b) => b.year === year);
-            const totalReach = yearBeneficiaries ? yearBeneficiaries.total : null;
+            const latestBeneficiaries = p.beneficiaries.reduce<
+              (typeof p.beneficiaries)[number] | null
+            >((latest, b) => (latest === null || b.year > latest.year ? b : latest), null);
+            const totalReach = latestBeneficiaries ? latestBeneficiaries.total : null;
             return (
               <ProjectCard
                 key={p.id}
@@ -153,7 +155,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
                 territory={p.department}
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
-                year={year}
+                year={latestBeneficiaries?.year ?? year}
                 totalReach={totalReach}
               />
             );
