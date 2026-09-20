@@ -2,7 +2,6 @@
 
 import { type ReactNode, useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import { createProject } from '@/app/actions/projects';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
@@ -434,11 +433,11 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
         cancelHref="/dashboard/projects"
         submitLabel="Guardar cambios"
         pending={pending}
-        secondaryAction={
-          <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
-            Guardar borrador
-          </Button>
-        }
+        // secondaryAction={
+        //   <Button type="button" variant="outline" size="lg" disabled className="flex-1 sm:min-w-36">
+        //     Guardar borrador
+        //   </Button>
+        // }
       />
     </form>
   );
