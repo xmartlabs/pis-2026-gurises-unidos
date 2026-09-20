@@ -63,20 +63,20 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
           </h1>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="block lg:hidden">
-            <Select value={year} onValueChange={(value) => setYear(value as number)}>
-              <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">
-                <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={true}>
-                {projectYears.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/*<div className="block lg:hidden">*/}
+          {/*  <Select value={year} onValueChange={(value) => setYear(value as number)}>*/}
+          {/*    <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">*/}
+          {/*      <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />*/}
+          {/*    </SelectTrigger>*/}
+          {/*    <SelectContent alignItemWithTrigger={true}>*/}
+          {/*      {projectYears.map((y) => (*/}
+          {/*        <SelectItem key={y} value={y}>*/}
+          {/*          {y}*/}
+          {/*        </SelectItem>*/}
+          {/*      ))}*/}
+          {/*    </SelectContent>*/}
+          {/*  </Select>*/}
+          {/*</div>*/}
           {newProjectButton}
         </div>
       </div>
@@ -104,26 +104,26 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             {filteredCountLabel}
           </p>
         </div>
-        <div className="hidden flex-row items-center gap-1.5 lg:flex">
-          <Tabs value={year} onValueChange={(value) => setYear(value as number)}>
-            <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
-              <TabsList aria-label="Filtrar por año">
-                {projectYears.map((y) => (
-                  <TabsTrigger
-                    key={y}
-                    value={y}
-                    className={cn(
-                      'text-muted-foreground h-7.25 cursor-pointer gap-2.5 rounded-md px-2 py-1 text-sm font-medium',
-                      'data-active:bg-card data-active:text-primary data-active:border-border data-active:shadow-sm/10'
-                    )}
-                  >
-                    {y}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </Tabs>
-        </div>
+        {/*<div className="hidden flex-row items-center gap-1.5 lg:flex">*/}
+        {/*  <Tabs value={year} onValueChange={(value) => setYear(value as number)}>*/}
+        {/*    <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">*/}
+        {/*      <TabsList aria-label="Filtrar por año">*/}
+        {/*        {projectYears.map((y) => (*/}
+        {/*          <TabsTrigger*/}
+        {/*            key={y}*/}
+        {/*            value={y}*/}
+        {/*            className={cn(*/}
+        {/*              'text-muted-foreground h-7.25 cursor-pointer gap-2.5 rounded-md px-2 py-1 text-sm font-medium',*/}
+        {/*              'data-active:bg-card data-active:text-primary data-active:border-border data-active:shadow-sm/10'*/}
+        {/*            )}*/}
+        {/*          >*/}
+        {/*            {y}*/}
+        {/*          </TabsTrigger>*/}
+        {/*        ))}*/}
+        {/*      </TabsList>*/}
+        {/*    </div>*/}
+        {/*  </Tabs>*/}
+        {/*</div>*/}
       </div>
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
         {filteredCountLabel}
@@ -142,8 +142,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
           {filtered.map((p) => {
-            const yearBeneficiaries = p.beneficiaries.find((b) => b.year === year);
-            const totalReach = yearBeneficiaries ? yearBeneficiaries.total : null;
+            const latestBeneficiaries = p.beneficiaries.at(0);
             return (
               <ProjectCard
                 key={p.id}
@@ -153,8 +152,8 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
                 territory={p.department}
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
-                year={year}
-                totalReach={totalReach}
+                year={latestBeneficiaries?.year ?? year}
+                totalReach={latestBeneficiaries?.total ?? null}
               />
             );
           })}
