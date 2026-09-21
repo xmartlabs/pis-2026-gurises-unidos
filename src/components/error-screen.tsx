@@ -40,7 +40,7 @@ export function ErrorScreen({ code, title, description, reference, actions }: Er
   const copy = ERROR_COPY[code] ?? FALLBACK_COPY;
 
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center-safe px-6 py-24 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center-safe px-6 py-24 text-center">
       <p className="text-muted-foreground text-7xl font-semibold tracking-tight tabular-nums sm:text-8xl">
         {code}
       </p>
@@ -51,7 +51,7 @@ export function ErrorScreen({ code, title, description, reference, actions }: Er
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         {actions}
         <Link
-          href="/"
+          href="/dashboard/projects"
           className={buttonVariants({ variant: actions ? 'outline' : 'default', size: 'lg' })}
         >
           Volver al inicio

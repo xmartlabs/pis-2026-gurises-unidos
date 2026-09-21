@@ -22,7 +22,10 @@ export function ProjectPreview({
     STATUS_OPTIONS.find((option) => option.value === values.status)?.label ?? 'Activo';
 
   return (
-    <aside aria-label="Vista previa de la tarjeta pública" className="bg-muted/30 min-w-0">
+    <aside
+      aria-label="Vista previa de la tarjeta pública"
+      className="bg-muted/30 min-w-0 lg:sticky lg:top-15"
+    >
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6">
         <p className="text-muted-foreground text-xs leading-4">
           Vista previa de la tarjeta pública
