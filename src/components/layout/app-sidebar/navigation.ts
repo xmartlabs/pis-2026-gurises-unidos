@@ -7,6 +7,7 @@ import {
   // Newspaper,
   Users,
 } from 'lucide-react';
+import type { UserRole } from '@/generated/prisma/enums';
 
 export type PathMatch = 'exact' | 'prefix';
 
@@ -16,6 +17,7 @@ export interface NavigationItem {
   href: string;
   icon: LucideIcon;
   match?: PathMatch;
+  roles?: readonly UserRole[];
   children?: readonly NavigationItem[];
 }
 
@@ -92,10 +94,24 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
         title: 'Usuarios',
         href: '/management/users',
         icon: Users,
+        roles: ['admin'],
       },
     ],
   },
 ];
+
+export function canAccessNavItem(item: NavigationItem, role: UserRole) {
+  return !item.roles || item.roles.includes(role);
+}
+
+export function filterNavGroups(groups: readonly NavigationGroup[], role: UserRole) {
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccessNavItem(item, role)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
 
 export function flattenNavItems(items: readonly NavigationItem[]): NavigationItem[] {
   return items.flatMap((item) => {
