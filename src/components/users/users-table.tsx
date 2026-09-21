@@ -60,9 +60,6 @@ function UserActionsMenu({ user }: { user: User }) {
         }
       />
       <DropdownMenuContent align="end" className="max-h-104 w-56 rounded-md border">
-        <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-          Acciones
-        </DropdownMenuItem>
         <DropdownMenuItem
           render={<Link href={`/management/users/${user.id}/edit`} />}
           className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
