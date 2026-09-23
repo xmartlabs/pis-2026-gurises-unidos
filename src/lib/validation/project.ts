@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const projectSchema = z.object({
-  name: z.string().trim().min(1, 'El nombre es obligatorio'),
+  name: z.string().trim().max(100, 'Máx. 100 caracteres').min(1, 'El nombre es obligatorio'),
   status: z.enum(['active', 'inProgress', 'completed', 'archived']),
   intensity: z.enum(['high', 'medium', 'low']),
   startYear: z.coerce
@@ -21,22 +21,25 @@ export const projectSchema = z.object({
   localityNeighborhood: z
     .string()
     .trim()
+    .max(100, 'Máx. 100 caracteres')
     .optional()
     .transform((value) => value || null),
   generalObjective: z
     .string()
     .trim()
+    .max(500, 'Máx. 500 caracteres')
     .optional()
     .transform((value) => value || null),
   publicDescription: z
     .string()
     .trim()
-    .max(300, 'Máx. 300 caracteres')
+    .max(1000, 'Máx. 1000 caracteres')
     .optional()
     .transform((value) => value || null),
   internalNotes: z
     .string()
     .trim()
+    .max(1000, 'Máx. 1000 caracteres')
     .optional()
     .transform((value) => value || null),
 });

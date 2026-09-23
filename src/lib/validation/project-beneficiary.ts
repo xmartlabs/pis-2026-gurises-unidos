@@ -8,6 +8,7 @@ const beneficiaryCount = z.preprocess(
     .number({ error: 'Valor inválido' })
     .int('Valor inválido')
     .min(0, 'No puede ser negativo')
+    .max(2147483647, 'La cantidad es demasiado grande')
     .default(0)
 );
 

@@ -177,6 +177,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
   return (
     <form
       action={formAction}
+      noValidate
       className="bg-muted/30 text-foreground flex min-h-0 min-w-0 flex-1 flex-col"
       aria-busy={pending}
       onSubmit={(event) => {
@@ -206,6 +207,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               label="Nombre del proyecto"
               value={values.name}
               onValueChange={(value) => updateField('name', value)}
+              maxLength={100}
               placeholder="Ej: Espacio joven Malvín Norte"
               description="Nombre de fantasía — puede cambiarse después"
               messages={state.errors?.name}
@@ -285,6 +287,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 label="Localidad / Barrio"
                 value={values.localityNeighborhood}
                 onValueChange={(value) => updateField('localityNeighborhood', value)}
+                maxLength={100}
                 messages={state.errors?.localityNeighborhood}
                 placeholder="Ej: Malvín Norte"
               />
@@ -358,6 +361,7 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               placeholder="Ej: Acompañando a jóvenes en situación de vulnerabilidad"
               messages={state.errors?.generalObjective}
               description="Aparece como subtítulo en la vista pública"
+              maxLength={500}
             />
             <Field
               className="min-w-0 gap-1.5"
@@ -374,13 +378,13 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
                 name="publicDescription"
                 value={values.publicDescription}
                 onChange={(event) => updateField('publicDescription', event.currentTarget.value)}
-                maxLength={300}
+                maxLength={1000}
                 placeholder="Contá de qué trata el proyecto, a quiénes ayuda y cuál es su impacto..."
                 aria-invalid={Boolean(state.errors?.publicDescription)}
                 className="border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base shadow-none md:text-sm"
               />
               <FieldDescription className="text-muted-foreground text-xs leading-4">
-                Máx. 300 caracteres
+                Máx. 1000 caracteres
               </FieldDescription>
               <FieldError className="text-xs leading-4">
                 {state.errors?.publicDescription?.[0]}
@@ -413,8 +417,9 @@ export function ProjectForm({ coordinators, departments }: ProjectFormProps) {
               aria-invalid={Boolean(state.errors?.internalNotes)}
               value={values.internalNotes}
               onChange={(event) => updateField('internalNotes', event.currentTarget.value)}
+              maxLength={1000}
               placeholder="Escribí un comentario para el equipo…"
-              className="border-input bg-background min-h-20 w-full resize-y rounded-lg px-3 py-2 text-base shadow-none sm:max-w-md md:text-sm"
+              className="border-input bg-background min-h-20 w-full resize-y rounded-lg px-3 py-2 text-base shadow-none md:text-sm"
             />
             <FieldError className="text-xs leading-4">
               {state.errors?.internalNotes?.[0]}

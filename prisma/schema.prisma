@@ -101,22 +101,22 @@ model Department {
 }
 
 model Project {
-  id                   Int           @id @default(autoincrement())
-  name                 String
+  id                   Int            @id @default(autoincrement())
+  name                 String         @db.VarChar(100)
   status               ProjectStatus
   intensity            Intensity
   startYear            Int
   leadCoordinatorId    Int
   departmentId         Int
-  localityNeighborhood String?
+  localityNeighborhood String?        @db.VarChar(100)
   zone                 Zone
-  generalObjective     String?
-  publicDescription    String?       @db.VarChar(300)
+  generalObjective     String?        @db.VarChar(500)
+  publicDescription    String?        @db.VarChar(1000)
   coverPhoto           String?
-  internalNotes        String?
-  createdAt            DateTime      @default(now())
+  internalNotes        String?        @db.VarChar(1000)
+  createdAt            DateTime       @default(now())
   createdBy            Int?
-  updatedAt            DateTime?     @updatedAt
+  updatedAt            DateTime?      @updatedAt
 
   leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
   department      Department @relation(fields: [departmentId], references: [id])
