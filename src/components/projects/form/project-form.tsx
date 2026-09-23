@@ -8,7 +8,6 @@ import { BasicInfoSection } from './sections/basic-info-section';
 
 import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { cn } from 'cn';
-import { Button } from '@/components/ui/button';
 import type { ProjectFormState } from '@/lib/validation/project';
 import {
   BENEFICIARY_FIELDS,
@@ -225,20 +224,6 @@ export function ProjectForm({
         cancelHref={cancelHref}
         submitLabel="Guardar cambios"
         pending={pending}
-        secondaryAction={
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            disabled
-            className={cn(
-              'flex-1 sm:min-w-36',
-              isEditing && 'rounded-[10px] px-4 shadow-sm disabled:opacity-100'
-            )}
-          >
-            Guardar borrador
-          </Button>
-        }
       />
     </form>
   );
