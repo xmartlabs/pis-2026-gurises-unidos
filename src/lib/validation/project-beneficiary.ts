@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_INT32 } from './ids';
 
 const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
 
@@ -8,7 +9,7 @@ const beneficiaryCount = z.preprocess(
     .number({ error: 'Valor inválido' })
     .int('Valor inválido')
     .min(0, 'No puede ser negativo')
-    .max(2147483647, 'La cantidad es demasiado grande')
+    .max(MAX_INT32, 'La cantidad es demasiado grande')
     .default(0)
 );
 

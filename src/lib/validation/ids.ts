@@ -1,0 +1,1 @@
+export const MAX_INT32 = 2_147_483_647;
