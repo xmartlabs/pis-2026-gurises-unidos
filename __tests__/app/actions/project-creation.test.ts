@@ -255,11 +255,11 @@ describe('createProject', () => {
   });
 
   const TEXT_LIMITS = [
-  { field: 'name', limit: 100 },
-  { field: 'localityNeighborhood', limit: 100 },
-  { field: 'generalObjective', limit: 500 },
-  { field: 'publicDescription', limit: 1000 },
-  { field: 'internalNotes', limit: 1000 },
+    { field: 'name', limit: 100 },
+    { field: 'localityNeighborhood', limit: 100 },
+    { field: 'generalObjective', limit: 500 },
+    { field: 'publicDescription', limit: 1000 },
+    { field: 'internalNotes', limit: 1000 },
   ];
 
   test.each(TEXT_LIMITS)(
