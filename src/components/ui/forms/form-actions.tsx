@@ -10,7 +10,6 @@ type FormActionsProps = {
   cancelHref: string;
   submitLabel: string;
   pending: boolean;
-  pendingLabel?: string;
   secondaryAction?: ReactNode;
 };
 
@@ -19,7 +18,6 @@ export function FormActions({
   cancelHref,
   submitLabel,
   pending,
-  pendingLabel = 'Guardando...',
   secondaryAction,
 }: FormActionsProps) {
   return (
@@ -44,7 +42,7 @@ export function FormActions({
             variant === 'detailed' && 'rounded-[10px] px-4 shadow-sm'
           )}
         >
-          {pending ? pendingLabel : submitLabel}
+          {pending ? 'Guardando...' : submitLabel}
         </Button>
       </div>
     </footer>

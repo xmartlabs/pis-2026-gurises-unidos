@@ -89,7 +89,7 @@ export async function createProject(
     console.error('Failed to create project', error);
     return { formError: 'No se pudo crear el proyecto. Intentá de nuevo.' };
   }
-  revalidateProject(projectId);
+  revalidateProject();
   redirect(`/dashboard/projects/${projectId}`);
 }
 
@@ -178,6 +178,6 @@ export async function updateProject(
     console.error('Failed to update project', error);
     return { formError: 'No se pudo actualizar el proyecto. Intentá de nuevo.' };
   }
-  revalidateProject(projectId);
+  revalidateProject();
   redirect(`/dashboard/projects/${projectId}`);
 }

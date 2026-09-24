@@ -262,9 +262,7 @@ describe('updateProject persistence', () => {
         },
       });
       expect(mocks.revalidatePath.mock.calls).toEqual([
-        ['/dashboard/projects'],
-        ['/dashboard/projects/10'],
-        ['/dashboard/projects/10/edit'],
+        ['/dashboard/projects', 'layout'],
       ]);
     }
   );
@@ -534,7 +532,7 @@ describe('project review regressions', () => {
         projectTopics: { create: [{ topicId: 2 }, { topicId: 4 }] },
       }),
     });
-    expect(mocks.revalidatePath).toHaveBeenCalledWith('/dashboard/projects');
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/dashboard/projects', 'layout');
   });
 
   it('rejects a nonexistent topic before any writes', async () => {
