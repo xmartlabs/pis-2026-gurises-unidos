@@ -253,4 +253,82 @@ describe('createProject', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create project', unexpectedError);
     expect(redirectMock).not.toHaveBeenCalled();
   });
+
+  const TEXT_LIMITS = [
+    { field: 'name', limit: 100 },
+    { field: 'localityNeighborhood', limit: 100 },
+    { field: 'generalObjective', limit: 500 },
+    { field: 'publicDescription', limit: 1000 },
+    { field: 'internalNotes', limit: 1000 },
+  ];
+
+  test.each(TEXT_LIMITS)(
+    'accepts $field with exactly $limit characters',
+    async ({ field, limit }) => {
+      const { projectCreate } = setupTransaction();
+      const value = 'a'.repeat(limit);
+      await expect(
+        createProject(EMPTY_STATE, buildFormData({ [field]: value }))
+      ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
+
+      expect(projectCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({ [field]: value }),
+      });
+    }
+  );
+
+  test.each(TEXT_LIMITS)(
+    'rejects $field above $limit characters without accessing the database',
+    async ({ field, limit }) => {
+      const result = await createProject(
+        EMPTY_STATE,
+        buildFormData({ [field]: 'a'.repeat(limit + 1) })
+      );
+
+      expect(result.errors?.[field]).toEqual([`Máx. ${limit} caracteres`]);
+      expect(transactionMock).not.toHaveBeenCalled();
+    });
+
+  const BENEFICIARY_FIELDS = [
+    'directChildrenAdolescents',
+    'indirectChildrenAdolescents',
+    'youth18To29',
+    'families',
+    'coordinatedInstitutions',
+    'communityLeaders',
+    'basicServiceStaff',
+  ];
+
+  test.each(BENEFICIARY_FIELDS)(
+    'accepts the int32 maximum for %s',
+    async (field) => {
+      const { beneficiaryCreate } = setupTransaction();
+
+      await expect(
+        createProject(
+          EMPTY_STATE,
+          buildFormData({ [field]: '2147483647' })
+        )
+      ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
+
+      expect(beneficiaryCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({ [field]: 2_147_483_647 }),
+      });
+    }
+  );
+
+  test.each(BENEFICIARY_FIELDS)(
+    'rejects %s above the int32 maximum without accessing the database',
+    async (field) => {
+      const result = await createProject(
+        EMPTY_STATE,
+        buildFormData({ [field]: '2147483648' })
+      );
+
+      expect(result.errors?.[field]).toEqual([
+        'La cantidad es demasiado grande',
+      ]);
+      expect(transactionMock).not.toHaveBeenCalled();
+    }
+  );
 });
