@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import prisma from '@/lib/prisma';
-import { getMetricValues, getMetricYears } from '@/lib/metrics';
+import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics';
 
 vi.mock('@/lib/prisma', () => ({
   default: {
+    metric: { findMany: vi.fn() },
     projectBeneficiary: { aggregate: vi.fn(), findMany: vi.fn() },
     project: { count: vi.fn(), findMany: vi.fn() },
   },
@@ -63,6 +64,20 @@ describe('getMetricValues', () => {
     vi.mocked(prisma.project.findMany).mockResolvedValue([]);
 
     expect(Object.values(await getMetricValues(2027))).toEqual([0, 0, 0, 0, 0, 0]);
+  });
+});
+
+describe('getMetricSettings', () => {
+  it('loads saved visibility and hides metrics without a saved setting', async () => {
+    vi.mocked(prisma.metric.findMany).mockResolvedValue([
+      { key: 'children_reached', showPublicly: true },
+      { key: 'families', showPublicly: false },
+    ] as Awaited<ReturnType<typeof prisma.metric.findMany>>);
+    const settings = await getMetricSettings();
+    expect(settings.filter((metric) => metric.showPublicly).map((metric) => metric.key)).toEqual([
+      'children_reached',
+    ]);
+    expect(settings).toHaveLength(6);
   });
 });
 

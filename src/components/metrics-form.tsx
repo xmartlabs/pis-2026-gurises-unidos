@@ -1,61 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { saveMetricSettings } from '@/app/actions/metrics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { formatNumber } from '@/lib/format';
-import type { MetricValues } from '@/lib/metrics';
+import type { MetricSetting, MetricValues } from '@/lib/metrics';
 
-const INITIAL_METRICS: {
-  key: keyof MetricValues;
-  name: string;
-  description: string;
-  showPublicly: boolean;
-}[] = [
-  {
-    key: 'children_reached',
-    name: 'NNA alcanzados',
-    description: 'Niños, niñas y adolescentes alcanzados con acciones directas e indirectas.',
-    showPublicly: true,
-  },
-  {
-    key: 'families',
-    name: 'Familias acompañadas',
-    description: 'Familias con acompañamiento directo durante el año.',
-    showPublicly: true,
-  },
-  {
-    key: 'teachers',
-    name: 'Docentes capacitados',
-    description: 'Funcionarios de servicios básicos formados por la organización.',
-    showPublicly: false,
-  },
-  {
-    key: 'institutions',
-    name: 'Instituciones vinculadas',
-    description: 'Organizaciones coordinadas en el territorio.',
-    showPublicly: false,
-  },
-  {
-    key: 'departments',
-    name: 'Departamentos',
-    description: 'Departamentos con presencia de la organización.',
-    showPublicly: false,
-  },
-  {
-    key: 'active_projects',
-    name: 'Proyectos activos',
-    description: 'Proyectos en ejecución durante el año.',
-    showPublicly: true,
-  },
-];
-
-export function MetricsForm({ year, values }: { year: string; values: MetricValues }) {
-  const [metrics, setMetrics] = useState(INITIAL_METRICS);
+export function MetricsForm({
+  year,
+  values,
+  initialMetrics,
+  canSave,
+}: {
+  year: string;
+  values: MetricValues;
+  initialMetrics: MetricSetting[];
+  canSave: boolean;
+}) {
+  const [metrics, setMetrics] = useState(initialMetrics);
+  const [savedMetrics, setSavedMetrics] = useState(initialMetrics);
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState('');
   const visibleMetrics = metrics.filter((metric) => metric.showPublicly);
 
+  function saveChanges() {
+    setMessage('');
+    startTransition(async () => {
+      try {
+        const result = await saveMetricSettings(
+          metrics.map(({ key, showPublicly }) => ({ key, showPublicly }))
+        );
+        if (result.success) setSavedMetrics(metrics);
+        setMessage(result.message);
+      } catch {
+        setMessage('No se pudieron guardar los cambios. Intentá de nuevo.');
+      }
+    });
+  }
+
   function setVisibility(key: string, showPublicly: boolean) {
+    setMessage('');
     setMetrics((current) =>
       current.map((metric) => (metric.key === key ? { ...metric, showPublicly } : metric))
     );
@@ -90,6 +76,7 @@ export function MetricsForm({ year, values }: { year: string; values: MetricValu
                 <Switch
                   id={`${metric.key}-visibility`}
                   checked={metric.showPublicly}
+                  disabled={isPending || !canSave}
                   onCheckedChange={(checked) => setVisibility(metric.key, checked)}
                   aria-label={`Mostrar ${metric.name} en el sitio público`}
                 />
@@ -101,16 +88,29 @@ export function MetricsForm({ year, values }: { year: string; values: MetricValu
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button variant="ghost" onClick={() => setMetrics(INITIAL_METRICS)}>
+          <Button
+            variant="ghost"
+            disabled={isPending || !canSave}
+            onClick={() => {
+              setMetrics(savedMetrics);
+              setMessage('');
+            }}
+          >
             Restablecer valores
           </Button>
           <div className="flex flex-wrap gap-2">
-            <Button disabled aria-describedby="metrics-demo-notice">
-              Guardar cambios
+            <Button
+              disabled={isPending || !canSave}
+              onClick={saveChanges}
+              aria-describedby="metrics-save-status"
+            >
+              {isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </div>
         </div>
-        <p id="metrics-demo-notice" className="text-muted-foreground text-sm"></p>
+        <p id="metrics-save-status" role="status" className="text-muted-foreground text-sm">
+          {canSave ? message : 'Solo los administradores pueden guardar cambios.'}
+        </p>
       </section>
       <aside
         aria-label="Vista previa del sitio público"
@@ -143,12 +143,17 @@ export function MetricsForm({ year, values }: { year: string; values: MetricValu
             )}
           </div>
           <p className="text-muted-foreground text-center text-xs leading-relaxed">
-            Estas cifras se actualizan automáticamente en el sitio público.
+            Guardá los cambios para actualizar la página pública de prueba.
           </p>
           <div className="text-center">
-            <Button variant="ghost" disabled>
-              Ver sitio público →
-            </Button>
+            <a
+              href={`/metrics-test?year=${year}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm underline underline-offset-4"
+            >
+              Ver página pública de prueba →
+            </a>
           </div>
         </div>
       </aside>

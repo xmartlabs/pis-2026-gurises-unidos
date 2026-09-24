@@ -1,4 +1,17 @@
 import prisma from '@/lib/prisma';
+import { METRIC_DEFINITIONS } from '@/lib/metric-definitions';
+
+export async function getMetricSettings() {
+  const savedMetrics = await prisma.metric.findMany({
+    select: { key: true, showPublicly: true },
+  });
+  return METRIC_DEFINITIONS.map((metric) => ({
+    ...metric,
+    showPublicly: savedMetrics.find((saved) => saved.key === metric.key)?.showPublicly ?? false,
+  }));
+}
+
+export type MetricSetting = Awaited<ReturnType<typeof getMetricSettings>>[number];
 
 export async function getMetricYears(currentYear: number) {
   const [beneficiaries, projects] = await Promise.all([
