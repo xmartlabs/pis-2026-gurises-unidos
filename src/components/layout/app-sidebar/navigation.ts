@@ -57,12 +57,6 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
             href: '/dashboard/projects',
             icon: FolderKanban,
           },
-          {
-            id: 'metrics',
-            title: 'Métricas',
-            href: '/dashboard/metrics',
-            icon: ChartNoAxesColumn,
-          },
           // {
           //   id: 'beneficiaries',
           //   title: 'Beneficiarios',
@@ -94,6 +88,13 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
         title: 'Usuarios',
         href: '/management/users',
         icon: Users,
+        roles: ['admin'],
+      },
+      {
+        id: 'metrics',
+        title: 'Gestión de métricas',
+        href: '/dashboard/metrics',
+        icon: ChartNoAxesColumn,
         roles: ['admin'],
       },
     ],

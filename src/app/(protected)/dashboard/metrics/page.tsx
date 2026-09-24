@@ -1,7 +1,7 @@
 import { MetricsForm } from '@/components/metrics-form';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { getMetricValues, getMetricYears } from '@/lib/metrics';
+import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics';
 import { MetricsYearSelect } from '@/components/metrics-year-select';
 
 export default async function MetricsPage({
@@ -11,6 +11,7 @@ export default async function MetricsPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
+  if (session.user.role !== 'admin') redirect('/dashboard/projects');
 
   const currentYear = Number(
     new Intl.DateTimeFormat('es-UY', {
@@ -25,7 +26,7 @@ export default async function MetricsPage({
       ? Number(requestedYear)
       : NaN;
   const year = years.includes(parsedYear) ? parsedYear : currentYear - 1;
-  const values = await getMetricValues(year);
+  const [values, initialMetrics] = await Promise.all([getMetricValues(year), getMetricSettings()]);
 
   return (
     <div className="bg-primary-foreground flex flex-1 flex-col gap-8 p-6 lg:p-8">
@@ -37,7 +38,12 @@ export default async function MetricsPage({
         </p>
       </header>
       <MetricsYearSelect year={year} years={years} />
-      <MetricsForm year={String(year)} values={values} />
+      <MetricsForm
+        year={String(year)}
+        values={values}
+        initialMetrics={initialMetrics}
+        canSave={session.user.role === 'admin'}
+      />
     </div>
   );
 }
