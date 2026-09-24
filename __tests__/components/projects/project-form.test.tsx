@@ -77,11 +77,7 @@ it('keeps the original creation appearance separate from edit styling', () => {
       .closest('[data-slot="card"]')
       ?.classList.contains('ring-1')
   ).toBe(true);
-  expect(
-    screen
-      .getByRole('button', { name: 'Guardar borrador' })
-      .classList.contains('disabled:opacity-100')
-  ).toBe(false);
+  expect(screen.queryByRole('button', { name: 'Guardar borrador' })).toBeNull();
 });
 
 it('sends all checked topics and keeps them after a failed save', async () => {

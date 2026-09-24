@@ -121,7 +121,7 @@ describe.each([
     ['year', '1800'],
     ['directChildrenAdolescents', '-1'],
     ['families', '1.5'],
-    ['publicDescription', 'a'.repeat(301)],
+    ['publicDescription', 'a'.repeat(1001)],
   ])('rejects invalid %s before writing', async (field, value) => {
     const result = await submit(formData({ [field]: value }));
     expect(result.errors?.[field]?.length).toBeGreaterThan(0);
