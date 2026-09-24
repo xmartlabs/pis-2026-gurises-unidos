@@ -158,7 +158,7 @@ export function UsersTable({ users }: { users: User[] }) {
   return (
     <>
       <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex w-full items-center gap-2 md:w-auto">
+        <div className="flex w-full items-center gap-2 xl:w-auto">
           <InputGroup className="h-9 min-w-0 flex-1 rounded-md sm:w-80 sm:flex-none">
             <InputGroupAddon>
               <Search />
@@ -170,7 +170,7 @@ export function UsersTable({ users }: { users: User[] }) {
             />
           </InputGroup>
 
-          <div className="hidden gap-2 md:flex">
+          <div className="hidden gap-2 xl:flex">
             {roleSelect}
             {statusSelect}
             {sortSelect}
@@ -179,7 +179,7 @@ export function UsersTable({ users }: { users: User[] }) {
           <Sheet>
             <SheetTrigger
               render={
-                <Button variant="outline" className="shrink-0 md:hidden">
+                <Button variant="outline" className="shrink-0 xl:hidden">
                   Filtros
                 </Button>
               }
@@ -222,12 +222,12 @@ export function UsersTable({ users }: { users: User[] }) {
           </Sheet>
         </div>
 
-        <span className="hidden text-sm leading-5 font-normal tracking-normal md:inline">
+        <span className="hidden text-sm leading-5 font-normal tracking-normal xl:inline">
           {formatUserCount(filteredUsers.length)}
         </span>
       </div>
 
-      <div className="flex max-h-130 flex-col gap-3 overflow-y-auto md:hidden">
+      <div className="flex max-h-130 flex-col gap-3 overflow-y-auto xl:hidden">
         {filteredUsers.length === 0 && (
           <p className="text-muted-foreground rounded-[14px] border py-12 text-center">
             No se encontraron usuarios
@@ -253,7 +253,7 @@ export function UsersTable({ users }: { users: User[] }) {
         ))}
       </div>
 
-      <div className="hidden w-full overflow-auto rounded-[14px] border md:block md:max-h-130">
+      <div className="hidden w-full overflow-auto rounded-[14px] border xl:max-h-130 xl:block">
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="bg-muted">

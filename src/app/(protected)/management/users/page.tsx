@@ -69,7 +69,7 @@ export default async function UsersPage() {
   const hasOnlyCurrentAdmin = users.length <= 1;
 
   return (
-    <div className="mx-auto w-full max-w-296">
+    <div className="mx-auto w-full max-w-296 [contain:inline-size]">
       <div className="flex w-full flex-col items-start justify-between gap-3 px-4 pt-6 pb-2.5 sm:flex-row sm:px-6">
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm tracking-normal">Administración</span>
@@ -110,7 +110,7 @@ export default async function UsersPage() {
         </div>
       ) : (
         <div className="flex w-full flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-3xl font-bold">{total}</CardTitle>
