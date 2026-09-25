@@ -187,6 +187,25 @@ describe('createProject', () => {
     });
   });
 
+  test('allows a coordinator to create a project', async () => {
+    authMock.mockResolvedValue({ user: { id: '3', role: 'coordinator' } });
+    const { projectCreate } = setupTransaction();
+
+    await expect(createProject(EMPTY_STATE, buildFormData())).rejects.toThrow(
+      'NEXT_REDIRECT:/dashboard/projects/42'
+    );
+
+    expect(projectCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ createdBy: 3 }),
+    });
+    expect(logAuditMock).toHaveBeenCalledWith(expect.anything(), {
+      authorId: 3,
+      action: 'creation',
+      entity: 'project',
+      entityId: 42,
+    });
+  });
+
   test('defaults beneficiary counts to 0 and year to the current year when omitted', async () => {
     const { beneficiaryCreate } = setupTransaction();
 
@@ -280,9 +299,9 @@ describe('createProject', () => {
     async ({ field, limit }) => {
       const { projectCreate } = setupTransaction();
       const value = 'a'.repeat(limit);
-      await expect(
-        createProject(EMPTY_STATE, buildFormData({ [field]: value }))
-      ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
+      await expect(createProject(EMPTY_STATE, buildFormData({ [field]: value }))).rejects.toThrow(
+        'NEXT_REDIRECT:/dashboard/projects/42'
+      );
 
       expect(projectCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({ [field]: value }),
@@ -300,7 +319,8 @@ describe('createProject', () => {
 
       expect(result.errors?.[field]).toEqual([`Máx. ${limit} caracteres`]);
       expect(transactionMock).not.toHaveBeenCalled();
-    });
+    }
+  );
 
   const BENEFICIARY_FIELDS = [
     'directChildrenAdolescents',
@@ -312,35 +332,24 @@ describe('createProject', () => {
     'basicServiceStaff',
   ];
 
-  test.each(BENEFICIARY_FIELDS)(
-    'accepts the int32 maximum for %s',
-    async (field) => {
-      const { beneficiaryCreate } = setupTransaction();
+  test.each(BENEFICIARY_FIELDS)('accepts the int32 maximum for %s', async (field) => {
+    const { beneficiaryCreate } = setupTransaction();
 
-      await expect(
-        createProject(
-          EMPTY_STATE,
-          buildFormData({ [field]: '2147483647' })
-        )
-      ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
+    await expect(
+      createProject(EMPTY_STATE, buildFormData({ [field]: '2147483647' }))
+    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
 
-      expect(beneficiaryCreate).toHaveBeenCalledWith({
-        data: expect.objectContaining({ [field]: 2_147_483_647 }),
-      });
-    }
-  );
+    expect(beneficiaryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ [field]: 2_147_483_647 }),
+    });
+  });
 
   test.each(BENEFICIARY_FIELDS)(
     'rejects %s above the int32 maximum without accessing the database',
     async (field) => {
-      const result = await createProject(
-        EMPTY_STATE,
-        buildFormData({ [field]: '2147483648' })
-      );
+      const result = await createProject(EMPTY_STATE, buildFormData({ [field]: '2147483648' }));
 
-      expect(result.errors?.[field]).toEqual([
-        'La cantidad es demasiado grande',
-      ]);
+      expect(result.errors?.[field]).toEqual(['La cantidad es demasiado grande']);
       expect(transactionMock).not.toHaveBeenCalled();
     }
   );
