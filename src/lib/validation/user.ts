@@ -1,10 +1,14 @@
 import { z } from 'zod';
 import { normalizeDocumentId } from '@/lib/utils';
 
+export const PRESERVED_FIELDS = ['firstName', 'lastName', 'documentId', 'email', 'role'] as const;
+
+export type PreservedField = (typeof PRESERVED_FIELDS)[number];
+
 export type UserFormState = {
   errors?: Record<string, string[]>;
   formError?: string;
-  values?: Record<string, string>;
+  values?: Partial<Record<PreservedField, string>>;
 };
 
 export function isValidUruguayanDocumentId(rawValue: string) {

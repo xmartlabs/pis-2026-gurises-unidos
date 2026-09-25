@@ -23,7 +23,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 import { Check, Copy } from 'lucide-react';
 
-import { userEditFormSchema, userFormSchema, type UserFormState } from '@/lib/validation/user';
+import {
+  userEditFormSchema,
+  userFormSchema,
+  type PreservedField,
+  type UserFormState,
+} from '@/lib/validation/user';
 import { generateTemporaryPassword } from '@/lib/users';
 
 const initialState: UserFormState = {};
@@ -89,6 +94,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [formErrorDismissed, setFormErrorDismissed] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
   const passwordConfirmRef = useRef<HTMLInputElement>(null);
 
@@ -102,12 +108,17 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
     const password = passwordRef.current?.value;
     if (!password) return;
 
-    await navigator.clipboard.writeText(password);
-    setPasswordCopied(true);
-    setTimeout(() => setPasswordCopied(false), COPIED_FEEDBACK_MS);
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopyFailed(false);
+      setPasswordCopied(true);
+      setTimeout(() => setPasswordCopied(false), COPIED_FEEDBACK_MS);
+    } catch {
+      setCopyFailed(true);
+    }
   }
 
-  function defaultFor(field: 'firstName' | 'lastName' | 'documentId' | 'email' | 'role') {
+  function defaultFor(field: PreservedField) {
     return state.values?.[field] ?? initialValues?.[field];
   }
 
@@ -249,6 +260,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                     Rol
                   </FieldLabel>
                   <NativeSelect
+                    key={state.values?.role}
                     id="role"
                     name="role"
                     defaultValue={defaultFor('role') ?? 'coordinator'}
@@ -338,7 +350,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                           <InputGroupAddon align="inline-end">
                             <InputGroupButton
                               size="icon-xs"
-                              aria-label="Copy password"
+                              aria-label="Copiar contraseña"
                               onClick={handleCopyPassword}
                             >
                               {passwordCopied ? (
@@ -350,6 +362,9 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                           </InputGroupAddon>
                         </InputGroup>
                         <FieldError messages={fieldMessages('password')} />
+                        {copyFailed && (
+                          <FieldError messages={['No se pudo copiar. Cópiala manualmente.']} />
+                        )}
                       </Field>
                       <Field className="gap-1.25">
                         <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">

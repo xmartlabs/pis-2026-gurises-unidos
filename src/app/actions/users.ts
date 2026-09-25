@@ -4,12 +4,10 @@ import { redirect } from 'next/navigation';
 import { Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { userFormSchema, type UserFormState } from '@/lib/validation/user';
+import { PRESERVED_FIELDS, userFormSchema, type UserFormState } from '@/lib/validation/user';
 import { logAudit } from '@/lib/audit-log';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-
-const PRESERVED_FIELDS = ['firstName', 'lastName', 'documentId', 'email', 'role'] as const;
 
 export async function createUser(
   _prevState: UserFormState,
