@@ -59,7 +59,7 @@ export async function saveMetricSettings(input: unknown) {
     return { success: false, message: 'No se pudieron guardar los cambios. Intentá de nuevo.' };
   }
 
-  revalidatePath('/dashboard/metrics');
+  revalidatePath('/management/metrics');
   revalidatePath('/metrics-test');
   return { success: true, message: 'Cambios guardados. Ya podés comprobar la página de prueba.' };
 }

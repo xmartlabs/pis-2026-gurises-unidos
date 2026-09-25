@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { formatNumber } from '@/lib/format';
+import { METRIC_DEFINITIONS } from '@/lib/metric-definitions';
 import type { MetricSetting, MetricValues } from '@/lib/metrics';
 
 export function MetricsForm({
@@ -20,7 +21,6 @@ export function MetricsForm({
   canSave: boolean;
 }) {
   const [metrics, setMetrics] = useState(initialMetrics);
-  const [savedMetrics, setSavedMetrics] = useState(initialMetrics);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState('');
   const visibleMetrics = metrics.filter((metric) => metric.showPublicly);
@@ -32,7 +32,6 @@ export function MetricsForm({
         const result = await saveMetricSettings(
           metrics.map(({ key, showPublicly }) => ({ key, showPublicly }))
         );
-        if (result.success) setSavedMetrics(metrics);
         setMessage(result.message);
       } catch {
         setMessage('No se pudieron guardar los cambios. Intentá de nuevo.');
@@ -48,13 +47,16 @@ export function MetricsForm({
   }
 
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,3fr)]">
-      <section aria-label="Selección de métricas" className="min-w-0 space-y-6">
+    <div className="mx-auto grid w-full max-w-[1185px] items-start gap-y-6 xl:grid-cols-[minmax(0,760fr)_minmax(0,425fr)]">
+      <section
+        aria-label="Selección de métricas"
+        className="flex min-w-0 flex-col gap-5 bg-[#FAFAFB] px-6 pt-6 pb-8"
+      >
         <div className="grid gap-4 md:grid-cols-2">
           {metrics.map((metric) => (
             <article
               key={metric.key}
-              className="bg-card flex flex-col gap-4 rounded-2xl border p-5"
+              className="bg-card flex min-w-0 flex-col gap-3 rounded-[14px] border border-[#E5E5E7] p-5"
             >
               <h2 className="text-lg font-semibold">
                 <label htmlFor={`${metric.key}-value`}>{metric.name}</label>
@@ -87,48 +89,65 @@ export function MetricsForm({
             </article>
           ))}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3 pt-2">
           <Button
             variant="ghost"
+            className="h-9 w-fit flex-col gap-2.5 rounded-lg px-4 py-2"
             disabled={isPending || !canSave}
             onClick={() => {
-              setMetrics(savedMetrics);
+              setMetrics((current) =>
+                current.map((metric) => ({
+                  ...metric,
+                  showPublicly:
+                    METRIC_DEFINITIONS.find((definition) => definition.key === metric.key)
+                      ?.showPublicly ?? false,
+                }))
+              );
               setMessage('');
             }}
           >
-            Restablecer valores
+            <span className="flex w-fit items-center gap-2.5 leading-5">Restablecer valores</span>
           </Button>
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={isPending || !canSave}
               onClick={saveChanges}
+              className="h-9 w-fit flex-col gap-2.5 rounded-lg bg-[#1A1A1A] px-4 py-2 shadow-[0_1px_2px_0_rgb(0_0_0/10%)]"
               aria-describedby="metrics-save-status"
             >
               {isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </div>
         </div>
-        <p id="metrics-save-status" role="status" className="text-muted-foreground text-sm">
+        <p
+          id="metrics-save-status"
+          role="status"
+          className="text-muted-foreground text-sm empty:hidden"
+        >
           {canSave ? message : 'Solo los administradores pueden guardar cambios.'}
         </p>
       </section>
       <aside
         aria-label="Vista previa del sitio público"
-        className="overflow-hidden rounded-xl border xl:sticky xl:top-6"
+        className="bg-card flex w-full flex-col overflow-hidden border border-[#E5E5E7] xl:mt-6"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-4 text-sm">
+        <div className="flex h-12 w-full shrink-0 items-center justify-between gap-2 border-b border-[#E5E5E7] bg-[#FAFAFB] px-5 py-3 text-sm">
           <h2 className="font-medium">Vista previa</h2>
           <span className="text-muted-foreground">Actualización automática</span>
         </div>
-        <div className="bg-muted/40 space-y-4 p-5 lg:p-6">
-          <div className="rounded-2xl bg-[#103d30] p-6" aria-live="polite" aria-atomic="true">
-            <h3 className="text-sm font-semibold tracking-wider text-[#ffa500] uppercase">
+        <div className="flex w-full flex-col gap-3 bg-[#F5F5F5] px-6 py-8">
+          <div
+            className="flex w-full flex-col gap-3.5 rounded-[14px] bg-[#0E3A2E] p-5"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <h3 className="w-fit font-sans text-xs leading-4 font-bold tracking-[0.06em] text-[#F5970C] uppercase">
               Impacto {year}
             </h3>
             {visibleMetrics.length > 0 ? (
-              <dl className="mt-5 space-y-5">
+              <dl className="flex flex-col gap-3.5">
                 {visibleMetrics.map((metric) => (
-                  <div key={metric.key} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <div key={metric.key} className="flex w-full items-center gap-2.5">
                     <dt className="order-2 text-sm text-white/70">{metric.name}</dt>
                     <dd className="order-1 text-4xl font-bold text-[#ffa500]">
                       {formatNumber(values[metric.key])}
@@ -137,22 +156,20 @@ export function MetricsForm({
                 ))}
               </dl>
             ) : (
-              <p className="mt-5 text-sm text-white/70">
-                No hay métricas seleccionadas para mostrar.
-              </p>
+              <p className="text-sm text-white/70">No hay métricas seleccionadas para mostrar.</p>
             )}
           </div>
           <p className="text-muted-foreground text-center text-xs leading-relaxed">
-            Guardá los cambios para actualizar la página pública de prueba.
+            Estas cifras se actualizan automáticamente en el sitio público.
           </p>
           <div className="text-center">
             <a
               href={`/metrics-test?year=${year}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm underline underline-offset-4"
+              className="inline-flex h-9 w-fit flex-col items-center justify-center gap-2.5 rounded-lg px-4 py-2 text-sm leading-5 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-              Ver página pública de prueba →
+              Ver sitio público →
             </a>
           </div>
         </div>

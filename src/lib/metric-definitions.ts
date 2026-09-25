@@ -20,7 +20,7 @@ export const METRIC_DEFINITIONS: {
   },
   {
     key: 'teachers',
-    name: 'Docentes capacitados',
+    name: 'Funcionarios de servicios básicos',
     description: 'Funcionarios de servicios básicos formados por la organización.',
     showPublicly: false,
   },
