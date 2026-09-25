@@ -16,5 +16,6 @@ export function getInitials(name: string | null | undefined) {
  * @example "4.123.456-7" -> "41234567"
  */
 export function normalizeDocumentId(documentId: string) {
-  return documentId.replace(/[ .\-]/g, '');
+  const normalized = documentId.replace(/[ .\-]/g, '');
+  return /^\d{7}$/.test(normalized) ? normalized.padStart(8, '0') : normalized;
 }
