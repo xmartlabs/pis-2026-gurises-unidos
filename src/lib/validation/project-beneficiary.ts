@@ -20,8 +20,8 @@ export const projectBeneficiarySchema = z.object({
       .number({ error: 'Año inválido' })
       .int('Año inválido')
       .min(1989, 'Año inválido')
-      .max(new Date().getFullYear(), 'Año inválido')
-      .default(new Date().getFullYear())
+      .refine((year) => year <= new Date().getFullYear(), 'Año inválido')
+      .default(() => new Date().getFullYear())
   ),
   directChildrenAdolescents: beneficiaryCount,
   indirectChildrenAdolescents: beneficiaryCount,
