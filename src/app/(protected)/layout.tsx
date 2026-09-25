@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Topbar } from '@/components/topbar';
+import { Toaster } from '@/components/ui/toast';
 
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -17,12 +18,14 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar user={session.user} />
-      <SidebarInset>
-        <Topbar user={session.user} />
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <Toaster>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar user={session.user} />
+        <SidebarInset>
+          <Topbar user={session.user} />
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </Toaster>
   );
 }
