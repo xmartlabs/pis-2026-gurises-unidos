@@ -22,6 +22,14 @@ vi.mock('@/lib/prisma', () => ({ default: { $transaction: transactionMock } }));
 
 const EMPTY_STATE: UserFormState = {};
 
+const SUBMITTED_VALUES = {
+  firstName: 'Ana',
+  lastName: 'García',
+  documentId: '77777777',
+  email: 'ana@gmail.com',
+  role: 'coordinator',
+};
+
 function buildFormData(overrides: Record<string, string> = {}) {
   const formData = new FormData();
   const fields = {
@@ -89,7 +97,7 @@ describe('createUser', () => {
   test('returns validation errors without touching the database', async () => {
     const result = await createUser(EMPTY_STATE, buildFormData({ documentId: '77777776' }));
 
-    expect(result.errors?.documentId).toEqual(['Ingresá una cédula uruguaya válida (8 dígitos).']);
+    expect(result.errors?.documentId).toEqual(['Ingresá una cédula uruguaya válida.']);
     expect(transactionMock).not.toHaveBeenCalled();
   });
 
@@ -176,6 +184,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'Ya existe un usuario con ese documento.',
+      values: SUBMITTED_VALUES,
     });
   });
 
@@ -184,6 +193,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'Ya existe un usuario con ese correo electrónico.',
+      values: SUBMITTED_VALUES,
     });
   });
 
@@ -192,6 +202,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'Tu sesión ya no es válida. Cerrá sesión y volvé a ingresar.',
+      values: SUBMITTED_VALUES,
     });
   });
 
@@ -200,6 +211,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'No se pudo crear el usuario. Intentá de nuevo.',
+      values: SUBMITTED_VALUES,
     });
   });
 

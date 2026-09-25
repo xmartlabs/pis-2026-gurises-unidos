@@ -8,19 +8,27 @@ import { createUser } from '@/app/actions/users';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-import { Eye, EyeOff } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 import { userEditFormSchema, userFormSchema, type UserFormState } from '@/lib/validation/user';
 import { generateTemporaryPassword } from '@/lib/users';
 
 const initialState: UserFormState = {};
+
+const COPIED_FEEDBACK_MS = 2000;
 
 type UserFormProps = {
   mode?: 'create' | 'edit';
@@ -80,8 +88,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const [state, formAction, pending] = useActionState(createUser, initialState);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [formErrorDismissed, setFormErrorDismissed] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [passwordConfirmVisible, setPasswordConfirmVisible] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
   const passwordConfirmRef = useRef<HTMLInputElement>(null);
 
@@ -89,6 +96,19 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
     const generated = generateTemporaryPassword();
     if (passwordRef.current) passwordRef.current.value = generated;
     if (passwordConfirmRef.current) passwordConfirmRef.current.value = generated;
+  }
+
+  async function handleCopyPassword() {
+    const password = passwordRef.current?.value;
+    if (!password) return;
+
+    await navigator.clipboard.writeText(password);
+    setPasswordCopied(true);
+    setTimeout(() => setPasswordCopied(false), COPIED_FEEDBACK_MS);
+  }
+
+  function defaultFor(field: 'firstName' | 'lastName' | 'documentId' | 'email' | 'role') {
+    return state.values?.[field] ?? initialValues?.[field];
   }
 
   function fieldMessages(field: string) {
@@ -130,8 +150,13 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
       noValidate
       className="flex min-w-0 flex-1 flex-col pt-6"
     >
-      <div className="mx-auto w-full px-6 pb-6">
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_425px]">
+      <div className={cn('mx-auto w-full px-6 pb-6', !isEditing && 'max-w-[1185px]')}>
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-6',
+            isEditing && 'xl:grid-cols-[minmax(0,1fr)_425px]'
+          )}
+        >
           <div className="flex min-w-0 flex-col gap-5">
             {state.formError && !formErrorDismissed && (
               <p className="border-destructive bg-destructive/10 text-destructive hidden rounded-lg border px-4 py-3 text-sm md:block">
@@ -151,9 +176,10 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                         Nombre
                       </FieldLabel>
                       <Input
+                        key={state.values?.firstName}
                         id="firstName"
                         name="firstName"
-                        defaultValue={initialValues?.firstName}
+                        defaultValue={defaultFor('firstName')}
                         placeholder={isEditing ? 'Nombre' : 'Ej. Ana'}
                         required
                         maxLength={100}
@@ -166,9 +192,10 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                         Apellido
                       </FieldLabel>
                       <Input
+                        key={state.values?.lastName}
                         id="lastName"
                         name="lastName"
-                        defaultValue={initialValues?.lastName}
+                        defaultValue={defaultFor('lastName')}
                         placeholder={isEditing ? 'Apellido' : 'Ej. García'}
                         maxLength={100}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
@@ -182,9 +209,10 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                         Documento (Cédula)
                       </FieldLabel>
                       <Input
+                        key={state.values?.documentId}
                         id="documentId"
                         name="documentId"
-                        defaultValue={initialValues?.documentId}
+                        defaultValue={defaultFor('documentId')}
                         placeholder="1.234.567-8"
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
                       />
@@ -195,10 +223,11 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                         Correo electrónico
                       </FieldLabel>
                       <Input
+                        key={state.values?.email}
                         id="email"
                         name="email"
                         type="email"
-                        defaultValue={initialValues?.email}
+                        defaultValue={defaultFor('email')}
                         placeholder="nombre@gurises-unidos.org.uy"
                         maxLength={254}
                         className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
@@ -222,7 +251,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                   <NativeSelect
                     id="role"
                     name="role"
-                    defaultValue={initialValues?.role ?? 'coordinator'}
+                    defaultValue={defaultFor('role') ?? 'coordinator'}
                     className="[&_select]:text-muted-foreground w-full max-w-81 [&_select]:h-9 [&_select]:rounded-md [&_select]:pt-2 [&_select]:pb-2 [&_select]:pl-3 [&_select]:shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]"
                   >
                     {ROLE_OPTIONS.map((role) => (
@@ -239,36 +268,38 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
               </CardContent>
             </Card>
 
-            <Card className="gap-4 pt-5 pb-5">
-              <CardHeader className="px-6">
-                <CardTitle className="leading-6 font-semibold">Estado</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6">
-                <RadioGroup
-                  name="status"
-                  defaultValue={initialValues?.status ?? 'active'}
-                  className="gap-3.5"
-                >
-                  {STATUS_OPTIONS.map((status) => (
-                    <Label
-                      key={status.value}
-                      htmlFor={`status-${status.value}`}
-                      className="w-fit gap-2.5 font-normal"
-                    >
-                      <RadioGroupItem
-                        value={status.value}
-                        id={`status-${status.value}`}
-                        className="border-input bg-background data-checked:border-input data-checked:bg-background data-checked:[&_[data-slot=radio-group-indicator]>span]:bg-foreground size-4 border shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] [&_[data-slot=radio-group-indicator]>span]:size-[6.67px]"
-                      />
-                      <Badge variant={status.variant} className={cn('px-2.5', status.className)}>
-                        {status.label}
-                      </Badge>
-                    </Label>
-                  ))}
-                </RadioGroup>
-                <FieldError messages={state.errors?.status} />
-              </CardContent>
-            </Card>
+            {isEditing && (
+              <Card className="gap-4 pt-5 pb-5">
+                <CardHeader className="px-6">
+                  <CardTitle className="leading-6 font-semibold">Estado</CardTitle>
+                </CardHeader>
+                <CardContent className="px-6">
+                  <RadioGroup
+                    name="status"
+                    defaultValue={initialValues?.status ?? 'active'}
+                    className="gap-3.5"
+                  >
+                    {STATUS_OPTIONS.map((status) => (
+                      <Label
+                        key={status.value}
+                        htmlFor={`status-${status.value}`}
+                        className="w-fit gap-2.5 font-normal"
+                      >
+                        <RadioGroupItem
+                          value={status.value}
+                          id={`status-${status.value}`}
+                          className="border-input bg-background data-checked:border-input data-checked:bg-background data-checked:[&_[data-slot=radio-group-indicator]>span]:bg-foreground size-4 border shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] [&_[data-slot=radio-group-indicator]>span]:size-[6.67px]"
+                        />
+                        <Badge variant={status.variant} className={cn('px-2.5', status.className)}>
+                          {status.label}
+                        </Badge>
+                      </Label>
+                    ))}
+                  </RadioGroup>
+                  <FieldError messages={state.errors?.status} />
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="gap-4 pt-5 pb-5">
               <CardHeader className="px-6">
@@ -292,74 +323,49 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                         <FieldLabel htmlFor="password" className="text-xs leading-4">
                           Contraseña temporal
                         </FieldLabel>
-                        <div className="relative">
-                          <Input
+                        <InputGroup className="h-9 rounded-md shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]">
+                          <InputGroupInput
                             ref={passwordRef}
                             id="password"
                             name="password"
-                            type={passwordVisible ? 'text' : 'password'}
+                            type="text"
                             placeholder="Se genera automáticamente"
                             required
                             minLength={8}
                             maxLength={72}
-                            className="h-9 rounded-md pr-8 pl-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
+                            className="pl-3 md:text-base md:leading-6"
                           />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            className="absolute top-1/2 right-1 -translate-y-1/2"
-                            aria-label={
-                              passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'
-                            }
-                            aria-controls="password"
-                            onClick={() => setPasswordVisible((visible) => !visible)}
-                          >
-                            {passwordVisible ? (
-                              <EyeOff className="size-3" aria-hidden="true" />
-                            ) : (
-                              <Eye className="size-3" aria-hidden="true" />
-                            )}
-                          </Button>
-                        </div>
+                          <InputGroupAddon align="inline-end">
+                            <InputGroupButton
+                              size="icon-xs"
+                              aria-label="Copy password"
+                              onClick={handleCopyPassword}
+                            >
+                              {passwordCopied ? (
+                                <Check className="size-3" />
+                              ) : (
+                                <Copy className="size-3" />
+                              )}
+                            </InputGroupButton>
+                          </InputGroupAddon>
+                        </InputGroup>
                         <FieldError messages={fieldMessages('password')} />
                       </Field>
                       <Field className="gap-1.25">
                         <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">
                           Confirmar contraseña
                         </FieldLabel>
-                        <div className="relative">
-                          <Input
-                            ref={passwordConfirmRef}
-                            id="passwordConfirm"
-                            name="passwordConfirm"
-                            type={passwordConfirmVisible ? 'text' : 'password'}
-                            placeholder="Repetí la contraseña"
-                            required
-                            minLength={8}
-                            maxLength={72}
-                            className="h-9 rounded-md pr-8 pl-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            className="absolute top-1/2 right-1 -translate-y-1/2"
-                            aria-label={
-                              passwordConfirmVisible
-                                ? 'Ocultar confirmación de contraseña'
-                                : 'Mostrar confirmación de contraseña'
-                            }
-                            aria-controls="passwordConfirm"
-                            onClick={() => setPasswordConfirmVisible((visible) => !visible)}
-                          >
-                            {passwordConfirmVisible ? (
-                              <EyeOff className="size-3" aria-hidden="true" />
-                            ) : (
-                              <Eye className="size-3" aria-hidden="true" />
-                            )}
-                          </Button>
-                        </div>
+                        <Input
+                          ref={passwordConfirmRef}
+                          id="passwordConfirm"
+                          name="passwordConfirm"
+                          type="text"
+                          placeholder="Repetí la contraseña"
+                          required
+                          minLength={8}
+                          maxLength={72}
+                          className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
+                        />
                         <FieldError messages={fieldMessages('passwordConfirm')} />
                       </Field>
                     </div>
@@ -385,33 +391,30 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
             </Card>
           </div>
 
-          <div className="min-w-0">
-            <Card className="gap-4 pt-5 pb-5">
-              <CardHeader className="px-6">
-                <CardTitle className="leading-6 font-semibold">Información</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4 px-6">
-                {!isEditing && (
-                  <CardDescription className="text-xs leading-4">
-                    Se completarán una vez creado el usuario.
-                  </CardDescription>
-                )}
-                <dl className="flex flex-col gap-4">
-                  {INFO_ROWS.map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between text-xs leading-4 font-medium"
-                    >
-                      <dt className="text-foreground">{row.label}</dt>
-                      <dd className="text-foreground">
-                        {initialValues?.information[row.key] ?? '—'}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </CardContent>
-            </Card>
-          </div>
+          {isEditing && (
+            <div className="min-w-0">
+              <Card className="gap-4 pt-5 pb-5">
+                <CardHeader className="px-6">
+                  <CardTitle className="leading-6 font-semibold">Información</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4 px-6">
+                  <dl className="flex flex-col gap-4">
+                    {INFO_ROWS.map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between text-xs leading-4 font-medium"
+                      >
+                        <dt className="text-foreground">{row.label}</dt>
+                        <dd className="text-foreground">
+                          {initialValues?.information[row.key] ?? '—'}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 

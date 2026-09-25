@@ -16,7 +16,7 @@ export default async function NewUserPage() {
   return (
     <div className="bg-primary-foreground flex w-full flex-1 flex-col">
       <div className="flex w-full flex-1 flex-col">
-        <header className="flex h-30 w-full flex-col gap-1.5 px-6 pt-6 pb-2.5">
+        <header className="mx-auto flex h-30 w-full max-w-[1185px] flex-col gap-1.5 px-6 pt-6 pb-2.5">
           <p className="text-muted-foreground h-5 text-sm leading-5 font-normal tracking-normal">
             Administración
           </p>

@@ -9,6 +9,8 @@ import { logAudit } from '@/lib/audit-log';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
+const PRESERVED_FIELDS = ['firstName', 'lastName', 'documentId', 'email', 'role'] as const;
+
 export async function createUser(
   _prevState: UserFormState,
   formData: FormData
@@ -25,9 +27,12 @@ export async function createUser(
 
   if (formData.get('intent') === 'submit') {
     const result = userFormSchema.safeParse(Object.fromEntries(formData));
+    const values = Object.fromEntries(
+      PRESERVED_FIELDS.map((field) => [field, String(formData.get(field) ?? '')])
+    );
 
     if (!result.success) {
-      return { errors: z.flattenError(result.error).fieldErrors };
+      return { errors: z.flattenError(result.error).fieldErrors, values };
     }
 
     const userData = result.data;
@@ -42,7 +47,7 @@ export async function createUser(
             documentId: userData.documentId,
             email: userData.email,
             role: userData.role,
-            status: userData.status,
+            status: 'active',
             passwordHash,
             createdBy: Number(session.user.id),
           },
@@ -66,19 +71,22 @@ export async function createUser(
           const fields = Array.isArray(target) ? target.map(String) : [String(target ?? '')];
 
           if (fields.some((field) => field.includes('documentId'))) {
-            return { formError: 'Ya existe un usuario con ese documento.' };
+            return { formError: 'Ya existe un usuario con ese documento.', values };
           }
 
           if (fields.some((field) => field.includes('email'))) {
-            return { formError: 'Ya existe un usuario con ese correo electrónico.' };
+            return { formError: 'Ya existe un usuario con ese correo electrónico.', values };
           }
         }
 
         if (isForeignKeyError) {
-          return { formError: 'Tu sesión ya no es válida. Cerrá sesión y volvé a ingresar.' };
+          return {
+            formError: 'Tu sesión ya no es válida. Cerrá sesión y volvé a ingresar.',
+            values,
+          };
         }
       }
-      return { formError: 'No se pudo crear el usuario. Intentá de nuevo.' };
+      return { formError: 'No se pudo crear el usuario. Intentá de nuevo.', values };
     }
 
     redirect('/management/users');
