@@ -92,8 +92,8 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
       },
       {
         id: 'metrics',
-        title: 'Gestión de métricas',
-        href: '/dashboard/metrics',
+        title: 'Gestión de Métricas',
+        href: '/management/metrics',
         icon: ChartNoAxesColumn,
         roles: ['admin'],
       },

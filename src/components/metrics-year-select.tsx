@@ -24,7 +24,10 @@ export function MetricsYearSelect({ year, years }: { year: number; years: number
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="metrics-year" className="text-muted-foreground text-sm">
+      <label
+        htmlFor="metrics-year"
+        className="text-muted-foreground font-sans text-sm leading-5 font-normal tracking-normal"
+      >
         Año
       </label>
       <Select

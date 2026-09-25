@@ -65,7 +65,7 @@ describe('saveMetricSettings', () => {
       })
     );
     expect(auditMock).toHaveBeenCalledTimes(6);
-    expect(revalidateMock).toHaveBeenCalledWith('/dashboard/metrics');
+    expect(revalidateMock).toHaveBeenCalledWith('/management/metrics');
     expect(revalidateMock).toHaveBeenCalledWith('/metrics-test');
   });
 

@@ -29,21 +29,29 @@ export default async function MetricsPage({
   const [values, initialMetrics] = await Promise.all([getMetricValues(year), getMetricSettings()]);
 
   return (
-    <div className="bg-primary-foreground flex flex-1 flex-col gap-8 p-6 lg:p-8">
-      <header className="space-y-2">
-        <p className="text-muted-foreground text-sm">Gestión de métricas</p>
-        <h1 className="text-3xl font-bold tracking-tight">Indicadores institucionales {year}</h1>
-        <p className="text-muted-foreground">
-          Seleccioná las cifras que querés mostrar en el sitio público de Gurises Unidos.
+    <main className="bg-primary-foreground flex flex-1 flex-col px-6">
+      <header className="mx-auto flex w-full max-w-[1185px] flex-col gap-1.5 px-6 pt-6 pb-2.5">
+        <p className="text-muted-foreground w-fit font-sans text-sm leading-5 font-normal tracking-normal">
+          Gestión de métricas
+        </p>
+        <h1 className="text-foreground w-fit font-sans text-3xl leading-9 font-bold tracking-normal">
+          Indicadores institucionales {year}
+        </h1>
+        <p className="text-muted-foreground w-fit font-sans text-sm leading-5 font-normal tracking-normal">
+          Estas cifras se publican automáticamente en el sitio público de Gurises Unidos.
         </p>
       </header>
-      <MetricsYearSelect year={year} years={years} />
-      <MetricsForm
-        year={String(year)}
-        values={values}
-        initialMetrics={initialMetrics}
-        canSave={session.user.role === 'admin'}
-      />
-    </div>
+      <div className="mx-auto flex w-full max-w-[1185px] flex-1 flex-col gap-4 pt-1.5 pb-6">
+        <div className="px-6">
+          <MetricsYearSelect year={year} years={years} />
+        </div>
+        <MetricsForm
+          year={String(year)}
+          values={values}
+          initialMetrics={initialMetrics}
+          canSave={session.user.role === 'admin'}
+        />
+      </div>
+    </main>
   );
 }
