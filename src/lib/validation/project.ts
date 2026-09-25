@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_INT32 } from './ids';
 
 export const projectSchema = z.object({
   name: z.string().trim().max(100, 'Máx. 100 caracteres').min(1, 'El nombre es obligatorio'),
@@ -8,15 +9,17 @@ export const projectSchema = z.object({
     .number()
     .int()
     .min(1989, 'Año inválido')
-    .max(new Date().getFullYear(), 'Año inválido'),
+    .refine((year) => year <= new Date().getFullYear(), 'Año inválido'),
   leadCoordinatorId: z.coerce
     .number({ error: 'Elegí un coordinador' })
     .int()
-    .positive('Elegí un coordinador'),
+    .positive('Elegí un coordinador')
+    .max(MAX_INT32),
   departmentId: z.coerce
     .number({ error: 'Elegí un departamento' })
     .int()
-    .positive('Elegí un departamento'),
+    .positive('Elegí un departamento')
+    .max(MAX_INT32),
   zone: z.enum(['city', 'inland', 'border', 'rural']),
   localityNeighborhood: z
     .string()

@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from 'cn';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
@@ -10,13 +11,22 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 type ImageUploadFieldProps = {
+  variant?: 'default' | 'detailed';
   id: string;
   label: string;
   value: File | null;
+  imageUrl?: string | null;
   onValueChange: (value: File | null) => void;
 };
 
-export function ImageUploadField({ id, label, value, onValueChange }: ImageUploadFieldProps) {
+export function ImageUploadField({
+  variant = 'default',
+  id,
+  label,
+  value,
+  imageUrl,
+  onValueChange,
+}: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>();
   const errorId = `${id}-error`;
@@ -55,10 +65,35 @@ export function ImageUploadField({ id, label, value, onValueChange }: ImageUploa
         }}
       />
       <Label
+        style={{
+          backgroundImage:
+            variant !== 'detailed'
+              ? undefined
+              : imageUrl
+                ? `url(${JSON.stringify(imageUrl)})`
+                : undefined,
+        }}
         htmlFor={id}
-        className="border-input bg-muted text-muted-foreground hover:bg-accent peer-focus-visible:ring-ring flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg border px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2"
+        className={cn(
+          'peer-focus-visible:ring-ring flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2',
+          variant === 'detailed'
+            ? 'text-secondary-foreground bg-project-cover bg-cover bg-center'
+            : 'border-input bg-muted text-muted-foreground hover:bg-accent border'
+        )}
       >
-        Clic para subir imagen (JPG, PNG, máx. 5MB)
+        <span
+          className={
+            variant === 'detailed' && imageUrl ? 'bg-background/85 rounded px-2 py-1' : undefined
+          }
+        >
+          {variant === 'default'
+            ? 'Clic para subir imagen (JPG, PNG, máx. 5MB)'
+            : value
+              ? `${value.name} · Cambiar imagen`
+              : imageUrl
+                ? 'Cambiar imagen'
+                : 'Clic para subir imagen (JPG, PNG, máx. 5MB)'}
+        </span>
       </Label>
       {value && (
         <Button
