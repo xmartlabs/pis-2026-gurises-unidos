@@ -222,7 +222,7 @@ export function UsersTable({ users }: { users: User[] }) {
           </Sheet>
         </div>
 
-        <span className="hidden text-sm leading-5 font-normal tracking-normal xl:inline">
+        <span className="hidden text-sm leading-5 font-normal tracking-normal md:inline">
           {formatUserCount(filteredUsers.length)}
         </span>
       </div>
@@ -234,7 +234,7 @@ export function UsersTable({ users }: { users: User[] }) {
           </p>
         )}
         {filteredUsers.map((user) => (
-          <Card key={user.id} className="gap-3 py-4">
+          <Card key={user.id} className="shrink-0 gap-3 py-4">
             <CardContent className="flex items-start justify-between gap-3 px-4">
               <div className="min-w-0">
                 <p className="text-foreground truncate font-medium">{fullName(user)}</p>
@@ -258,7 +258,7 @@ export function UsersTable({ users }: { users: User[] }) {
           <TableHeader>
             <TableRow className="bg-muted">
               <TableHead className="text-muted-foreground h-10 w-56 px-4 py-2.5">Nombre</TableHead>
-              <TableHead className="text-muted-foreground h-10 w-80 px-4 py-2.5">
+              <TableHead className="text-muted-foreground h-10 w-32 px-4 py-2.5">
                 Correo electrónico
               </TableHead>
               <TableHead className="text-muted-foreground h-10 w-38 px-4 py-2.5">Rol</TableHead>
