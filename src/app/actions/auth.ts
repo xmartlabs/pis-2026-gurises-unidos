@@ -2,25 +2,33 @@
 
 import { redirect } from 'next/navigation';
 import { AuthError } from 'next-auth';
+import { flattenError } from 'zod';
 import { signIn, signOut } from '@/auth';
+import { loginSchema, type LoginFormState } from '@/lib/validation/auth';
 
-export type LoginState = {
-  error?: string;
-  documentId?: string;
-};
+export async function login(
+  _prevState: LoginFormState,
+  formData: FormData
+): Promise<LoginFormState> {
+  const rawDocumentId = String(formData.get('documentId') ?? '');
+  const parsed = loginSchema.safeParse(Object.fromEntries(formData));
 
-export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
-  const documentId = String(formData.get('documentId') ?? '');
+  if (!parsed.success) {
+    return { errors: flattenError(parsed.error).fieldErrors, documentId: rawDocumentId };
+  }
+
+  const { documentId, password } = parsed.data;
 
   try {
     await signIn('credentials', {
       documentId,
-      password: formData.get('password'),
+      password,
+      remember: formData.get('rememberCheck') ? 'true' : 'false',
       redirect: false,
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: 'Invalid credentials', documentId };
+      return { formError: 'Invalid credentials', documentId: rawDocumentId };
     }
     throw error;
   }
@@ -29,5 +37,5 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
 }
 
 export async function logout() {
-  await signOut({ redirectTo: '/' });
+  await signOut({ redirectTo: '/login' });
 }

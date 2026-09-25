@@ -1,20 +1,20 @@
-import { notFound, redirect } from 'next/navigation';
+import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
+import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
-import { auth } from '@/auth';
+import { requireUser } from '@/lib/auth/require-user';
+import { canEditProject } from '@/lib/projects/permissions';
+import { parseId } from '@/lib/validation/ids';
 import { formatNumber } from '@/lib/format';
 import { STATUS_LABEL, INTENSITY_LABEL, BENEFICIARY_FIELDS } from '@/lib/project-display';
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect('/login');
-  }
+  const user = await requireUser();
 
   const { id } = await params;
-  const projectId = Number(id);
+  const projectId = parseId(id);
 
-  if (!Number.isInteger(projectId)) {
+  if (!projectId) {
     notFound();
   }
 
@@ -23,6 +23,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     include: {
       leadCoordinator: true,
       department: true,
+      projectTopics: { include: { topic: true } },
       projectBeneficiaries: { orderBy: { year: 'desc' }, take: 1 },
     },
   });
@@ -36,6 +37,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
+      {canEditProject(user, project) && (
+        <Link
+          href={`/dashboard/projects/${project.id}/edit`}
+          className={buttonVariants({ variant: 'outline' })}
+        >
+          Editar proyecto
+        </Link>
+      )}
       <h1 className="mt-3 text-3xl font-semibold tracking-tight">{project.name}</h1>
 
       <div className="text-muted-foreground mt-3 space-y-1 text-sm">
@@ -45,6 +54,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </p>
         <p>
           Coordinador/a: {project.leadCoordinator.firstName} {project.leadCoordinator.lastName}
+        </p>
+        <p>
+          Temáticas:{' '}
+          {project.projectTopics.map(({ topic }) => topic.name).join(', ') || 'Sin temática'}
         </p>
         <p>Desde {project.startYear}</p>
         <p>Estado: {STATUS_LABEL[project.status]}</p>

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_INT32 } from './ids';
 
 const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
 
@@ -8,6 +9,7 @@ const beneficiaryCount = z.preprocess(
     .number({ error: 'Valor inválido' })
     .int('Valor inválido')
     .min(0, 'No puede ser negativo')
+    .max(MAX_INT32, 'La cantidad es demasiado grande')
     .default(0)
 );
 
@@ -18,8 +20,8 @@ export const projectBeneficiarySchema = z.object({
       .number({ error: 'Año inválido' })
       .int('Año inválido')
       .min(1989, 'Año inválido')
-      .max(new Date().getFullYear(), 'Año inválido')
-      .default(new Date().getFullYear())
+      .refine((year) => year <= new Date().getFullYear(), 'Año inválido')
+      .default(() => new Date().getFullYear())
   ),
   directChildrenAdolescents: beneficiaryCount,
   indirectChildrenAdolescents: beneficiaryCount,

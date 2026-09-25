@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { normalizeDocumentId } from '@/lib/utils';
 
-
 export type UserFormState = { errors?: Record<string, string[]>; formError?: string };
 
 export function isValidUruguayanDocumentId(rawValue: string) {
@@ -17,42 +16,45 @@ export function isValidUruguayanDocumentId(rawValue: string) {
   return checkDigit === Number(digits[7]);
 }
 
-export const userFormSchema = z
-  .object({
-    firstName: z
-      .string()
-      .trim()
-      .min(1, 'El nombre es obligatorio.')
-      .max(100, 'El nombre no puede superar los 100 caracteres.'),
-    lastName: z
-      .string()
-      .trim()
-      .min(1, 'El apellido es obligatorio.')
-      .max(100, 'El apellido no puede superar los 100 caracteres.'),
-    documentId: z
-      .string()
-      .trim()
-      .min(1, 'El documento es obligatorio.')
-      .refine(isValidUruguayanDocumentId, 'Ingresá una cédula uruguaya válida (8 dígitos).')
-      .transform(normalizeDocumentId),
-    email: z
-      .string()
-      .trim()
-      .min(1, 'El correo es obligatorio.')
-      .max(254, 'El correo no puede superar los 254 caracteres.')
-      .pipe(z.email({ error: 'Ingresá un correo electrónico válido.' })),
-    role: z.enum(['admin', 'coordinator']),
-    status: z.enum(['active', 'pendingInvitation', 'disabled']),
+export const userEditFormSchema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(1, 'El nombre es obligatorio.')
+    .max(100, 'El nombre no puede superar los 100 caracteres.'),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, 'El apellido es obligatorio.')
+    .max(100, 'El apellido no puede superar los 100 caracteres.'),
+  documentId: z
+    .string()
+    .trim()
+    .min(1, 'El documento es obligatorio.')
+    .refine(isValidUruguayanDocumentId, 'Ingresá una cédula uruguaya válida (8 dígitos).')
+    .transform(normalizeDocumentId),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1, 'El correo es obligatorio.')
+    .max(254, 'El correo no puede superar los 254 caracteres.')
+    .pipe(z.email({ error: 'Ingresá un correo electrónico válido.' })),
+  role: z.enum(['admin', 'coordinator']),
+  status: z.enum(['active', 'pendingInvitation', 'disabled']),
+});
+
+export const userFormSchema = userEditFormSchema
+  .extend({
     password: z
       .string()
       .min(1, 'La contraseña es obligatoria.')
       .min(8, 'La contraseña debe tener al menos 8 caracteres.')
+      .regex(/[A-Z]/, 'La contraseña debe tener al menos una mayúscula.')
+      .regex(/[a-z]/, 'La contraseña debe tener al menos una minúscula.')
+      .regex(/[0-9]/, 'La contraseña debe tener al menos un número.')
       .max(72, 'La contraseña no puede superar los 72 caracteres.'),
-    passwordConfirm: z
-      .string()
-      .min(1, 'Confirmá la contraseña.')
-      .min(8, 'La contraseña debe tener al menos 8 caracteres.')
-      .max(72, 'La contraseña no puede superar los 72 caracteres.'),
+    passwordConfirm: z.string().min(1, 'Confirmá la contraseña.'),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     path: ['passwordConfirm'],

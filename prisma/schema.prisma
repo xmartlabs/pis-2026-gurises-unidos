@@ -45,6 +45,8 @@ enum AuditAction {
   creation
   update
   deletion
+  passwordChange
+  passwordReset
 }
 
 enum AuditEntity {
@@ -57,19 +59,21 @@ enum AuditEntity {
 // ---------- TABLES ----------
 
 model User {
-  id           Int        @id @default(autoincrement())
-  firstName    String
-  lastName     String
-  documentId   String     @unique
-  email        String     @unique
-  role         UserRole
-  status       UserStatus
-  passwordHash String
-  lastAccess   DateTime?
-  createdAt    DateTime   @default(now())
-  createdBy    Int?
-  updatedAt    DateTime?  @updatedAt
-  deletedAt    DateTime?
+  id                 Int        @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  documentId         String     @unique
+  email              String     @unique
+  role               UserRole
+  status             UserStatus
+  passwordHash       String
+  passwordChangedAt  DateTime?
+  mustChangePassword Boolean    @default(false)
+  lastAccess         DateTime?
+  createdAt          DateTime   @default(now())
+  createdBy          Int?
+  updatedAt          DateTime?  @updatedAt
+  deletedAt          DateTime?
 
   creator              User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
   createdUsers         User[]               @relation("UserCreatedBy")
@@ -97,22 +101,22 @@ model Department {
 }
 
 model Project {
-  id                   Int           @id @default(autoincrement())
-  name                 String
+  id                   Int            @id @default(autoincrement())
+  name                 String         @db.VarChar(100)
   status               ProjectStatus
   intensity            Intensity
   startYear            Int
   leadCoordinatorId    Int
   departmentId         Int
-  localityNeighborhood String?
+  localityNeighborhood String?        @db.VarChar(100)
   zone                 Zone
-  generalObjective     String?
-  publicDescription    String?       @db.VarChar(300)
+  generalObjective     String?        @db.VarChar(500)
+  publicDescription    String?        @db.VarChar(1000)
   coverPhoto           String?
-  internalNotes        String?
-  createdAt            DateTime      @default(now())
+  internalNotes        String?        @db.VarChar(1000)
+  createdAt            DateTime       @default(now())
   createdBy            Int?
-  updatedAt            DateTime?     @updatedAt
+  updatedAt            DateTime?      @updatedAt
 
   leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
   department      Department @relation(fields: [departmentId], references: [id])

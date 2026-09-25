@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
+import { ADMIN } from './fixtures';
 
 const prisma = new PrismaClient();
 
@@ -53,16 +54,23 @@ async function main() {
 
       // --- Users ---
       const admin = await tx.user.upsert({
-        where: { documentId: '11111111' },
+        where: { documentId: ADMIN.documentId },
+        update: { passwordHash },
+        create: { ...ADMIN, passwordHash },
+      });
+
+      await tx.user.upsert({
+        where: { documentId: '33333333' },
         update: { passwordHash },
         create: {
-          firstName: 'Ana',
+          firstName: 'Bruno',
           lastName: 'Admin',
-          documentId: '11111111',
-          email: 'admin@gurisesunidos.test',
+          documentId: '33333333',
+          email: 'admin2@gurisesunidos.test',
           role: 'admin',
-          status: 'active',
+          status: 'pendingInvitation',
           passwordHash,
+          createdBy: admin.id,
         },
       });
 
@@ -76,6 +84,21 @@ async function main() {
           email: 'coordinator@gurisesunidos.test',
           role: 'coordinator',
           status: 'active',
+          passwordHash,
+          createdBy: admin.id,
+        },
+      });
+
+      await tx.user.upsert({
+        where: { documentId: '44444444' },
+        update: { passwordHash },
+        create: {
+          firstName: 'Diana',
+          lastName: 'Coordinator',
+          documentId: '44444444',
+          email: 'coordinator2@gurisesunidos.test',
+          role: 'coordinator',
+          status: 'disabled',
           passwordHash,
           createdBy: admin.id,
         },

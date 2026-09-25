@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --project-cover: linear-gradient(154deg, #e7f0e9 7.14%, #f9f1e2 46.43%, #f5e8db 78.57%);
+  --surface-page: #fafafb;
+  --status-success: #16a34b;
+  --history-marker: #ff9500;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -37,13 +41,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --status-active: oklch(0.9631 0.0320 161.30);
-  --status-active-foreground: oklch(0.6272 0.1690 149.44);
+  --status-active: oklch(0.9631 0.032 161.3);
+  --status-active-foreground: oklch(0.6272 0.169 149.44);
   --status-pending: oklch(0.9783 0.0322 93.51);
   --status-pending-foreground: oklch(0.5626 0.1279 62.25);
 }
 
 @theme inline {
+  --color-surface-page: var(--surface-page);
+  --color-status-success: var(--status-success);
+  --color-history-marker: var(--history-marker);
   --font-sans: var(--font-mulish);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -99,6 +106,10 @@
 }
 
 .dark {
+  --surface-page: oklch(0.18 0 0);
+  --status-success: #4ade80;
+  --history-marker: #ffb340;
+  --project-cover: linear-gradient(154deg, #203a2b 7.14%, #3a3425 46.43%, #3d2d25 78.57%);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -132,7 +143,7 @@
   --sidebar-ring: oklch(0.556 0 0);
   --status-active: oklch(0.3925 0.0896 152.54);
   --status-active-foreground: oklch(0.8003 0.1821 151.71);
-  --status-pending: oklch(0.4210 0.0897 57.71);
+  --status-pending: oklch(0.421 0.0897 57.71);
   --status-pending-foreground: oklch(0.8369 0.1644 84.43);
 }
 
@@ -174,4 +185,8 @@
   html {
     @apply font-sans;
   }
+}
+
+@utility bg-project-cover {
+  background-image: var(--project-cover);
 }

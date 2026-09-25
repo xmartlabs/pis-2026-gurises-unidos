@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import logo from '@/assets/logo.png';
 import { AppSidebarFooter } from './footer';
-import { flattenNavItems, NAV_GROUPS } from './navigation';
+import { filterNavGroups, flattenNavItems, NAV_GROUPS } from './navigation';
 import { SidebarCollapsibleNavItem, SidebarNavItem } from './nav-item';
 
 interface Props {
@@ -29,6 +29,7 @@ interface Props {
 export function AppSidebar({ user }: Props) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
+  const navGroups = filterNavGroups(NAV_GROUPS, user.role);
 
   return (
     <Sidebar collapsible="icon">
@@ -62,7 +63,7 @@ export function AppSidebar({ user }: Props) {
       </SidebarHeader>
 
       <SidebarContent className="space-y-2">
-        {NAV_GROUPS.map((group) => {
+        {navGroups.map((group) => {
           const items = isMobile ? flattenNavItems(group.items) : group.items;
 
           return (

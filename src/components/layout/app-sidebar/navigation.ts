@@ -1,12 +1,13 @@
 import {
-  ChartNoAxesColumn,
-  FileChartColumnIncreasing,
+  // ChartNoAxesColumn,
+  // FileChartColumnIncreasing,
   FolderKanban,
   HomeIcon,
   type LucideIcon,
-  Newspaper,
+  // Newspaper,
   Users,
 } from 'lucide-react';
+import type { UserRole } from '@/generated/prisma/enums';
 
 export type PathMatch = 'exact' | 'prefix';
 
@@ -16,6 +17,7 @@ export interface NavigationItem {
   href: string;
   icon: LucideIcon;
   match?: PathMatch;
+  roles?: readonly UserRole[];
   children?: readonly NavigationItem[];
 }
 
@@ -55,32 +57,32 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
             href: '/dashboard/projects',
             icon: FolderKanban,
           },
-          {
-            id: 'metrics',
-            title: 'Métricas',
-            href: '#',
-            icon: ChartNoAxesColumn,
-          },
-          {
-            id: 'beneficiaries',
-            title: 'Beneficiarios',
-            href: '#',
-            icon: Users,
-          },
+          // {
+          //   id: 'metrics',
+          //   title: 'Métricas',
+          //   href: '#',
+          //   icon: ChartNoAxesColumn,
+          // },
+          // {
+          //   id: 'beneficiaries',
+          //   title: 'Beneficiarios',
+          //   href: '#',
+          //   icon: Users,
+          // },
         ],
       },
-      {
-        id: 'publications',
-        title: 'Publicaciones',
-        href: '#',
-        icon: Newspaper,
-      },
-      {
-        id: 'reports',
-        title: 'Reportes',
-        href: '#',
-        icon: FileChartColumnIncreasing,
-      },
+      // {
+      //   id: 'publications',
+      //   title: 'Publicaciones',
+      //   href: '#',
+      //   icon: Newspaper,
+      // },
+      // {
+      //   id: 'reports',
+      //   title: 'Reportes',
+      //   href: '#',
+      //   icon: FileChartColumnIncreasing,
+      // },
     ],
   },
   {
@@ -90,12 +92,26 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
       {
         id: 'users',
         title: 'Usuarios',
-        href: '#',
+        href: '/management/users',
         icon: Users,
+        roles: ['admin'],
       },
     ],
   },
 ];
+
+export function canAccessNavItem(item: NavigationItem, role: UserRole) {
+  return !item.roles || item.roles.includes(role);
+}
+
+export function filterNavGroups(groups: readonly NavigationGroup[], role: UserRole) {
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccessNavItem(item, role)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
 
 export function flattenNavItems(items: readonly NavigationItem[]): NavigationItem[] {
   return items.flatMap((item) => {

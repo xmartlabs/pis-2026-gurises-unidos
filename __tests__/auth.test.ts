@@ -3,6 +3,7 @@ import type { NextAuthConfig } from 'next-auth';
 import { makeUser } from './fixtures/user';
 import { toAuthUser, verifyUserCredentials } from '@/lib/credentials';
 import prisma from '@/lib/prisma';
+import { encode } from 'next-auth/jwt';
 
 const authConfig = vi.hoisted(() => ({
   current: undefined as NextAuthConfig | undefined,
@@ -17,6 +18,10 @@ vi.mock('next-auth', () => ({
 
 vi.mock('next-auth/providers/credentials', () => ({
   default: (options: object) => ({ id: 'credentials', ...options }),
+}));
+
+vi.mock('next-auth/jwt', () => ({
+  encode: vi.fn().mockResolvedValue('mock-encoded-token'),
 }));
 
 vi.mock('@/lib/credentials', async (importOriginal) => {
@@ -34,19 +39,45 @@ function capturedConfig() {
 function authorize() {
   const provider = capturedConfig().providers[0] as unknown as {
     authorize: (
-      credentials?: Partial<Record<'documentId' | 'password', unknown>>
+      credentials?: Partial<Record<'documentId' | 'password' | 'remember', unknown>>
     ) => Promise<unknown>;
   };
   return provider.authorize;
 }
 
 describe('auth config', () => {
-  test('uses a 12-hour jwt session', () => {
+  test('uses a 30-day jwt session ceiling', () => {
     expect(capturedConfig().session).toMatchObject({
       strategy: 'jwt',
-      maxAge: 12 * 60 * 60,
+      maxAge: 30 * 24 * 60 * 60,
       updateAge: 0,
     });
+  });
+});
+
+describe('jwt.encode', () => {
+  beforeEach(() => {
+    vi.mocked(encode).mockClear();
+  });
+
+  test('uses the 12-hour session length when remember is false', async () => {
+    await capturedConfig().jwt?.encode?.({
+      token: { sub: '1', remember: false },
+      secret: 'secret',
+      salt: 'salt',
+    } as never);
+
+    expect(encode).toHaveBeenCalledWith(expect.objectContaining({ maxAge: 12 * 60 * 60 }));
+  });
+
+  test('uses the 30-day ceiling when remember is true', async () => {
+    await capturedConfig().jwt?.encode?.({
+      token: { sub: '1', remember: true },
+      secret: 'secret',
+      salt: 'salt',
+    } as never);
+
+    expect(encode).toHaveBeenCalledWith(expect.objectContaining({ maxAge: 30 * 24 * 60 * 60 }));
   });
 });
 
@@ -77,8 +108,20 @@ describe('authorize', () => {
 
     await expect(
       authorize()({ documentId: user.documentId, password: 'password' })
-    ).resolves.toEqual(toAuthUser(user));
+    ).resolves.toEqual({ ...toAuthUser(user), remember: false });
     expect(verifyUserCredentials).toHaveBeenCalledWith(user.documentId, 'password');
+  });
+
+  test('sets remember: true only when credentials.remember is the string "true"', async () => {
+    const user = makeUser();
+    vi.mocked(verifyUserCredentials).mockResolvedValue(user);
+
+    await expect(
+      authorize()({ documentId: user.documentId, password: 'password', remember: 'true' })
+    ).resolves.toEqual({ ...toAuthUser(user), remember: true });
+    await expect(
+      authorize()({ documentId: user.documentId, password: 'password', remember: 'false' })
+    ).resolves.toEqual({ ...toAuthUser(user), remember: false });
   });
 
   test('returns null when verifyUserCredentials returns null', async () => {
@@ -90,20 +133,56 @@ describe('authorize', () => {
 });
 
 describe('jwt', () => {
-  test('sets sub and role when a user is present', () => {
-    const token = { sub: 'old' };
-    const user = { id: '42', role: 'coordinator' as const };
+  beforeEach(() => {
+    vi.mocked(prisma.user.findUnique).mockReset();
+  });
 
-    expect(capturedConfig().callbacks?.jwt?.({ token, user } as never)).toEqual({
+  test('sets sub, role, and remember when a user is present', async () => {
+    const token = { sub: 'old' };
+    const user = { id: '42', role: 'coordinator' as const, remember: true };
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token, user } as never)).resolves.toEqual({
       sub: '42',
       role: 'coordinator',
+      remember: true,
+    });
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  test('returns the token unchanged when the user has no sub or iat', async () => {
+    const token = { role: 'admin' as const };
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(token);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  test('returns the token unchanged when the password was never changed', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(makeUser({ passwordChangedAt: null }));
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(token);
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+      select: { passwordChangedAt: true },
     });
   });
 
-  test('returns the token unchanged when no user is present', () => {
-    const token = { sub: '1', role: 'admin' as const };
+  test('returns the token unchanged when the password changed before the token was issued', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      makeUser({ passwordChangedAt: new Date(500 * 1000) })
+    );
 
-    expect(capturedConfig().callbacks?.jwt?.({ token } as never)).toEqual(token);
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(token);
+  });
+
+  test('invalidates the session when the password changed after the token was issued', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      makeUser({ passwordChangedAt: new Date(1_500 * 1000) })
+    );
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toBeNull();
   });
 });
 

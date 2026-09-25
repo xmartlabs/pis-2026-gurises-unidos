@@ -18,6 +18,8 @@ export function makeUser(overrides: Partial<User> = {}): User {
     role: 'admin',
     status: 'active',
     passwordHash: TEST_PASSWORD_HASH,
+    passwordChangedAt: null,
+    mustChangePassword: false,
     lastAccess: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     createdBy: null,
