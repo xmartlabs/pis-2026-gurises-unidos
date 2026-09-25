@@ -15,7 +15,7 @@ npm run dev      # http://localhost:3000
 La app queda corriendo en **http://localhost:3000** (`dev`, `start` y Docker usan el mismo puerto).
 
 Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`,
-`npm test` (Vitest), `npm run test:watch`.
+`npm test` (Vitest), `npm run test:watch`, `npm run test:e2e` (Playwright).
 
 ### Con Docker
 
@@ -67,6 +67,32 @@ npx auth secret               # genera AUTH_SECRET y lo escribe en .env
 
 `SEED_USER_PASSWORD` es la contraseña de los usuarios de prueba del seed. Poné cualquier valor en
 `.env` antes de correr `npx prisma db seed`. Si la cambiás, volvé a ejecutar el seed para actualizar los hashes.
+
+## Tests end to end
+
+Playwright contra la app real y la base local. Cubre login, la tabla de usuarios y el listado y
+detalle de proyectos. Los tests unitarios de Vitest (`npm test`) siguen siendo independientes: `e2e/`
+no lo toca.
+
+Requiere la base levantada, migrada y sembrada, y el `.env` con `AUTH_SECRET` y `SEED_USER_PASSWORD`,
+o sea todo lo de las dos secciones anteriores. La primera vez hay que bajar el browser:
+
+```bash
+npx playwright install chromium
+npm run test:e2e        # levanta el server solo
+npm run test:e2e:ui     # modo interactivo, para escribir o depurar tests
+```
+
+`test:e2e` arranca `npm run dev` por su cuenta y lo baja al terminar. Si ya tenés uno corriendo en
+`http://localhost:3000` lo reusa, así que ojo con que esté en la rama que querés probar. Para apuntar
+a otra URL: `E2E_BASE_URL=http://159.89.90.10:3001 npm run test:e2e`.
+
+Los tests no dependen de filas concretas: el único dato que dan por sentado es el admin de
+`prisma/fixtures.ts` (documento `11111111`), que crean tanto `prisma/seed.ts` como
+`prisma/seed-staging.ts`. Por eso corren igual contra cualquiera de los dos datasets.
+
+Cuando uno falla queda un reporte navegable en `playwright-report/`, con screenshot del momento del
+fallo. En CI el workflow `E2E` lo sube como artifact.
 
 ## Deploy
 
