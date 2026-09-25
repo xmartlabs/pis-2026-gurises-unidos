@@ -1,18 +1,22 @@
 'use client';
 
+import { cn } from 'cn';
 import Image from 'next/image';
 import { MapPin, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { STATUS_OPTIONS } from '@/lib/project-display';
 import type { ProjectFormValues } from './project-form-values';
 
 export function ProjectPreview({
+  variant = 'default',
   values,
   topicLabel,
   locationLabel,
   beneficiaryTotal,
 }: {
+  variant?: 'default' | 'detailed';
   values: ProjectFormValues;
   topicLabel: string;
   locationLabel: string;
@@ -24,17 +28,39 @@ export function ProjectPreview({
   return (
     <aside
       aria-label="Vista previa de la tarjeta pública"
-      className="bg-muted/30 min-w-0 lg:sticky lg:top-15"
+      className={
+        variant === 'detailed' ? 'bg-background min-w-0 border-x border-b' : 'bg-muted/30 min-w-0 lg:sticky lg:top-15'
+      }
     >
-      <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6">
-        <p className="text-muted-foreground text-xs leading-4">
+      <div
+        className={cn(
+          'flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-4 py-3',
+          variant === 'detailed' ? 'bg-surface-page sm:px-5' : 'sm:px-6'
+        )}
+      >
+        <p
+          className={cn(
+            'text-muted-foreground text-xs leading-4',
+            variant === 'detailed' && 'font-semibold'
+          )}
+        >
           Vista previa de la tarjeta pública
         </p>
         <p className="text-muted-foreground text-xs leading-4">Actualización automática</p>
       </div>
-      <div className="bg-muted/60 flex flex-col items-center gap-3 px-4 py-8 sm:px-6">
+      <div
+        className={cn(
+          'flex flex-col items-center gap-3 px-4 py-8 sm:px-6',
+          variant === 'detailed' ? 'bg-muted' : 'bg-muted/60'
+        )}
+      >
         <Card className="bg-card ring-border w-full max-w-[377px] gap-0 overflow-hidden rounded-xl py-0 shadow-none ring-1">
-          <div className="bg-muted relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden">
+          <div
+            className={cn(
+              'relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden',
+              variant === 'default' ? 'bg-muted' : 'bg-project-cover'
+            )}
+          >
             {values.coverPhotoUrl ? (
               <Image
                 src={values.coverPhotoUrl}
@@ -43,9 +69,9 @@ export function ProjectPreview({
                 unoptimized
                 className="object-cover"
               />
-            ) : (
+            ) : variant === 'default' ? (
               <span className="text-muted-foreground/60 text-xs leading-4">Foto de portada</span>
-            )}
+            ) : null}
           </div>
           <div className="flex flex-1 flex-col gap-2 p-4">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -80,6 +106,17 @@ export function ProjectPreview({
         <p className="text-muted-foreground text-center text-xs leading-4">
           Así se verá en el listado público
         </p>
+        {variant === 'detailed' && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            disabled
+            className="rounded-[10px] px-4 font-medium disabled:opacity-100"
+          >
+            Ver vista pública →
+          </Button>
+        )}
       </div>
     </aside>
   );

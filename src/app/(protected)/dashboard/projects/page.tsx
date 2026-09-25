@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { ProjectsCardList } from '@/components/projects-card-listing';
-import { ProjectsCardListSkeleton } from '@/components/projects-card-listing-skeleton';
+import { ProjectsCardList } from '@/components/projects/projects-card-listing';
+import { ProjectsCardListSkeleton } from '@/components/projects/projects-card-listing-skeleton';
 import { listProjects } from '@/lib/projects/list';
 import { PROJECT_LIST_MAX_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
 

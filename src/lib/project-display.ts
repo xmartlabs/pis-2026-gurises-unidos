@@ -15,6 +15,7 @@ export const INTENSITY_LABEL: Record<Intensity, string> = {
 
 export const STATUS_OPTIONS = [
   { value: 'active', label: STATUS_LABEL.active },
+  { value: 'inProgress', label: STATUS_LABEL.inProgress },
   { value: 'completed', label: STATUS_LABEL.completed },
   { value: 'archived', label: STATUS_LABEL.archived },
 ] as const;

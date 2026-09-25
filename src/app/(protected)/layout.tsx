@@ -19,9 +19,9 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar user={session.user} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <Topbar user={session.user} />
-        {children}
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

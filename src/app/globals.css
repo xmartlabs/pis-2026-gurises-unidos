@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --project-cover: linear-gradient(154deg, #e7f0e9 7.14%, #f9f1e2 46.43%, #f5e8db 78.57%);
+  --surface-page: #fafafb;
+  --status-success: #16a34b;
+  --history-marker: #ff9500;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -44,6 +48,9 @@
 }
 
 @theme inline {
+  --color-surface-page: var(--surface-page);
+  --color-status-success: var(--status-success);
+  --color-history-marker: var(--history-marker);
   --font-sans: var(--font-mulish);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -99,6 +106,10 @@
 }
 
 .dark {
+  --surface-page: oklch(0.18 0 0);
+  --status-success: #4ade80;
+  --history-marker: #ffb340;
+  --project-cover: linear-gradient(154deg, #203a2b 7.14%, #3a3425 46.43%, #3d2d25 78.57%);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -174,4 +185,8 @@
   html {
     @apply font-sans;
   }
+}
+
+@utility bg-project-cover {
+  background-image: var(--project-cover);
 }
