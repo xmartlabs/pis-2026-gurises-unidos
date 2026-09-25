@@ -158,7 +158,7 @@ export function UsersTable({ users }: { users: User[] }) {
   return (
     <>
       <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex w-full items-center gap-2 md:w-auto">
+        <div className="flex w-full items-center gap-2 xl:w-auto">
           <InputGroup className="h-9 min-w-0 flex-1 rounded-md sm:w-80 sm:flex-none">
             <InputGroupAddon>
               <Search />
@@ -170,7 +170,7 @@ export function UsersTable({ users }: { users: User[] }) {
             />
           </InputGroup>
 
-          <div className="hidden gap-2 md:flex">
+          <div className="hidden gap-2 xl:flex">
             {roleSelect}
             {statusSelect}
             {sortSelect}
@@ -179,7 +179,7 @@ export function UsersTable({ users }: { users: User[] }) {
           <Sheet>
             <SheetTrigger
               render={
-                <Button variant="outline" className="shrink-0 md:hidden">
+                <Button variant="outline" className="shrink-0 xl:hidden">
                   Filtros
                 </Button>
               }
@@ -227,14 +227,14 @@ export function UsersTable({ users }: { users: User[] }) {
         </span>
       </div>
 
-      <div className="flex max-h-130 flex-col gap-3 overflow-y-auto md:hidden">
+      <div className="flex max-h-130 flex-col gap-3 overflow-y-auto xl:hidden">
         {filteredUsers.length === 0 && (
           <p className="text-muted-foreground rounded-[14px] border py-12 text-center">
             No se encontraron usuarios
           </p>
         )}
         {filteredUsers.map((user) => (
-          <Card key={user.id} className="gap-3 py-4">
+          <Card key={user.id} className="shrink-0 gap-3 py-4">
             <CardContent className="flex items-start justify-between gap-3 px-4">
               <div className="min-w-0">
                 <p className="text-foreground truncate font-medium">{fullName(user)}</p>
@@ -253,12 +253,12 @@ export function UsersTable({ users }: { users: User[] }) {
         ))}
       </div>
 
-      <div className="hidden w-full overflow-auto rounded-[14px] border md:block md:max-h-130">
+      <div className="hidden w-full overflow-auto rounded-[14px] border xl:max-h-130 xl:block">
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="bg-muted">
               <TableHead className="text-muted-foreground h-10 w-56 px-4 py-2.5">Nombre</TableHead>
-              <TableHead className="text-muted-foreground h-10 w-80 px-4 py-2.5">
+              <TableHead className="text-muted-foreground h-10 w-32 px-4 py-2.5">
                 Correo electrónico
               </TableHead>
               <TableHead className="text-muted-foreground h-10 w-38 px-4 py-2.5">Rol</TableHead>
