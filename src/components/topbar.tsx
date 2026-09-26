@@ -29,8 +29,11 @@ export function Topbar({ user }: TopbarProps) {
           <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem disabled className="text-muted-foreground text-xs">
+      <DropdownMenuContent align="end" className="w-auto max-w-72">
+        <DropdownMenuItem
+          disabled
+          className="text-muted-foreground text-xs break-all whitespace-normal"
+        >
           {user?.email ?? ''}
         </DropdownMenuItem>
         <form action={logout}>
