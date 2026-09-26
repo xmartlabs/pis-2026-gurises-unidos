@@ -139,6 +139,28 @@ describe.each([
     }
   );
 
+  it('reports a project with the same name and start year as a field error', async () => {
+    mocks.transaction.mockRejectedValue(
+      databaseError('P2002', { modelName: 'Project', target: ['name', 'startYear'] })
+    );
+    expect(await submit(formData())).toEqual({
+      errors: { name: ['Ya existe un proyecto con ese nombre y año de inicio'] },
+    });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('does not report unrelated unique violations as a duplicate project', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.transaction.mockRejectedValue(databaseError('P2002', { target: ['topicId'] }));
+    try {
+      const result = await submit(formData());
+      expect(result.errors).toBeUndefined();
+      expect(result.formError).toBeDefined();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('handles stale session references', async () => {
     mocks.transaction.mockRejectedValue(databaseError('P2003', { constraint: 'authorId' }));
     expect(await submit(formData())).toEqual({
