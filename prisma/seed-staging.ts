@@ -147,11 +147,17 @@ async function main() {
         const name = `${base} - ${departmentName}`;
         const startYear = 2018 + (index % 8);
 
+        const status = STATUSES[index % STATUSES.length];
+
         const data = {
           name,
-          status: STATUSES[index % STATUSES.length],
+          status,
           intensity: INTENSITIES[index % INTENSITIES.length],
           startYear,
+          endYear:
+            status === 'closed'
+              ? Math.min(startYear + 1 + (index % 3), new Date().getFullYear())
+              : null,
           leadCoordinatorId: coordinatorIds[index % coordinatorIds.length],
           departmentId: departments.get(departmentName)!,
           topicId: topicIds[index % topicIds.length],

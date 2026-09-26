@@ -106,6 +106,7 @@ async function main() {
         status: 'active',
         intensity: 'medium',
         startYear: 2025,
+        endYear: null,
         leadCoordinatorId: coordinator.id,
         departmentId: montevideo.id,
         topicId: education.id,
