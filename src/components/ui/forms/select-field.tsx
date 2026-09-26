@@ -1,6 +1,6 @@
 'use client';
 
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ export function SelectField({
   placeholder,
   options,
   onValueChange,
+  description,
   messages,
   required,
 }: {
@@ -32,6 +33,7 @@ export function SelectField({
   placeholder?: string;
   options: readonly SelectOption[];
   onValueChange: (value: string) => void;
+  description?: string;
   messages?: string[];
   required?: boolean;
 }) {
@@ -62,6 +64,11 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
+      {description && (
+        <FieldDescription className="text-muted-foreground text-xs leading-4">
+          {description}
+        </FieldDescription>
+      )}
       <FieldError className="text-xs leading-4">{messages?.[0]}</FieldError>
     </Field>
   );

@@ -48,7 +48,7 @@ test('prefills the user edit form and information', () => {
   expect((screen.getByLabelText('Correo electrónico') as HTMLInputElement).value).toBe(
     'ana@example.com'
   );
-  expect((screen.getByLabelText('Rol') as HTMLSelectElement).value).toBe('admin');
+  expect(screen.getByLabelText('Rol').textContent).toContain('Administrador');
   expect(screen.getByRole('radio', { name: 'Deshabilitado' }).getAttribute('aria-checked')).toBe(
     'true'
   );

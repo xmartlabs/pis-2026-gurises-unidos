@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useState } from 'react';
 import { cn } from 'cn';
 
 import { createUser } from '@/app/actions/users';
@@ -9,31 +9,30 @@ import { createUser } from '@/app/actions/users';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from '@/components/ui/input-group';
+import { FieldDescription, FieldGroup } from '@/components/ui/field';
+import { SelectField } from '@/components/ui/forms/select-field';
+import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { Label } from '@/components/ui/label';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 import { Check, Copy } from 'lucide-react';
 
-import {
-  userEditFormSchema,
-  userFormSchema,
-  type PreservedField,
-  type UserFormState,
-} from '@/lib/validation/user';
+import { userEditFormSchema, userFormSchema, type UserFormState } from '@/lib/validation/user';
 import { generateTemporaryPassword } from '@/lib/users';
 
 const initialState: UserFormState = {};
 
 const COPIED_FEEDBACK_MS = 2000;
+
+type UserFormValues = {
+  firstName: string;
+  lastName: string;
+  documentId: string;
+  email: string;
+  role: 'admin' | 'coordinator';
+  password: string;
+  passwordConfirm: string;
+};
 
 type UserFormProps = {
   mode?: 'create' | 'edit';
@@ -95,31 +94,58 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const [formErrorDismissed, setFormErrorDismissed] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
-  const passwordRef = useRef<HTMLInputElement>(null);
-  const passwordConfirmRef = useRef<HTMLInputElement>(null);
+  const [values, setValues] = useState<UserFormValues>({
+    firstName: initialValues?.firstName ?? '',
+    lastName: initialValues?.lastName ?? '',
+    documentId: initialValues?.documentId ?? '',
+    email: initialValues?.email ?? '',
+    role: initialValues?.role ?? 'coordinator',
+    password: '',
+    passwordConfirm: '',
+  });
+  const [preservedValues, setPreservedValues] = useState(state.values);
+
+  if (state.values !== preservedValues) {
+    setPreservedValues(state.values);
+    if (state.values) {
+      setValues((currentValues) => ({
+        ...currentValues,
+        firstName: state.values?.firstName ?? currentValues.firstName,
+        lastName: state.values?.lastName ?? currentValues.lastName,
+        documentId: state.values?.documentId ?? currentValues.documentId,
+        email: state.values?.email ?? currentValues.email,
+        role: (state.values?.role as UserFormValues['role'] | undefined) ?? currentValues.role,
+      }));
+    }
+  }
+
+  function updateField<K extends keyof UserFormValues>(field: K, value: UserFormValues[K]) {
+    setValues((currentValues) => ({
+      ...currentValues,
+      [field]: value,
+    }));
+  }
 
   function handleGeneratePassword() {
     const generated = generateTemporaryPassword();
-    if (passwordRef.current) passwordRef.current.value = generated;
-    if (passwordConfirmRef.current) passwordConfirmRef.current.value = generated;
+    setValues((currentValues) => ({
+      ...currentValues,
+      password: generated,
+      passwordConfirm: generated,
+    }));
   }
 
   async function handleCopyPassword() {
-    const password = passwordRef.current?.value;
-    if (!password) return;
+    if (!values.password) return;
 
     try {
-      await navigator.clipboard.writeText(password);
+      await navigator.clipboard.writeText(values.password);
       setCopyFailed(false);
       setPasswordCopied(true);
       setTimeout(() => setPasswordCopied(false), COPIED_FEEDBACK_MS);
     } catch {
       setCopyFailed(true);
     }
-  }
-
-  function defaultFor(field: PreservedField) {
-    return state.values?.[field] ?? initialValues?.[field];
   }
 
   function fieldMessages(field: string) {
@@ -182,69 +208,49 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
               <CardContent className="px-6">
                 <FieldGroup className="gap-4">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Field className="gap-1.25">
-                      <FieldLabel htmlFor="firstName" className="text-xs leading-4">
-                        Nombre
-                      </FieldLabel>
-                      <Input
-                        key={state.values?.firstName}
-                        id="firstName"
-                        name="firstName"
-                        defaultValue={defaultFor('firstName')}
-                        placeholder={isEditing ? 'Nombre' : 'Ej. Ana'}
-                        required
-                        maxLength={100}
-                        className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                      />
-                      <FieldError messages={fieldMessages('firstName')} />
-                    </Field>
-                    <Field className="gap-1.25">
-                      <FieldLabel htmlFor="lastName" className="text-xs leading-4">
-                        Apellido
-                      </FieldLabel>
-                      <Input
-                        key={state.values?.lastName}
-                        id="lastName"
-                        name="lastName"
-                        defaultValue={defaultFor('lastName')}
-                        placeholder={isEditing ? 'Apellido' : 'Ej. García'}
-                        maxLength={100}
-                        className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                      />
-                      <FieldError messages={fieldMessages('lastName')} />
-                    </Field>
+                    <TextInputField
+                      id="firstName"
+                      name="firstName"
+                      label="Nombre"
+                      value={values.firstName}
+                      onValueChange={(value) => updateField('firstName', value)}
+                      placeholder={isEditing ? 'Nombre' : 'Ej. Ana'}
+                      required
+                      maxLength={100}
+                      messages={fieldMessages('firstName')}
+                    />
+                    <TextInputField
+                      id="lastName"
+                      name="lastName"
+                      label="Apellido"
+                      value={values.lastName}
+                      onValueChange={(value) => updateField('lastName', value)}
+                      placeholder={isEditing ? 'Apellido' : 'Ej. García'}
+                      maxLength={100}
+                      messages={fieldMessages('lastName')}
+                    />
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Field className="gap-1.25">
-                      <FieldLabel htmlFor="documentId" className="text-xs leading-4">
-                        Documento (Cédula)
-                      </FieldLabel>
-                      <Input
-                        key={state.values?.documentId}
-                        id="documentId"
-                        name="documentId"
-                        defaultValue={defaultFor('documentId')}
-                        placeholder="1.234.567-8"
-                        className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                      />
-                      <FieldError messages={fieldMessages('documentId')} />
-                    </Field>
-                    <Field className="gap-1.25">
-                      <FieldLabel htmlFor="email" className="text-xs leading-4">
-                        Correo electrónico
-                      </FieldLabel>
-                      <Input
-                        key={state.values?.email}
-                        id="email"
-                        name="email"
-                        type="email"
-                        defaultValue={defaultFor('email')}
-                        placeholder="nombre@gurises-unidos.org.uy"
-                        maxLength={254}
-                        className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                      />
-                      <FieldError messages={fieldMessages('email')} />
-                    </Field>
+                    <TextInputField
+                      id="documentId"
+                      name="documentId"
+                      label="Documento (Cédula)"
+                      value={values.documentId}
+                      onValueChange={(value) => updateField('documentId', value)}
+                      placeholder="1.234.567-8"
+                      messages={fieldMessages('documentId')}
+                    />
+                    <TextInputField
+                      id="email"
+                      name="email"
+                      label="Correo electrónico"
+                      type="email"
+                      value={values.email}
+                      onValueChange={(value) => updateField('email', value)}
+                      placeholder="nombre@gurises-unidos.org.uy"
+                      maxLength={254}
+                      messages={fieldMessages('email')}
+                    />
                   </div>
                 </FieldGroup>
               </CardContent>
@@ -255,28 +261,16 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                 <CardTitle className="leading-6 font-semibold">Permisos</CardTitle>
               </CardHeader>
               <CardContent className="px-6">
-                <Field className="gap-1.25">
-                  <FieldLabel htmlFor="role" className="text-xs leading-4">
-                    Rol
-                  </FieldLabel>
-                  <NativeSelect
-                    key={state.values?.role}
-                    id="role"
-                    name="role"
-                    defaultValue={defaultFor('role') ?? 'coordinator'}
-                    className="[&_select]:text-muted-foreground w-full max-w-81 [&_select]:h-9 [&_select]:rounded-md [&_select]:pt-2 [&_select]:pb-2 [&_select]:pl-3 [&_select]:shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]"
-                  >
-                    {ROLE_OPTIONS.map((role) => (
-                      <NativeSelectOption key={role.value} value={role.value}>
-                        {role.label}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                  <FieldDescription className="text-xs leading-4">
-                    Los administradores pueden gestionar usuarios y configurar el sistema.
-                  </FieldDescription>
-                  <FieldError messages={state.errors?.role} />
-                </Field>
+                <SelectField
+                  id="role"
+                  name="role"
+                  label="Rol"
+                  value={values.role}
+                  options={ROLE_OPTIONS}
+                  onValueChange={(value) => updateField('role', value as UserFormValues['role'])}
+                  description="Los administradores pueden gestionar usuarios y configurar el sistema."
+                  messages={state.errors?.role}
+                />
               </CardContent>
             </Card>
 
@@ -331,58 +325,50 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                     </Button>
                   ) : (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <Field className="gap-1.25">
-                        <FieldLabel htmlFor="password" className="text-xs leading-4">
-                          Contraseña temporal
-                        </FieldLabel>
-                        <InputGroup className="h-9 rounded-md shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]">
-                          <InputGroupInput
-                            ref={passwordRef}
-                            id="password"
-                            name="password"
-                            type="text"
-                            placeholder="Se genera automáticamente"
-                            required
-                            minLength={8}
-                            maxLength={72}
-                            className="pl-3 md:text-base md:leading-6"
-                          />
-                          <InputGroupAddon align="inline-end">
-                            <InputGroupButton
-                              size="icon-xs"
-                              aria-label="Copiar contraseña"
-                              onClick={handleCopyPassword}
-                            >
-                              {passwordCopied ? (
-                                <Check className="size-3" />
-                              ) : (
-                                <Copy className="size-3" />
-                              )}
-                            </InputGroupButton>
-                          </InputGroupAddon>
-                        </InputGroup>
-                        <FieldError messages={fieldMessages('password')} />
-                        {copyFailed && (
-                          <FieldError messages={['No se pudo copiar. Cópiala manualmente.']} />
-                        )}
-                      </Field>
-                      <Field className="gap-1.25">
-                        <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">
-                          Confirmar contraseña
-                        </FieldLabel>
-                        <Input
-                          ref={passwordConfirmRef}
-                          id="passwordConfirm"
-                          name="passwordConfirm"
-                          type="text"
-                          placeholder="Repetí la contraseña"
-                          required
-                          minLength={8}
-                          maxLength={72}
-                          className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                        />
-                        <FieldError messages={fieldMessages('passwordConfirm')} />
-                      </Field>
+                      <TextInputField
+                        id="password"
+                        name="password"
+                        label="Contraseña temporal"
+                        type="text"
+                        value={values.password}
+                        onValueChange={(value) => updateField('password', value)}
+                        placeholder="Se genera automáticamente"
+                        required
+                        minLength={8}
+                        maxLength={72}
+                        messages={
+                          fieldMessages('password') ??
+                          (copyFailed ? ['No se pudo copiar. Cópiala manualmente.'] : undefined)
+                        }
+                        trailingAction={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label="Copiar contraseña"
+                            onClick={handleCopyPassword}
+                          >
+                            {passwordCopied ? (
+                              <Check className="size-3" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                          </Button>
+                        }
+                      />
+                      <TextInputField
+                        id="passwordConfirm"
+                        name="passwordConfirm"
+                        label="Confirmar contraseña"
+                        type="text"
+                        value={values.passwordConfirm}
+                        onValueChange={(value) => updateField('passwordConfirm', value)}
+                        placeholder="Repetí la contraseña"
+                        required
+                        minLength={8}
+                        maxLength={72}
+                        messages={fieldMessages('passwordConfirm')}
+                      />
                     </div>
                   )}
                   {!isEditing && (
