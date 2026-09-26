@@ -96,12 +96,10 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const passwordConfirmRef = useRef<HTMLInputElement>(null);
 
   function handleGeneratePassword() {
     const generated = generateTemporaryPassword();
     if (passwordRef.current) passwordRef.current.value = generated;
-    if (passwordConfirmRef.current) passwordConfirmRef.current.value = generated;
   }
 
   async function handleCopyPassword() {
@@ -365,23 +363,6 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                         {copyFailed && (
                           <FieldError messages={['No se pudo copiar. Cópiala manualmente.']} />
                         )}
-                      </Field>
-                      <Field hidden className="gap-1.25">
-                        <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">
-                          Confirmar contraseña
-                        </FieldLabel>
-                        <Input
-                          ref={passwordConfirmRef}
-                          id="passwordConfirm"
-                          name="passwordConfirm"
-                          type="text"
-                          placeholder="Repetí la contraseña"
-                          required
-                          minLength={8}
-                          maxLength={72}
-                          className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                        />
-                        <FieldError messages={fieldMessages('passwordConfirm')} />
                       </Field>
                     </div>
                   )}
