@@ -39,7 +39,7 @@ export function Topbar({ user }: TopbarProps) {
         >
           {user?.email ?? ''}
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/dashboard/profile" />}>
+        <DropdownMenuItem render={<Link href="/management/profile" />}>
           <UserRound />
           Mi perfil
         </DropdownMenuItem>

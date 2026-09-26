@@ -12,9 +12,9 @@ const PROFILE = {
   email: 'ana@example.com',
   role: 'coordinator' as const,
   status: 'active' as const,
-  createdAt: '01/01/2026, 10:00',
-  lastAccess: '02/01/2026, 11:00',
-  updatedAt: '03/01/2026, 12:00',
+  createdAt: new Date('2026-01-01T12:00:00.000Z'),
+  lastAccess: new Date('2026-01-02T12:00:00.000Z'),
+  updatedAt: new Date('2026-01-03T12:00:00.000Z'),
 };
 
 describe('ProfileForm', () => {
@@ -46,6 +46,14 @@ describe('ProfileForm', () => {
     expect(container.querySelector('[name="password"]')).toBeNull();
   });
 
+  test('formats account dates and absent values', () => {
+    render(<ProfileForm profile={{ ...PROFILE, lastAccess: null }} />);
+
+    expect(screen.getByText('01/01/2026')).toBeDefined();
+    expect(screen.getByText('Nunca')).toBeDefined();
+    expect(screen.getByText('03/01/2026')).toBeDefined();
+  });
+
   test('blocks submission and displays client validation errors', () => {
     render(<ProfileForm profile={PROFILE} />);
     const firstNameInput = screen.getByRole('textbox', { name: 'Nombre' });
@@ -58,5 +66,30 @@ describe('ProfileForm', () => {
 
     expect(screen.getByText('El nombre es obligatorio.')).toBeDefined();
     expect(screen.getByText('Ingresá un correo electrónico válido.')).toBeDefined();
+  });
+
+  test('discards unsaved changes and validation errors', () => {
+    render(<ProfileForm profile={PROFILE} />);
+    const firstNameInput = screen.getByRole('textbox', { name: 'Nombre' }) as HTMLInputElement;
+    const lastNameInput = screen.getByRole('textbox', { name: 'Apellido' }) as HTMLInputElement;
+    const emailInput = screen.getByRole('textbox', {
+      name: 'Correo electrónico',
+    }) as HTMLInputElement;
+
+    fireEvent.change(firstNameInput, { target: { value: '' } });
+    fireEvent.change(lastNameInput, { target: { value: 'Pérez' } });
+    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Guardar cambios' }).closest('form')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect((screen.getByRole('textbox', { name: 'Nombre' }) as HTMLInputElement).value).toBe('Ana');
+    expect((screen.getByRole('textbox', { name: 'Apellido' }) as HTMLInputElement).value).toBe(
+      'García'
+    );
+    expect(
+      (screen.getByRole('textbox', { name: 'Correo electrónico' }) as HTMLInputElement).value
+    ).toBe('ana@example.com');
+    expect(screen.queryByText('El nombre es obligatorio.')).toBeNull();
+    expect(screen.queryByText('Ingresá un correo electrónico válido.')).toBeNull();
   });
 });

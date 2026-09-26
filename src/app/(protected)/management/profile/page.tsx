@@ -3,16 +3,6 @@ import { auth } from '@/auth';
 import { ProfileForm } from '@/components/profile-form';
 import prisma from '@/lib/prisma';
 
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('es-UY', {
-  dateStyle: 'short',
-  timeStyle: 'short',
-  timeZone: 'America/Montevideo',
-});
-
-function formatDateTime(value: Date | null) {
-  return value ? DATE_TIME_FORMATTER.format(value) : '—';
-}
-
 export default async function ProfilePage() {
   const session = await auth();
   const userId = Number(session?.user?.id);
@@ -54,19 +44,7 @@ export default async function ProfilePage() {
         </p>
       </header>
 
-      <ProfileForm
-        profile={{
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          documentId: profile.documentId,
-          email: profile.email,
-          role: profile.role,
-          status: profile.status,
-          createdAt: formatDateTime(profile.createdAt),
-          lastAccess: formatDateTime(profile.lastAccess),
-          updatedAt: formatDateTime(profile.updatedAt),
-        }}
-      />
+      <ProfileForm profile={profile} />
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function AppSidebarFooter({ user }: Props) {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="h-10 gap-3 [&_svg]:size-5"
-              render={<Link href="/dashboard/profile" onClick={() => setOpenMobile(false)} />}
+              render={<Link href="/management/profile" onClick={() => setOpenMobile(false)} />}
             >
               <UserRound />
               <span>Mi perfil</span>
@@ -103,7 +103,7 @@ export function AppSidebarFooter({ user }: Props) {
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem render={<Link href="/dashboard/profile" />}>
+              <DropdownMenuItem render={<Link href="/management/profile" />}>
                 <UserRound />
                 <span>Mi perfil</span>
               </DropdownMenuItem>
