@@ -114,12 +114,15 @@ export function ProjectForm({
     }));
   }
 
-  const { topicLabel, locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
+  const { locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
     values,
     departments,
-    topics,
     isEditing
   );
+
+  const beneficiaryYearOptions = isEditing
+    ? yearOptions.filter(({ value }) => Number(value) >= Number(values.startYear))
+    : yearOptions;
 
   return (
     <form
@@ -189,7 +192,7 @@ export function ProjectForm({
             values={values}
             state={state}
             updateField={updateField}
-            yearOptions={yearOptions}
+            yearOptions={beneficiaryYearOptions}
             selectYear={selectYear}
           />
 
@@ -213,7 +216,6 @@ export function ProjectForm({
         <ProjectPreview
           variant={variant}
           values={values}
-          topicLabel={topicLabel}
           locationLabel={locationLabel}
           beneficiaryTotal={beneficiaryTotal}
         />

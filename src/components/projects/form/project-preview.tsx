@@ -1,111 +1,83 @@
 'use client';
 
-import { cn } from 'cn';
 import Image from 'next/image';
-import { MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { STATUS_OPTIONS } from '@/lib/project-display';
 import type { ProjectFormValues } from './project-form-values';
 
 export function ProjectPreview({
   variant = 'default',
   values,
-  topicLabel,
   locationLabel,
   beneficiaryTotal,
 }: {
   variant?: 'default' | 'detailed';
   values: ProjectFormValues;
-  topicLabel: string;
   locationLabel: string;
   beneficiaryTotal: number;
 }) {
-  const statusLabel =
-    STATUS_OPTIONS.find((option) => option.value === values.status)?.label ?? 'Activo';
 
   return (
     <aside
       aria-label="Vista previa de la tarjeta pública"
-      className={
-        variant === 'detailed' ? 'bg-background min-w-0 border-x border-b' : 'bg-muted/30 min-w-0 lg:sticky lg:top-15'
-      }
+      className="min-w-0"
     >
-      <div
-        className={cn(
-          'flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-4 py-3',
-          variant === 'detailed' ? 'bg-surface-page sm:px-5' : 'sm:px-6'
-        )}
-      >
-        <p
-          className={cn(
-            'text-muted-foreground text-xs leading-4',
-            variant === 'detailed' && 'font-semibold'
-          )}
-        >
+      <div className="bg-surface-page flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
+        <p className="text-muted-foreground text-xs leading-4">
           Vista previa de la tarjeta pública
         </p>
-        <p className="text-muted-foreground text-xs leading-4">Actualización automática</p>
+        <p className="text-xs leading-4 text-[#9ca3af]">
+          Actualización automática
+        </p>
       </div>
-      <div
-        className={cn(
-          'flex flex-col items-center gap-3 px-4 py-8 sm:px-6',
-          variant === 'detailed' ? 'bg-muted' : 'bg-muted/60'
-        )}
-      >
-        <Card className="bg-card ring-border w-full max-w-[377px] gap-0 overflow-hidden rounded-xl py-0 shadow-none ring-1">
-          <div
-            className={cn(
-              'relative flex h-[140px] shrink-0 items-center justify-center overflow-hidden',
-              variant === 'default' ? 'bg-muted' : 'bg-project-cover'
-            )}
-          >
-            {values.coverPhotoUrl ? (
+
+      <div className="flex flex-col items-center gap-3 bg-[#f5f5f5] px-6 py-8">
+        <Card className="theme-public bg-card text-card-foreground w-full max-w-[377px] gap-0 overflow-hidden rounded-xl
+        border-0 py-0 shadow-none ring-0">
+          <div className="bg-project-cover relative aspect-video w-full overflow-hidden">
+            {values.coverPhotoUrl && (
               <Image
                 src={values.coverPhotoUrl}
-                alt="Foto de portada del proyecto"
+                alt=""
                 fill
                 unoptimized
                 className="object-cover"
               />
-            ) : variant === 'default' ? (
-              <span className="text-muted-foreground/60 text-xs leading-4">Foto de portada</span>
-            ) : null}
+            )}
           </div>
-          <div className="flex flex-1 flex-col gap-2 p-4">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge className="bg-primary text-primary-foreground h-[22px] rounded-full px-2.5 text-xs">
-                {statusLabel}
-              </Badge>
-              <Badge
-                variant="secondary"
-                className="bg-muted text-secondary-foreground h-[22px] rounded-full px-2.5 text-xs"
-              >
-                {topicLabel}
-              </Badge>
+
+          <div className="flex flex-col gap-3 p-5">
+            <div className="text-muted-foreground flex items-center gap-2 text-xs leading-4">
+              <span
+                aria-hidden="true"
+                className="bg-primary size-1.5 shrink-0 rounded-full"
+              />
+              <span>{locationLabel}</span>
             </div>
-            <h3 className="text-foreground truncate text-base leading-6 font-semibold">
+
+            <h3 className="text-lg leading-7 font-semibold break-words">
               {values.name || 'Nombre del proyecto'}
             </h3>
-            <p className="text-muted-foreground truncate text-xs leading-4">
-              {values.generalObjective || 'El tagline aparecerá aquí cuando lo completes.'}
+
+            <p className="text-muted-foreground text-sm leading-5 break-words">
+              {values.generalObjective ||
+                'El objetivo general aparecerá aquí cuando lo completes.'}
             </p>
-            <div className="text-muted-foreground flex items-center gap-4 pt-1 text-xs leading-4">
-              <span className="flex min-w-0 items-center gap-1">
-                <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
-                <span className="truncate">{locationLabel}</span>
+
+            <div className="flex flex-wrap items-baseline gap-2 pt-1">
+              <span className="text-primary text-2xl leading-8 font-bold">
+                {beneficiaryTotal.toLocaleString('es-UY')}
               </span>
-              <span className="flex shrink-0 items-center gap-1">
-                <Users aria-hidden="true" className="size-3.5 shrink-0" />
-                {beneficiaryTotal || '—'}
+              <span className="text-muted-foreground text-xs leading-4">
+                personas alcanzadas
               </span>
             </div>
           </div>
         </Card>
-        <p className="text-muted-foreground text-center text-xs leading-4">
+        <p className="text-center text-xs leading-4 text-[#9ca3af]">
           Así se verá en el listado público
         </p>
+
         {variant === 'detailed' && (
           <Button
             type="button"
