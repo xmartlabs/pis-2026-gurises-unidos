@@ -19,7 +19,7 @@ jobs:
           --health-cmd pg_isready --health-interval 5s
           --health-timeout 5s --health-retries 10
     env:
-      E2E_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/app
+      E2E_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/app_e2e
       AUTH_SECRET: e2e-auth-secret
       SEED_USER_PASSWORD: e2e-seed-password
     steps:

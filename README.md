@@ -83,8 +83,10 @@ npx playwright install chromium
 ```
 
 La base no hay que crearla: `migrate deploy` la crea si no existe. `E2E_DATABASE_URL` sí es
-obligatoria y tiene que ser distinta de `DATABASE_URL`: lo primero que hace el seed de E2E es truncar
-todas las tablas, así que se niega a correr si falta o si son la misma.
+obligatoria y tiene que **nombrar otra base** que la de `DATABASE_URL`: lo primero que hace el seed de
+E2E es truncar todas las tablas, así que se niega a correr si falta o si las dos URLs terminan en el
+mismo nombre de base (comparar los strings no alcanza: `localhost` y `127.0.0.1` son la misma base
+escrita distinto).
 
 ```bash
 npm run test:e2e        # migra, siembra, levanta el server y corre
@@ -93,8 +95,17 @@ npm run test:e2e:ui     # modo interactivo, para escribir o depurar tests
 
 Cada corrida aplica las migraciones y vuelve a sembrar la base de E2E antes del primer test, así que
 no hay nada que preparar a mano. El server de prueba es `npm run dev` en `:3100` —un puerto aparte
-para no pisar el `:3000` que tengas abierto contra tu base de desarrollo— y se baja al terminar. Para
-apuntar a otra URL: `E2E_BASE_URL=http://159.89.90.10:3001 npm run test:e2e`.
+para no pisar el `:3000` que tengas abierto contra tu base de desarrollo— y se baja al terminar.
+
+Con `E2E_BASE_URL` los tests corren contra una instancia que ya tengas levantada y Playwright no
+arranca ninguna:
+
+```bash
+E2E_BASE_URL=http://localhost:3200 npm run test:e2e
+```
+
+Ojo con eso: `E2E_DATABASE_URL` tiene que ser la base de _esa_ instancia, y el seed la trunca. No
+apuntes esto a staging ni a producción.
 
 El dataset vive en `prisma/e2e-fixtures.ts` y lo crea `prisma/seed-e2e.ts`: tres usuarios y dos
 proyectos, siempre los mismos. Por eso las aserciones pueden ser conteos exactos, y `prisma/seed.ts`

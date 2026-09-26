@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3100';
-const port = new URL(baseURL).port;
+const LOCAL_PORT = 3100;
+const externalTarget = process.env.E2E_BASE_URL;
+const baseURL = externalTarget ?? `http://localhost:${LOCAL_PORT}`;
 
 export default defineConfig({
   testDir: './e2e',
@@ -25,15 +26,17 @@ export default defineConfig({
       dependencies: ['setup'],
     },
   ],
-  webServer: {
-    command: `npm run dev -- --port ${port}`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    env: {
-      DATABASE_URL: process.env.E2E_DATABASE_URL ?? '',
-      AUTH_URL: baseURL,
-      AUTH_TRUST_HOST: 'true',
-    },
-    timeout: 120_000,
-  },
+  webServer: externalTarget
+    ? undefined
+    : {
+        command: `npm run dev -- --port ${LOCAL_PORT}`,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        env: {
+          DATABASE_URL: process.env.E2E_DATABASE_URL ?? '',
+          AUTH_URL: baseURL,
+          AUTH_TRUST_HOST: 'true',
+        },
+        timeout: 120_000,
+      },
 });

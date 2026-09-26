@@ -13,6 +13,14 @@ import {
   E2E_DISABLED_COORDINATOR,
 } from './e2e-fixtures';
 
+function databaseName(url: string) {
+  try {
+    return decodeURIComponent(new URL(url).pathname).replace(/^\/+/, '');
+  } catch {
+    return url;
+  }
+}
+
 function e2eDatabaseUrl() {
   const url = process.env.E2E_DATABASE_URL;
 
@@ -22,8 +30,11 @@ function e2eDatabaseUrl() {
     );
   }
 
-  if (url === process.env.DATABASE_URL) {
-    throw new Error('E2E_DATABASE_URL must point to a different database than DATABASE_URL');
+  const developmentUrl = process.env.DATABASE_URL;
+  if (developmentUrl && databaseName(url) === databaseName(developmentUrl)) {
+    throw new Error(
+      `E2E_DATABASE_URL must name a different database than DATABASE_URL, both are "${databaseName(url)}": the e2e seed truncates every table, and the same name on the same server is the same database however the host is spelled`
+    );
   }
 
   return url;
