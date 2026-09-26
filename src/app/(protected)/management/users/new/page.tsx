@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { UserForm } from '@/components/user-form';
+import { ErrorScreen } from '@/components/error-screen';
 
 export default async function NewUserPage() {
   const session = await auth();
@@ -10,13 +11,13 @@ export default async function NewUserPage() {
   }
 
   if (session.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    return <ErrorScreen code={403} />;
   }
 
   return (
     <div className="bg-primary-foreground flex w-full flex-1 flex-col">
       <div className="flex w-full flex-1 flex-col">
-        <header className="flex h-30 w-full flex-col gap-1.5 px-6 pt-6 pb-2.5">
+        <header className="mx-auto flex h-30 w-full max-w-[1185px] flex-col gap-1.5 px-6 pt-6 pb-2.5">
           <p className="text-muted-foreground h-5 text-sm leading-5 font-normal tracking-normal">
             Administración
           </p>
