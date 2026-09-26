@@ -9,6 +9,10 @@ export const projectFormSchema = projectSchema.extend({
     .array(z.coerce.number().int().positive().max(MAX_INT32))
     .default([])
     .transform((ids) => [...new Set(ids)].sort((a, b) => a - b)),
+  })
+  .refine((data) => data.year >= data.startYear, {
+    message: 'El año de beneficiarios no puede ser anterior al año de inicio',
+    path: ['year'],
 });
 
 export function splitProjectFormData(data: z.infer<typeof projectFormSchema>) {

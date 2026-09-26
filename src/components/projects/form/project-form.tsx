@@ -120,9 +120,9 @@ export function ProjectForm({
     isEditing
   );
 
-  const beneficiaryYearOptions = isEditing
-    ? yearOptions.filter(({ value }) => Number(value) >= Number(values.startYear))
-    : yearOptions;
+  const beneficiaryYearOptions = yearOptions.filter(
+    ({ value }) => Number(value) >= Number(values.startYear)
+  );
 
   return (
     <form
