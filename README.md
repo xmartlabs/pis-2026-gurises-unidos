@@ -114,6 +114,18 @@ puede cambiar sin romper los E2E.
 Cuando uno falla queda un reporte navegable en `playwright-report/`, con screenshot del momento del
 fallo. En CI el workflow `E2E` lo sube como artifact.
 
+## Tests de integración
+
+Vitest contra la misma base y el mismo dataset que E2E, pero sin browser ni server: llaman a las
+server actions directo. Usan `E2E_DATABASE_URL` y el mismo seed, así que la preparación es la de
+arriba.
+
+```bash
+npm run test:integration
+```
+
+No corras las dos suites a la vez: cada una trunca y vuelve a sembrar la base al arrancar.
+
 ## Deploy
 
 Hay dos workflows, los dos **buildean la imagen en GitHub Actions**, la publican en GHCR y después
