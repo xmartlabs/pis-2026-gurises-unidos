@@ -1,6 +1,6 @@
 'use client';
 
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ export function SelectField({
   placeholder,
   options,
   onValueChange,
+  description,
   messages,
   required,
 }: {
@@ -32,6 +33,7 @@ export function SelectField({
   placeholder?: string;
   options: readonly SelectOption[];
   onValueChange: (value: string) => void;
+  description?: string;
   messages?: string[];
   required?: boolean;
 }) {
@@ -50,7 +52,7 @@ export function SelectField({
         <SelectTrigger
           id={id}
           aria-invalid={Boolean(messages?.length)}
-          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm shadow-none data-[size=default]:h-9"
+          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm data-[size=default]:h-9"
         >
           <SelectValue placeholder={placeholder} className="min-w-0 truncate" />
         </SelectTrigger>
@@ -62,6 +64,11 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
+      {description && (
+        <FieldDescription className="text-muted-foreground text-xs leading-4">
+          {description}
+        </FieldDescription>
+      )}
       <FieldError className="text-xs leading-4">{messages?.[0]}</FieldError>
     </Field>
   );
