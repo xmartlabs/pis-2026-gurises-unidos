@@ -32,7 +32,7 @@ export function TextareaField({
         aria-describedby={description ? `${id}-description` : undefined}
         className={cn(
           'border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base',
-          variant === 'detailed' ? 'leading-6 shadow-sm' : 'shadow-none md:text-sm'
+          variant === 'detailed' ? 'leading-6 shadow-sm' : 'md:text-sm'
         )}
       />
       {description && <FieldDescription id={`${id}-description`}>{description}</FieldDescription>}

@@ -52,7 +52,7 @@ export function SelectField({
         <SelectTrigger
           id={id}
           aria-invalid={Boolean(messages?.length)}
-          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm shadow-none data-[size=default]:h-9"
+          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm data-[size=default]:h-9"
         >
           <SelectValue placeholder={placeholder} className="min-w-0 truncate" />
         </SelectTrigger>
