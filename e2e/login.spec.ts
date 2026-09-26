@@ -36,5 +36,6 @@ test('blocks non admin users from the users management page', async ({ page }) =
   await loginAs(page, E2E_COORDINATOR.documentId);
   await page.goto('/management/users');
 
-  await expect(page).toHaveURL('/dashboard/projects');
+  await expect(page.getByRole('heading', { level: 1, name: 'Acceso denegado' })).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(0);
 });
