@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { ProjectFormState } from '@/lib/validation/project';
 
-const { authMock, redirectMock, logAuditMock, transactionMock } = vi.hoisted(() => ({
+const { authMock, redirectMock, logAuditMock, transactionMock, findUserMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
   redirectMock: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
   logAuditMock: vi.fn(),
   transactionMock: vi.fn(),
+  findUserMock: vi.fn(),
 }));
 
 vi.mock('@/auth', () => ({ auth: authMock }));
@@ -16,11 +17,7 @@ vi.mock('@/lib/audit-log', () => ({ logAudit: logAuditMock }));
 vi.mock('@/lib/prisma', () => ({
   default: {
     $transaction: transactionMock,
-    user: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null }),
-    },
+    user: { findUnique: findUserMock },
   },
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -91,6 +88,7 @@ function knownRequestError(code: string, meta: Record<string, unknown>) {
 
 beforeEach(() => {
   authMock.mockResolvedValue({ user: { id: '7' } });
+  findUserMock.mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null });
   redirectMock.mockImplementation((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   });
@@ -188,7 +186,13 @@ describe('createProject', () => {
   });
 
   test('allows a coordinator to create a project', async () => {
-    authMock.mockResolvedValue({ user: { id: '3', role: 'coordinator' } });
+    authMock.mockResolvedValue({ user: { id: '3' } });
+    findUserMock.mockResolvedValue({
+      id: 3,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
     const { projectCreate } = setupTransaction();
 
     await expect(createProject(EMPTY_STATE, buildFormData())).rejects.toThrow(
