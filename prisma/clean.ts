@@ -1,22 +1,9 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { ADMIN } from './fixtures';
+import { ADMIN, TABLES } from './fixtures';
 
 const prisma = new PrismaClient();
-
-const TABLES = [
-  'ProjectTopic',
-  'ProjectCoordinator',
-  'ProjectBeneficiary',
-  'AuditLog',
-  'Report',
-  'Metric',
-  'Project',
-  'User',
-  'Topic',
-  'Department',
-];
 
 async function main() {
   const mode = process.env.CLEAN_MODE;

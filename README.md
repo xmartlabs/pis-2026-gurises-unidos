@@ -15,7 +15,7 @@ npm run dev      # http://localhost:3000
 La app queda corriendo en **http://localhost:3000** (`dev`, `start` y Docker usan el mismo puerto).
 
 Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`,
-`npm test` (Vitest), `npm run test:watch`.
+`npm test` (Vitest), `npm run test:watch`, `npm run test:e2e` (Playwright).
 
 ### Con Docker
 
@@ -67,6 +67,52 @@ npx auth secret               # genera AUTH_SECRET y lo escribe en .env
 
 `SEED_USER_PASSWORD` es la contraseña de los usuarios de prueba del seed. Poné cualquier valor en
 `.env` antes de correr `npx prisma db seed`. Si la cambiás, volvé a ejecutar el seed para actualizar los hashes.
+
+## Tests end to end
+
+Playwright contra la app real y una base propia. Cubre login, la tabla de usuarios y el listado y
+detalle de proyectos. Los tests unitarios de Vitest (`npm test`) siguen siendo independientes: `e2e/`
+no lo toca.
+
+Requiere Postgres levantado y el `.env` con `AUTH_SECRET` y `SEED_USER_PASSWORD`. Además, una sola
+vez, apuntar la base de E2E y bajar el browser:
+
+```bash
+echo 'E2E_DATABASE_URL=postgresql://postgres:<password>@localhost:5432/app_e2e' >> .env
+npx playwright install chromium
+```
+
+La base no hay que crearla: `migrate deploy` la crea si no existe. `E2E_DATABASE_URL` sí es
+obligatoria y tiene que **nombrar otra base** que la de `DATABASE_URL`: lo primero que hace el seed de
+E2E es truncar todas las tablas, así que se niega a correr si falta o si las dos URLs terminan en el
+mismo nombre de base (comparar los strings no alcanza: `localhost` y `127.0.0.1` son la misma base
+escrita distinto).
+
+```bash
+npm run test:e2e        # migra, siembra, levanta el server y corre
+npm run test:e2e:ui     # modo interactivo, para escribir o depurar tests
+```
+
+Cada corrida aplica las migraciones y vuelve a sembrar la base de E2E antes del primer test, así que
+no hay nada que preparar a mano. El server de prueba es `npm run dev` en `:3100` —un puerto aparte
+para no pisar el `:3000` que tengas abierto contra tu base de desarrollo— y se baja al terminar.
+
+Con `E2E_BASE_URL` los tests corren contra una instancia que ya tengas levantada y Playwright no
+arranca ninguna:
+
+```bash
+E2E_BASE_URL=http://localhost:3200 npm run test:e2e
+```
+
+Ojo con eso: `E2E_DATABASE_URL` tiene que ser la base de _esa_ instancia, y el seed la trunca. No
+apuntes esto a staging ni a producción.
+
+El dataset vive en `prisma/e2e-fixtures.ts` y lo crea `prisma/seed-e2e.ts`: tres usuarios y dos
+proyectos, siempre los mismos. Por eso las aserciones pueden ser conteos exactos, y `prisma/seed.ts`
+puede cambiar sin romper los E2E.
+
+Cuando uno falla queda un reporte navegable en `playwright-report/`, con screenshot del momento del
+fallo. En CI el workflow `E2E` lo sube como artifact.
 
 ## Deploy
 
@@ -181,10 +227,10 @@ Dos workflows manuales (Actions → correr con **Run workflow**) dejan la base d
 estado conocido. Los dos usan el mismo túnel SSH que las migraciones y comparten el grupo de
 concurrencia `deploy-staging`, así que nunca corren en paralelo con un deploy.
 
-| Workflow          | Qué hace                                                            |
-| ----------------- | ------------------------------------------------------------------- |
+| Workflow          | Qué hace                                                                                                                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Seed staging**  | Carga el dataset de prueba: 19 departamentos, 6 usuarios, 25 proyectos con 1 a 4 años de beneficiarios (4 quedan sin ninguno). Es idempotente: correrlo de nuevo no duplica nada. |
-| **Clean staging** | Vacía la base. Input `mode`: `reset` borra todo y recrea el admin, `wipe` borra todo sin dejar admin. |
+| **Clean staging** | Vacía la base. Input `mode`: `reset` borra todo y recrea el admin, `wipe` borra todo sin dejar admin.                                                                             |
 
 El admin es `admin@gurisesunidos.test` (documento `11111111`) y su contraseña es el secret
 `SEED_USER_PASSWORD` del environment `staging`.
