@@ -220,7 +220,7 @@ describe('AC2: filters', () => {
       departmentId: '0',
       startYearFrom: '1500',
       startYearTo: '3000',
-      beneficiaryYear: '3000'
+      beneficiaryYear: '3000',
     });
 
     expect(findManyArgs().where).toEqual({});
@@ -242,10 +242,10 @@ describe('AC2: filters', () => {
     expect(findManyArgs().where).toEqual({ projectBeneficiaries: { some: { year: 2025 } } });
   });
 
-  test('requests only the selected beneficiary year', async () =>{
-  await listWith({ beneficiaryYear: '2025' });
+  test('requests only the selected beneficiary year', async () => {
+    await listWith({ beneficiaryYear: '2025' });
 
-  expect(findManyArgs().select.projectBeneficiaries.where).toEqual({ year: 2025 });
+    expect(findManyArgs().select.projectBeneficiaries.where).toEqual({ year: 2025 });
   });
 });
 
@@ -313,7 +313,6 @@ describe('parseProjectFilters', () => {
     expect(parseProjectFilters({ beneficiaryYear: 'abc' }).beneficiaryYear).toBeUndefined();
     expect(parseProjectFilters({ beneficiaryYear: '3000' }).beneficiaryYear).toBeUndefined();
   });
-
 });
 
 describe('listProjectFilterOptions', () => {

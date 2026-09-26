@@ -18,7 +18,6 @@ export const prismaMock = {
     findMany: vi.fn(),
   },
   $transaction: vi.fn(),
-  
 };
 
 function resetMockValue(value: unknown) {

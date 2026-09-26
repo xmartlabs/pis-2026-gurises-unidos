@@ -131,5 +131,5 @@ export async function listProjectFilterOptions() {
     }),
   ]);
 
-return { coordinators, departments, years: years.map(({ year }) => year) };
+  return { coordinators, departments, years: years.map(({ year }) => year) };
 }
