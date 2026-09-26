@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { UserForm } from '@/components/user-form';
+import { ErrorScreen } from '@/components/error-screen';
 
 export default async function NewUserPage() {
   const session = await auth();
@@ -10,7 +11,7 @@ export default async function NewUserPage() {
   }
 
   if (session.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    return <ErrorScreen code={403} />;
   }
 
   return (

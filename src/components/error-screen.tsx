@@ -21,6 +21,10 @@ const ERROR_COPY: Record<number, ErrorCopy> = {
     title: 'Algo salió mal',
     description: 'Tuvimos un problema inesperado. Intentá de nuevo en unos minutos.',
   },
+  403: {
+    title: 'Acceso denegado',
+    description: 'No tenés permisos para acceder a esta página.',
+  },
 };
 
 const FALLBACK_COPY: ErrorCopy = {

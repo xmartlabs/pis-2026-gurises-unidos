@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { formatLastAccess, formatUserDate } from '@/lib/users/format';
 import { UserForm } from '@/components/user-form';
+import { ErrorScreen } from '@/components/error-screen';
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -12,7 +13,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   }
 
   if (session.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    return <ErrorScreen code={403} />;
   }
 
   const { id } = await params;

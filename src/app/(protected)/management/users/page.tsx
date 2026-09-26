@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/empty';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { UsersTable } from '@/components/users/users-table';
+import { ErrorScreen } from '@/components/error-screen';
 
 const NOT_DELETED_WHERE = { deletedAt: null };
 
@@ -22,7 +22,7 @@ export default async function UsersPage() {
   const session = await auth();
 
   if (session?.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    return <ErrorScreen code={403} />;
   }
 
   const [users, total, admins, coordinators, pendingInvitations] = await Promise.all([
