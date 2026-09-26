@@ -144,7 +144,7 @@ function InternalProjectCard({
         <Separator />
         <CardDescription className="flex flex-row items-center justify-between">
           <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
-            {totalReach !== null ? `Beneficiarios ${year}` : 'Sin datos'}
+            {totalReach !== null ? `Beneficiarios ${year}` : 'Sin beneficiarios'}
           </p>
           <p className="text-primary text-xl leading-7 font-bold tracking-normal">
             {totalReach !== null ? formatNumber(totalReach) : '—'}

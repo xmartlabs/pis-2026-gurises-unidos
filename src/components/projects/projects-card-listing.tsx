@@ -17,6 +17,10 @@ import { ProjectCard } from '@/components/projects/project-card';
 import type { ProjectListItem } from '@/lib/projects/list';
 import { STATUS_FILTERS, type StatusFilterValue } from '@/lib/projects/constants';
 
+const ALL_YEARS = 'all';
+
+type YearFilterValue = number | typeof ALL_YEARS;
+
 type ProjectsCardListProps = {
   projects: ProjectListItem[];
   total: number;
@@ -26,12 +30,16 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
   const projectYears = Array.from(
     new Set(projects.flatMap((p) => p.beneficiaries.map((b) => b.year)))
   ).sort((a, b) => b - a);
+  const yearOptions: { value: YearFilterValue; label: string }[] = [
+    { value: ALL_YEARS, label: 'Todos' },
+    ...projectYears.map((y) => ({ value: y, label: String(y) })),
+  ];
 
   const searchParams = useSearchParams();
   const current =
     STATUS_FILTERS.find((f) => f.value === searchParams.get('status')) ?? STATUS_FILTERS[0];
   const status = current.value;
-  const [year, setYear] = useState<number>(projectYears[0] ?? new Date().getFullYear());
+  const [year, setYear] = useState<YearFilterValue>(ALL_YEARS);
 
   function selectStatus(value: StatusFilterValue) {
     const params = new URLSearchParams(searchParams.toString());
@@ -41,7 +49,11 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
     window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
   }
 
-  const filtered = projects.filter((p) => status === 'all' || p.status === status);
+  const filtered = projects.filter(
+    (p) =>
+      (status === 'all' || p.status === status) &&
+      (year === ALL_YEARS || p.beneficiaries.some((b) => b.year === year))
+  );
 
   const filteredCountLabel = `${filtered.length} ${filtered.length === 1 ? 'proyecto' : 'proyectos'}`;
 
@@ -57,7 +69,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
   );
 
   return (
-    <div className="bg-background flex h-fit w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
+    <div className="bg-primary-foreground flex h-full w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
       <div className="flex flex-row items-start justify-between gap-3 lg:items-center">
         <div className="flex flex-col justify-center gap-0.5">
           <p className="text-muted-foreground block text-xs leading-4 font-medium lg:hidden">
@@ -68,20 +80,24 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
           </h1>
         </div>
         <div className="flex flex-col items-end gap-3">
-          {/*<div className="block lg:hidden">*/}
-          {/*  <Select value={year} onValueChange={(value) => setYear(value as number)}>*/}
-          {/*    <SelectTrigger className="h-9! w-20.5 rounded-md px-3 py-2 shadow-xs/10">*/}
-          {/*      <SelectValue className="text-muted-foreground text-sm leading-5 tracking-normal" />*/}
-          {/*    </SelectTrigger>*/}
-          {/*    <SelectContent alignItemWithTrigger={true}>*/}
-          {/*      {projectYears.map((y) => (*/}
-          {/*        <SelectItem key={y} value={y}>*/}
-          {/*          {y}*/}
-          {/*        </SelectItem>*/}
-          {/*      ))}*/}
-          {/*    </SelectContent>*/}
-          {/*  </Select>*/}
-          {/*</div>*/}
+          <div className="bg-background block lg:hidden">
+            <Select<YearFilterValue>
+              items={yearOptions}
+              value={year}
+              onValueChange={(value) => value !== null && setYear(value)}
+            >
+              <SelectTrigger className="h-9! w-22.5 rounded-md px-3 py-2 shadow-xs/10">
+                <SelectValue className="text-primary text-sm leading-5 tracking-normal" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                {yearOptions.map((y) => (
+                  <SelectItem key={y.value} value={y.value}>
+                    {y.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {newProjectButton}
         </div>
       </div>
@@ -109,26 +125,26 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             {filteredCountLabel}
           </p>
         </div>
-        {/*<div className="hidden flex-row items-center gap-1.5 lg:flex">*/}
-        {/*  <Tabs value={year} onValueChange={(value) => setYear(value as number)}>*/}
-        {/*    <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">*/}
-        {/*      <TabsList aria-label="Filtrar por año">*/}
-        {/*        {projectYears.map((y) => (*/}
-        {/*          <TabsTrigger*/}
-        {/*            key={y}*/}
-        {/*            value={y}*/}
-        {/*            className={cn(*/}
-        {/*              'text-muted-foreground h-7.25 cursor-pointer gap-2.5 rounded-md px-2 py-1 text-sm font-medium',*/}
-        {/*              'data-active:bg-card data-active:text-primary data-active:border-border data-active:shadow-sm/10'*/}
-        {/*            )}*/}
-        {/*          >*/}
-        {/*            {y}*/}
-        {/*          </TabsTrigger>*/}
-        {/*        ))}*/}
-        {/*      </TabsList>*/}
-        {/*    </div>*/}
-        {/*  </Tabs>*/}
-        {/*</div>*/}
+        <div className="hidden flex-row items-center gap-1.5 lg:flex">
+          <div className="hidden lg:flex">
+            <Select<YearFilterValue>
+              items={yearOptions}
+              value={year}
+              onValueChange={(value) => value !== null && setYear(value)}
+            >
+              <SelectTrigger className="bg-background h-9! w-22.5 rounded-md px-3 py-2 shadow-xs/10">
+                <SelectValue className="text-primary text-sm leading-5 tracking-normal" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                {yearOptions.map((y) => (
+                  <SelectItem key={y.value} value={y.value}>
+                    {y.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
         {filteredCountLabel}
@@ -146,21 +162,23 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
         </p>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
-          {filtered.map((p) => {
-            const latestBeneficiaries = p.beneficiaries.at(0);
-            return (
+          {filtered.flatMap((p) => {
+            const shownBeneficiaries =
+              year === ALL_YEARS ? p.beneficiaries : p.beneficiaries.filter((b) => b.year === year);
+            const cardBeneficiaries = shownBeneficiaries.length > 0 ? shownBeneficiaries : [null];
+            return cardBeneficiaries.map((yearBeneficiaries) => (
               <ProjectCard
-                key={p.id}
+                key={`${p.id}-${yearBeneficiaries?.year ?? 'none'}`}
                 id={p.id}
                 name={p.name}
                 status={p.status}
                 territory={p.department}
                 coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
                 intensity={p.intensity}
-                year={latestBeneficiaries?.year ?? year}
-                totalReach={latestBeneficiaries?.total ?? null}
+                year={yearBeneficiaries?.year ?? p.startYear}
+                totalReach={yearBeneficiaries?.total ?? null}
               />
-            );
+            ));
           })}
         </div>
       )}
