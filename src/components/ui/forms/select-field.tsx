@@ -25,6 +25,7 @@ export function SelectField({
   description,
   messages,
   required,
+  disabled,
 }: {
   id: string;
   name?: string;
@@ -36,6 +37,7 @@ export function SelectField({
   description?: string;
   messages?: string[];
   required?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Field className="min-w-0 gap-1.5" data-invalid={Boolean(messages?.length)}>
@@ -48,6 +50,7 @@ export function SelectField({
         value={value || null}
         onValueChange={(nextValue) => onValueChange(nextValue ?? '')}
         required={required}
+        disabled={disabled}
       >
         <SelectTrigger
           id={id}

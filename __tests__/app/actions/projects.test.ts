@@ -161,6 +161,23 @@ describe.each([
     }
   });
 
+  it.each([
+    ['is before the start year', { status: 'closed', endYear: '2018' }],
+    ['is set on a project that is not closed', { status: 'paused', endYear: '2020' }],
+    ['is before the first project year', { status: 'closed', endYear: '1988' }],
+  ])('rejects an end year that %s before writing', async (_case, overrides) => {
+    const result = await submit(formData(overrides));
+    expect(result.errors?.endYear?.length).toBeGreaterThan(0);
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('accepts an end year equal to the start year on a closed project', async () => {
+    await expect(submit(formData({ status: 'closed', endYear: '2019' }))).rejects.toThrow(
+      'Redirect: /dashboard/projects/10'
+    );
+    expect(mocks.transaction).toHaveBeenCalledTimes(1);
+  });
+
   it('handles stale session references', async () => {
     mocks.transaction.mockRejectedValue(databaseError('P2003', { constraint: 'authorId' }));
     expect(await submit(formData())).toEqual({
@@ -232,6 +249,7 @@ describe('updateProject persistence', () => {
           status: 'paused',
           intensity: 'medium',
           startYear: 2019,
+          endYear: null,
           leadCoordinatorId: 2,
           departmentId: 3,
           topicId: null,

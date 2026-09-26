@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
 
@@ -149,4 +149,57 @@ it('sends one selected topic and preserves it after a failed save', async () => 
     fireEvent.submit(container.querySelector('form')!);
   });
   expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['none']);
+});
+
+function renderFormWith(initialValues: Record<string, string>) {
+  return render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        ...initialValues,
+      }}
+      submitAction={vi.fn()}
+    />
+  );
+}
+
+it('disables the end year unless the project is closed', () => {
+  renderFormWith({ status: 'active' });
+  expect((screen.getByLabelText('Año de fin') as HTMLButtonElement).disabled).toBe(true);
+  cleanup();
+  renderFormWith({ status: 'closed', startYear: '2020', endYear: '2022' });
+  const endYear = screen.getByLabelText('Año de fin') as HTMLButtonElement;
+  expect(endYear.disabled).toBe(false);
+  expect(endYear.textContent).toContain('2022');
+});
+
+it('submits the end year of a closed project', async () => {
+  const submitAction = vi.fn().mockResolvedValue({});
+  const { container } = render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        status: 'closed',
+        startYear: '2020',
+        endYear: '2022',
+      }}
+      submitAction={submitAction}
+    />
+  );
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+  expect(submitAction.mock.calls[0][1].get('endYear')).toBe('2022');
 });

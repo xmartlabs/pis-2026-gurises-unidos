@@ -142,6 +142,7 @@ describe('createProject', () => {
         status: 'active',
         intensity: 'high',
         startYear: 2020,
+        endYear: null,
         leadCoordinatorId: 1,
         departmentId: 2,
         zone: 'city',
