@@ -50,6 +50,7 @@ it('loads only the selected year and retains unsaved drafts when switching years
       departments={[]}
       beneficiaryRecords={[{ ...counts, year: 2025 }]}
       submitAction={vi.fn()}
+      initialValues={{ startYear: '2020' }}
     />
   );
   expect((screen.getByLabelText('Familias') as HTMLInputElement).value).toBe('0');

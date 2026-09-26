@@ -16,6 +16,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
         status: 'inProgress',
         leadCoordinatorId: '2',
         departmentId: '3',
+        startYear: '2020',
         year: '2024',
         families: '30',
       }}
