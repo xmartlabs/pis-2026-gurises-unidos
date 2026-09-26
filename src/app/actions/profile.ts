@@ -9,6 +9,7 @@ import { profileFormSchema, type ProfileFormState } from '@/lib/validation/profi
 import { z } from 'zod';
 
 const INVALID_SESSION_MESSAGE = 'Tu sesión ya no es válida. Iniciá sesión de nuevo.';
+const PROFILE_FIELDS = ['firstName', 'lastName', 'email'] as const;
 
 export async function updateProfile(
   _prevState: ProfileFormState,
@@ -32,8 +33,32 @@ export async function updateProfile(
   }
 
   try {
-    const updatedUser = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.update({
+    const transactionResult = await prisma.$transaction(async (tx) => {
+      const currentUser = await tx.user.findFirst({
+        where: {
+          id: userId,
+          status: 'active',
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      });
+
+      if (!currentUser) return null;
+
+      const changedFields = PROFILE_FIELDS.filter(
+        (field) => result.data[field] !== currentUser[field]
+      );
+
+      if (!changedFields.length) {
+        return { user: currentUser, changed: false };
+      }
+
+      const updatedUser = await tx.user.update({
         where: {
           id: userId,
           status: 'active',
@@ -52,20 +77,27 @@ export async function updateProfile(
         authorId: userId,
         action: 'update',
         entity: 'user',
-        entityId: user.id,
+        entityId: updatedUser.id,
+        details: { changedFields },
       });
 
-      return user;
+      return { user: updatedUser, changed: true };
     });
 
-    revalidatePath('/dashboard/profile');
+    if (!transactionResult) {
+      return { formError: INVALID_SESSION_MESSAGE };
+    }
+
+    if (transactionResult.changed) {
+      revalidatePath('/management/profile');
+    }
 
     return {
       success: true,
       values: {
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        email: updatedUser.email,
+        firstName: transactionResult.user.firstName,
+        lastName: transactionResult.user.lastName,
+        email: transactionResult.user.email,
       },
     };
   } catch (error) {

@@ -19,7 +19,7 @@ vi.mock('@/lib/prisma', () => ({ default: { user: { findFirst: findFirstMock } }
 vi.mock('@/components/profile-form', () => ({ ProfileForm: profileFormMock }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 
-import ProfilePage from '@/app/(protected)/dashboard/profile/page';
+import ProfilePage from '@/app/(protected)/management/profile/page';
 
 beforeEach(() => {
   authMock.mockReset();
@@ -41,16 +41,26 @@ describe('ProfilePage', () => {
 
   test('loads the active profile using the authenticated user id', async () => {
     authMock.mockResolvedValue({ user: { id: '7', role: 'coordinator' } });
-    findFirstMock.mockResolvedValue(
-      makeUser({
-        id: 7,
-        firstName: 'Ana',
-        lastName: 'García',
-        documentId: '41234567',
-        email: 'ana@example.com',
-        role: 'coordinator',
-      })
-    );
+    const user = makeUser({
+      id: 7,
+      firstName: 'Ana',
+      lastName: 'García',
+      documentId: '41234567',
+      email: 'ana@example.com',
+      role: 'coordinator',
+    });
+    const profile = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      documentId: user.documentId,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      createdAt: user.createdAt,
+      lastAccess: user.lastAccess,
+      updatedAt: user.updatedAt,
+    };
+    findFirstMock.mockResolvedValue(profile);
 
     render(await ProfilePage());
 
@@ -74,17 +84,7 @@ describe('ProfilePage', () => {
     });
     expect(screen.getByRole('heading', { name: 'Mi perfil' })).toBeDefined();
     expect(profileFormMock).toHaveBeenCalledOnce();
-    const profileFormProps = profileFormMock.mock.calls[0]?.[0];
-    expect(profileFormProps?.profile).toEqual(
-      expect.objectContaining({
-        firstName: 'Ana',
-        lastName: 'García',
-        documentId: '41234567',
-        email: 'ana@example.com',
-        role: 'coordinator',
-        status: 'active',
-      })
-    );
+    expect(profileFormMock.mock.calls[0]?.[0]).toEqual({ profile });
   });
 
   test('redirects when the authenticated account is no longer active', async () => {

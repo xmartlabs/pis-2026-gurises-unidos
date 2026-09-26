@@ -42,7 +42,7 @@ import {
 } from '@/lib/users/constants';
 import {
   fullName,
-  formatLastAccess,
+  formatDate,
   formatUserCount,
   matchesFilters,
   compareUsers,
@@ -245,9 +245,7 @@ export function UsersTable({ users }: { users: User[] }) {
             </CardContent>
             <CardContent className="flex items-center justify-between gap-3 px-4">
               <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
-              <span className="text-muted-foreground text-sm">
-                {formatLastAccess(user.lastAccess)}
-              </span>
+              <span className="text-muted-foreground text-sm">{formatDate(user.lastAccess)}</span>
             </CardContent>
           </Card>
         ))}
@@ -294,7 +292,7 @@ export function UsersTable({ users }: { users: User[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground h-15 px-4 py-3">
-                  {formatLastAccess(user.lastAccess)}
+                  {formatDate(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
                   <UserActionsMenu user={user} />

@@ -35,6 +35,12 @@ function buildFormData(overrides: Record<string, string> = {}) {
 }
 
 function setupTransaction({ userId = 7 } = {}) {
+  const userFindFirst = vi.fn().mockResolvedValue({
+    id: userId,
+    firstName: 'Ana',
+    lastName: 'Previous',
+    email: 'ana@example.com',
+  });
   const userUpdate = vi.fn().mockImplementation(({ data }) =>
     Promise.resolve({
       id: userId,
@@ -45,10 +51,10 @@ function setupTransaction({ userId = 7 } = {}) {
   );
 
   transactionMock.mockImplementation(async (callback) =>
-    callback({ user: { update: userUpdate } })
+    callback({ user: { findFirst: userFindFirst, update: userUpdate } })
   );
 
-  return { userUpdate };
+  return { userFindFirst, userUpdate };
 }
 
 function knownRequestError(code: string, meta: Record<string, unknown> = {}) {
@@ -93,11 +99,24 @@ describe('updateProfile', () => {
   });
 
   test('updates the authenticated user and records the audit event atomically', async () => {
-    const { userUpdate } = setupTransaction();
+    const { userFindFirst, userUpdate } = setupTransaction();
 
     const result = await updateProfile(EMPTY_STATE, buildFormData());
 
     expect(transactionMock).toHaveBeenCalledWith(expect.any(Function));
+    expect(userFindFirst).toHaveBeenCalledWith({
+      where: {
+        id: 7,
+        status: 'active',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
     expect(userUpdate).toHaveBeenCalledWith({
       where: {
         id: 7,
@@ -121,8 +140,9 @@ describe('updateProfile', () => {
       action: 'update',
       entity: 'user',
       entityId: 7,
+      details: { changedFields: ['lastName'] },
     });
-    expect(revalidatePathMock).toHaveBeenCalledWith('/dashboard/profile');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/management/profile');
     expect(result).toEqual({
       success: true,
       values: {
@@ -131,6 +151,49 @@ describe('updateProfile', () => {
         email: 'ana@example.com',
       },
     });
+  });
+
+  test('returns success without updating or auditing when the profile is unchanged', async () => {
+    const { userFindFirst, userUpdate } = setupTransaction();
+    userFindFirst.mockResolvedValue({
+      id: 7,
+      firstName: 'Ana',
+      lastName: 'García',
+      email: 'ana@example.com',
+    });
+
+    await expect(
+      updateProfile(
+        EMPTY_STATE,
+        buildFormData({
+          firstName: ' Ana ',
+          lastName: ' García ',
+          email: ' ANA@EXAMPLE.COM ',
+        })
+      )
+    ).resolves.toEqual({
+      success: true,
+      values: {
+        firstName: 'Ana',
+        lastName: 'García',
+        email: 'ana@example.com',
+      },
+    });
+    expect(userUpdate).not.toHaveBeenCalled();
+    expect(logAuditMock).not.toHaveBeenCalled();
+    expect(revalidatePathMock).not.toHaveBeenCalled();
+  });
+
+  test('returns a session error without writing when the active profile no longer exists', async () => {
+    const { userFindFirst, userUpdate } = setupTransaction();
+    userFindFirst.mockResolvedValue(null);
+
+    await expect(updateProfile(EMPTY_STATE, buildFormData())).resolves.toEqual({
+      formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.',
+    });
+    expect(userUpdate).not.toHaveBeenCalled();
+    expect(logAuditMock).not.toHaveBeenCalled();
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   test('normalizes the editable fields before updating', async () => {
