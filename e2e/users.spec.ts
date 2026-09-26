@@ -62,5 +62,6 @@ test.describe('mobile', () => {
     await expect(card.getByText(ADMIN_NAME)).toBeVisible();
     await expect(card.getByText('Administrador')).toBeVisible();
     await expect(card.getByRole('button', { name: `Acciones para ${ADMIN_NAME}` })).toBeVisible();
+    expect((await card.boundingBox())?.height).toBeGreaterThan(110);
   });
 });

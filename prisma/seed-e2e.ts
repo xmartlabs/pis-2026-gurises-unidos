@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import { config as loadEnvFiles } from 'dotenv';
 import { execSync } from 'node:child_process';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
@@ -12,6 +12,11 @@ import {
   E2E_DEPARTMENT,
   E2E_DISABLED_COORDINATOR,
 } from './e2e-fixtures';
+
+loadEnvFiles({
+  path: ['.env.development.local', '.env.local', '.env.development', '.env'],
+  quiet: true,
+});
 
 function databaseName(url: string) {
   try {
@@ -30,10 +35,17 @@ function e2eDatabaseUrl() {
     );
   }
 
-  const developmentUrl = process.env.DATABASE_URL;
-  if (developmentUrl && databaseName(url) === databaseName(developmentUrl)) {
+  const name = databaseName(url);
+  if (!name) {
     throw new Error(
-      `E2E_DATABASE_URL must name a different database than DATABASE_URL, both are "${databaseName(url)}": the e2e seed truncates every table, and the same name on the same server is the same database however the host is spelled`
+      `E2E_DATABASE_URL must name a database, "${url}" has none: without one the seed would truncate the server's default database`
+    );
+  }
+
+  const developmentUrl = process.env.DATABASE_URL;
+  if (developmentUrl && name === databaseName(developmentUrl)) {
+    throw new Error(
+      `E2E_DATABASE_URL must name a different database than DATABASE_URL, both are "${name}": the e2e seed truncates every table, and the same name on the same server is the same database however the host is spelled`
     );
   }
 

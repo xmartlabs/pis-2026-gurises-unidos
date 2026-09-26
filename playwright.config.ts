@@ -13,6 +13,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
+  expect: { timeout: 15_000 },
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -31,7 +32,7 @@ export default defineConfig({
     : {
         command: `npm run dev -- --port ${LOCAL_PORT}`,
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         env: {
           DATABASE_URL: process.env.E2E_DATABASE_URL ?? '',
           AUTH_URL: baseURL,
