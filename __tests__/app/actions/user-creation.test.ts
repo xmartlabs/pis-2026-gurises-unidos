@@ -41,7 +41,6 @@ function buildFormData(overrides: Record<string, string> = {}) {
     role: 'coordinator',
     status: 'active',
     password: 'Test1234',
-    passwordConfirm: 'Test1234',
     ...overrides,
   };
 
@@ -156,10 +155,7 @@ describe('createUser', () => {
   });
 
   test('returns error for a weak password', async () => {
-    const result = await createUser(
-      EMPTY_STATE,
-      buildFormData({ password: '1234', passwordConfirm: '1234' })
-    );
+    const result = await createUser(EMPTY_STATE, buildFormData({ password: '1234' }));
 
     expect(result.errors?.password).toEqual(
       expect.arrayContaining([
@@ -170,13 +166,6 @@ describe('createUser', () => {
     );
     expect(transactionMock).not.toHaveBeenCalled();
     expect(hashMock).not.toHaveBeenCalled();
-  });
-
-  test('returns an error when passwords do not match', async () => {
-    const result = await createUser(EMPTY_STATE, buildFormData({ passwordConfirm: 'Dif123' }));
-
-    expect(result.errors?.passwordConfirm).toContain('Las contraseñas no coinciden.');
-    expect(transactionMock).not.toHaveBeenCalled();
   });
 
   test('returns a duplicate document error', async () => {
