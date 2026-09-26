@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { cn } from 'cn';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ type TextInputFieldProps = Omit<
   onValueChange: (value: string) => void;
   description?: string;
   messages?: string[];
+  trailingAction?: ReactNode;
   className?: string;
 };
 
@@ -29,6 +30,7 @@ export function TextInputField({
   onValueChange,
   description,
   messages,
+  trailingAction,
   className,
   ...inputProps
 }: TextInputFieldProps) {
@@ -37,18 +39,24 @@ export function TextInputField({
       <FieldLabel htmlFor={id} className="text-foreground text-xs leading-4 font-medium">
         {label}
       </FieldLabel>
-      <Input
-        {...inputProps}
-        id={id}
-        name={name}
-        value={value}
-        onChange={(event) => onValueChange(event.currentTarget.value)}
-        aria-invalid={Boolean(messages?.length)}
-        className={cn(
-          'border-input bg-background h-9 min-w-0 rounded-lg px-3 text-base',
-          variant === 'detailed' ? 'leading-6 shadow-sm' : 'shadow-none md:text-sm'
+      <div className="relative">
+        <Input
+          {...inputProps}
+          id={id}
+          name={name}
+          value={value}
+          onChange={(event) => onValueChange(event.currentTarget.value)}
+          aria-invalid={Boolean(messages?.length)}
+          className={cn(
+            'border-input bg-background h-9 min-w-0 rounded-lg px-3 text-base',
+            variant === 'detailed' ? 'leading-6 shadow-sm' : 'md:text-sm',
+            trailingAction && 'pr-8'
+          )}
+        />
+        {trailingAction && (
+          <div className="absolute top-1/2 right-1 -translate-y-1/2">{trailingAction}</div>
         )}
-      />
+      </div>
       {description && (
         <FieldDescription className="text-muted-foreground text-xs leading-4">
           {description}
