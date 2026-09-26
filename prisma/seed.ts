@@ -64,7 +64,7 @@ async function main() {
           documentId: '33333333',
           email: 'admin2@gurisesunidos.test',
           role: 'admin',
-          status: 'pendingInvitation',
+          status: 'active',
           passwordHash,
           createdBy: admin.id,
         },
