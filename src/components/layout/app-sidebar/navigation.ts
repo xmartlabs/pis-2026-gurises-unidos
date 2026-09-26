@@ -1,5 +1,5 @@
 import {
-  // ChartNoAxesColumn,
+  ChartNoAxesColumn,
   // FileChartColumnIncreasing,
   FolderKanban,
   HomeIcon,
@@ -58,12 +58,6 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
             icon: FolderKanban,
           },
           // {
-          //   id: 'metrics',
-          //   title: 'Métricas',
-          //   href: '#',
-          //   icon: ChartNoAxesColumn,
-          // },
-          // {
           //   id: 'beneficiaries',
           //   title: 'Beneficiarios',
           //   href: '#',
@@ -94,6 +88,13 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
         title: 'Usuarios',
         href: '/management/users',
         icon: Users,
+        roles: ['admin'],
+      },
+      {
+        id: 'metrics',
+        title: 'Gestión de Métricas',
+        href: '/management/metrics',
+        icon: ChartNoAxesColumn,
         roles: ['admin'],
       },
     ],
