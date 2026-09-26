@@ -366,7 +366,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                           <FieldError messages={['No se pudo copiar. Cópiala manualmente.']} />
                         )}
                       </Field>
-                      <Field className="gap-1.25">
+                      <Field hidden className="gap-1.25">
                         <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">
                           Confirmar contraseña
                         </FieldLabel>
@@ -450,18 +450,6 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
         >
           Cancelar
         </Link>
-        <Button
-          hidden
-          type={isEditing ? 'button' : 'submit'}
-          name="intent"
-          value="draft"
-          variant="outline"
-          size="lg"
-          className="h-auto min-h-9 w-full min-w-0 px-4 py-1.5 whitespace-normal md:order-2 md:h-9 md:w-auto md:py-0 md:whitespace-nowrap"
-          disabled={pending}
-        >
-          Guardar borrador
-        </Button>
         <Button
           type={isEditing ? 'button' : 'submit'}
           name="intent"
