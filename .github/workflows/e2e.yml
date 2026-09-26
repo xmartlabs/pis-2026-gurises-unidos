@@ -19,7 +19,7 @@ jobs:
           --health-cmd pg_isready --health-interval 5s
           --health-timeout 5s --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/app
+      E2E_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/app
       AUTH_SECRET: e2e-auth-secret
       SEED_USER_PASSWORD: e2e-seed-password
     steps:
@@ -33,10 +33,6 @@ jobs:
       - run: npm ci
 
       - run: npx prisma generate
-
-      - run: npx prisma migrate deploy
-
-      - run: npx prisma db seed
 
       - id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"

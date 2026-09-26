@@ -70,26 +70,35 @@ npx auth secret               # genera AUTH_SECRET y lo escribe en .env
 
 ## Tests end to end
 
-Playwright contra la app real y la base local. Cubre login, la tabla de usuarios y el listado y
+Playwright contra la app real y una base propia. Cubre login, la tabla de usuarios y el listado y
 detalle de proyectos. Los tests unitarios de Vitest (`npm test`) siguen siendo independientes: `e2e/`
 no lo toca.
 
-Requiere la base levantada, migrada y sembrada, y el `.env` con `AUTH_SECRET` y `SEED_USER_PASSWORD`,
-o sea todo lo de las dos secciones anteriores. La primera vez hay que bajar el browser:
+Requiere Postgres levantado y el `.env` con `AUTH_SECRET` y `SEED_USER_PASSWORD`. Además, una sola
+vez, apuntar la base de E2E y bajar el browser:
 
 ```bash
+echo 'E2E_DATABASE_URL=postgresql://postgres:<password>@localhost:5432/app_e2e' >> .env
 npx playwright install chromium
-npm run test:e2e        # levanta el server solo
+```
+
+La base no hay que crearla: `migrate deploy` la crea si no existe. `E2E_DATABASE_URL` sí es
+obligatoria y tiene que ser distinta de `DATABASE_URL`: lo primero que hace el seed de E2E es truncar
+todas las tablas, así que se niega a correr si falta o si son la misma.
+
+```bash
+npm run test:e2e        # migra, siembra, levanta el server y corre
 npm run test:e2e:ui     # modo interactivo, para escribir o depurar tests
 ```
 
-`test:e2e` arranca `npm run dev` por su cuenta y lo baja al terminar. Si ya tenés uno corriendo en
-`http://localhost:3000` lo reusa, así que ojo con que esté en la rama que querés probar. Para apuntar
-a otra URL: `E2E_BASE_URL=http://159.89.90.10:3001 npm run test:e2e`.
+Cada corrida aplica las migraciones y vuelve a sembrar la base de E2E antes del primer test, así que
+no hay nada que preparar a mano. El server de prueba es `npm run dev` en `:3100` —un puerto aparte
+para no pisar el `:3000` que tengas abierto contra tu base de desarrollo— y se baja al terminar. Para
+apuntar a otra URL: `E2E_BASE_URL=http://159.89.90.10:3001 npm run test:e2e`.
 
-Los tests no dependen de filas concretas: el único dato que dan por sentado es el admin de
-`prisma/fixtures.ts` (documento `11111111`), que crean tanto `prisma/seed.ts` como
-`prisma/seed-staging.ts`. Por eso corren igual contra cualquiera de los dos datasets.
+El dataset vive en `prisma/e2e-fixtures.ts` y lo crea `prisma/seed-e2e.ts`: tres usuarios y dos
+proyectos, siempre los mismos. Por eso las aserciones pueden ser conteos exactos, y `prisma/seed.ts`
+puede cambiar sin romper los E2E.
 
 Cuando uno falla queda un reporte navegable en `playwright-report/`, con screenshot del momento del
 fallo. En CI el workflow `E2E` lo sube como artifact.
@@ -207,10 +216,10 @@ Dos workflows manuales (Actions → correr con **Run workflow**) dejan la base d
 estado conocido. Los dos usan el mismo túnel SSH que las migraciones y comparten el grupo de
 concurrencia `deploy-staging`, así que nunca corren en paralelo con un deploy.
 
-| Workflow          | Qué hace                                                            |
-| ----------------- | ------------------------------------------------------------------- |
+| Workflow          | Qué hace                                                                                                                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Seed staging**  | Carga el dataset de prueba: 19 departamentos, 6 usuarios, 25 proyectos con 1 a 4 años de beneficiarios (4 quedan sin ninguno). Es idempotente: correrlo de nuevo no duplica nada. |
-| **Clean staging** | Vacía la base. Input `mode`: `reset` borra todo y recrea el admin, `wipe` borra todo sin dejar admin. |
+| **Clean staging** | Vacía la base. Input `mode`: `reset` borra todo y recrea el admin, `wipe` borra todo sin dejar admin.                                                                             |
 
 El admin es `admin@gurisesunidos.test` (documento `11111111`) y su contraseña es el secret
 `SEED_USER_PASSWORD` del environment `staging`.

@@ -1,9 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 
-export const ADMIN_DOCUMENT_ID = '11111111';
-export const ADMIN_NAME = 'Ana Admin';
-export const ADMIN_EMAIL = 'admin@gurisesunidos.test';
-export const COORDINATOR_DOCUMENT_ID = '22222222';
+import { E2E_ADMIN, E2E_COORDINATOR } from '../prisma/e2e-fixtures';
+
+export const ADMIN_NAME = `${E2E_ADMIN.firstName} ${E2E_ADMIN.lastName}`;
+export const COORDINATOR_NAME = `${E2E_COORDINATOR.firstName} ${E2E_COORDINATOR.lastName}`;
 
 export const DESKTOP = { width: 1440, height: 900 };
 export const MOBILE = { width: 390, height: 844 };
