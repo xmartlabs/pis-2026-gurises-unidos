@@ -48,7 +48,7 @@ const TX = {
 };
 const VALID_DATA = {
   name: '  Updated project  ',
-  status: 'inProgress',
+  status: 'paused',
   intensity: 'medium',
   startYear: '2019',
   leadCoordinatorId: '2',
@@ -207,7 +207,7 @@ describe('updateProject persistence', () => {
         where: { id: 10 },
         data: {
           name: 'Updated project',
-          status: 'inProgress',
+          status: 'paused',
           intensity: 'medium',
           startYear: 2019,
           leadCoordinatorId: 2,

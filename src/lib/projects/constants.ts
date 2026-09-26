@@ -11,9 +11,8 @@ export const PROJECT_STATUS_META: Record<
   }
 > = {
   active: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
-  inProgress: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
-  archived: { displayStatus: 'paused', label: 'Pausado', badgeVariant: 'pending' },
-  completed: { displayStatus: 'closed', label: 'Cerrado', badgeVariant: 'neutral' },
+  paused: { displayStatus: 'paused', label: 'Pausado', badgeVariant: 'pending' },
+  closed: { displayStatus: 'closed', label: 'Cerrado', badgeVariant: 'neutral' },
 };
 
 export const STATUS_FILTERS = [

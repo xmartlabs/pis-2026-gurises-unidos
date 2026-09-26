@@ -177,7 +177,6 @@ export function ProjectForm({
 
           <BasicInfoSection
             variant={variant}
-            isEditing={isEditing}
             values={values}
             state={state}
             updateField={updateField}

@@ -6,7 +6,6 @@ import type { SectionProps } from './section-props';
 
 export function BasicInfoSection({
   variant,
-  isEditing,
   values,
   state,
   updateField,
@@ -15,14 +14,7 @@ export function BasicInfoSection({
   topics,
 }: Pick<
   SectionProps,
-  | 'variant'
-  | 'isEditing'
-  | 'values'
-  | 'state'
-  | 'updateField'
-  | 'yearOptions'
-  | 'coordinatorOptions'
-  | 'topics'
+  'variant' | 'values' | 'state' | 'updateField' | 'yearOptions' | 'coordinatorOptions' | 'topics'
 >) {
   return (
     <FormSection variant={variant} title="Información básica">
@@ -45,11 +37,7 @@ export function BasicInfoSection({
           name="status"
           label="Estado"
           value={values.status}
-          options={
-            isEditing
-              ? STATUS_OPTIONS
-              : STATUS_OPTIONS.filter((option) => option.value !== 'inProgress')
-          }
+          options={STATUS_OPTIONS}
           messages={state.errors?.status}
           onValueChange={(value) => updateField('status', value)}
           required

@@ -20,7 +20,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Existing project',
-        status: 'inProgress',
+        status: 'paused',
         leadCoordinatorId: '2',
         departmentId: '3',
         startYear: '2020',
@@ -48,7 +48,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   const submitted = submitAction.mock.calls[0][1] as FormData;
   expect(submitted.get('name')).toBe('Edited project');
   expect(submitted.get('year')).toBe('2024');
-  expect(submitted.get('status')).toBe('inProgress');
+  expect(submitted.get('status')).toBe('paused');
   expect(submitted.get('families')).toBe('30');
   expect((screen.getByLabelText('Nombre del proyecto') as HTMLInputElement).value).toBe(
     'Edited project'
