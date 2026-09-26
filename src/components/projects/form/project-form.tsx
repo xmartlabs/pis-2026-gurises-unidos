@@ -8,6 +8,8 @@ import { BasicInfoSection } from './sections/basic-info-section';
 
 import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { cn } from 'cn';
+import { isRedirectError } from 'next/dist/client/components/redirect-error';
+import { notify } from '@/lib/notify';
 import type { ProjectFormState } from '@/lib/validation/project';
 import {
   BENEFICIARY_FIELDS,
@@ -56,7 +58,42 @@ export function ProjectForm({
     if (!parsed.success) {
       return { errors: parsed.error.flatten().fieldErrors };
     }
-    return submitAction(previousState, formData);
+    if (mode === 'edit') {
+      return submitAction(previousState, formData);
+    }
+    return submitWithToast(previousState, formData);
+  }
+  async function submitWithToast(
+    previousState: ProjectFormState,
+    formData: FormData
+  ): Promise<ProjectFormState> {
+    let redirectError: unknown;
+    let failedState: ProjectFormState | undefined;
+    const submission = submitAction(previousState, formData).then(
+      (state) => {
+        if (!state.errors && !state.formError) return state;
+        failedState = state;
+        throw new Error('Project submission failed');
+      },
+      (error) => {
+        if (!isRedirectError(error)) throw error;
+        redirectError = error;
+        return INITIAL_STATE;
+      }
+    );
+    notify.promise(submission, {
+      loading: 'Creando proyecto...',
+      success: 'Proyecto creado',
+      error: 'No se pudo crear el proyecto',
+    });
+    try {
+      const state = await submission;
+      if (redirectError) throw redirectError;
+      return state;
+    } catch (error) {
+      if (failedState) return failedState;
+      throw error;
+    }
   }
   const isEditing = mode === 'edit';
   const variant = isEditing ? 'detailed' : 'default';
