@@ -5,9 +5,7 @@ import { toAuthUser, verifyUserCredentials } from './lib/credentials';
 import prisma from './lib/prisma';
 import { fullName } from './lib/users/format';
 import { getAvatarColorIndex } from './lib/users/avatar';
-
-const SESSION_MAX_AGE = 12 * 60 * 60; // 12 hours
-const REMEMBER_ME_MAX_AGE = 30 * 24 * 60 * 60;
+import { getSessionMaxAge, REMEMBER_ME_MAX_AGE } from './lib/auth/session-expiration';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
@@ -21,7 +19,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token,
         secret,
         salt,
-        maxAge: token?.remember ? REMEMBER_ME_MAX_AGE : SESSION_MAX_AGE,
+        maxAge: getSessionMaxAge(Boolean(token?.remember)),
       }),
   },
   providers: [

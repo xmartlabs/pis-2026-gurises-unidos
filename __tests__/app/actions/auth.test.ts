@@ -3,6 +3,15 @@ import { AuthError, CredentialsSignin } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { login, logout } from '@/app/actions/auth';
 import { signIn, signOut } from '@/auth';
+import {
+  SESSION_EXPIRATION_COOKIE,
+  SESSION_EXPIRATION_COOKIE_MAX_AGE,
+} from '@/lib/auth/session-expiration';
+
+const cookieStore = vi.hoisted(() => ({
+  set: vi.fn(),
+  delete: vi.fn(),
+}));
 
 vi.mock('next-auth', () => import('@auth/core/errors'));
 
@@ -13,6 +22,10 @@ vi.mock('@/auth', () => ({
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+}));
+
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => cookieStore),
 }));
 
 function makeFormData(documentId: string, password: string, remember = false) {
@@ -29,6 +42,7 @@ describe('login', () => {
   beforeEach(() => {
     vi.mocked(signIn).mockReset();
     vi.mocked(redirect).mockReset();
+    cookieStore.set.mockReset();
     vi.mocked(redirect).mockImplementation(() => {
       throw new Error('NEXT_REDIRECT');
     });
@@ -47,6 +61,14 @@ describe('login', () => {
       remember: 'false',
       redirect: false,
     });
+    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_EXPIRATION_COOKIE, expect.any(String), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/',
+      maxAge: SESSION_EXPIRATION_COOKIE_MAX_AGE,
+    });
+    expect(Number(cookieStore.set.mock.calls[0][1])).toBeGreaterThan(Date.now());
     expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
   });
 
@@ -61,6 +83,13 @@ describe('login', () => {
       'credentials',
       expect.objectContaining({ remember: 'true' })
     );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      SESSION_EXPIRATION_COOKIE,
+      expect.any(String),
+      expect.objectContaining({
+        maxAge: SESSION_EXPIRATION_COOKIE_MAX_AGE,
+      })
+    );
   });
 
   test.each([
@@ -73,6 +102,7 @@ describe('login', () => {
       formError: 'Invalid credentials',
       documentId: '1.111.111-1',
     });
+    expect(cookieStore.set).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -115,6 +145,7 @@ describe('login', () => {
 describe('logout', () => {
   beforeEach(() => {
     vi.mocked(signOut).mockReset();
+    cookieStore.delete.mockReset();
   });
 
   test('calls signOut with redirectTo: /login', async () => {
@@ -122,6 +153,7 @@ describe('logout', () => {
 
     await logout();
 
+    expect(cookieStore.delete).toHaveBeenCalledWith(SESSION_EXPIRATION_COOKIE);
     expect(signOut).toHaveBeenCalledWith({ redirectTo: '/login' });
   });
 });

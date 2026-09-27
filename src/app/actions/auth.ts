@@ -1,9 +1,15 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthError } from 'next-auth';
 import { flattenError } from 'zod';
 import { signIn, signOut } from '@/auth';
+import {
+  getSessionExpirationTimestamp,
+  SESSION_EXPIRATION_COOKIE,
+  SESSION_EXPIRATION_COOKIE_MAX_AGE,
+} from '@/lib/auth/session-expiration';
 import { loginSchema, type LoginFormState } from '@/lib/validation/auth';
 
 export async function login(
@@ -18,12 +24,13 @@ export async function login(
   }
 
   const { documentId, password } = parsed.data;
+  const remember = Boolean(formData.get('rememberCheck'));
 
   try {
     await signIn('credentials', {
       documentId,
       password,
-      remember: formData.get('rememberCheck') ? 'true' : 'false',
+      remember: remember ? 'true' : 'false',
       redirect: false,
     });
   } catch (error) {
@@ -33,9 +40,20 @@ export async function login(
     throw error;
   }
 
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_EXPIRATION_COOKIE, String(getSessionExpirationTimestamp(remember)), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: SESSION_EXPIRATION_COOKIE_MAX_AGE,
+  });
+
   redirect('/dashboard/projects');
 }
 
 export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_EXPIRATION_COOKIE);
   await signOut({ redirectTo: '/login' });
 }

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 // TODO: re-enable once the reset-password page exists
 // import Link from 'next/link';
 
-export function LoginForm() {
+export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean }) {
   const [state, formAction, pending] = useActionState(login, {});
   const [showPassword, setShowPassword] = useState(false);
   const [serverErrorDismissed, setServerErrorDismissed] = useState(false);
@@ -28,6 +28,14 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
+      {sessionExpired && (
+        <p
+          role="status"
+          className="border-border bg-muted text-foreground rounded-lg border px-4 py-3 text-sm"
+        >
+          Tu sesión se cerró por inactividad. Iniciá sesión nuevamente para continuar.
+        </p>
+      )}
       <div className="flex flex-col gap-4.5">
         <TextInputField
           id="documentId"

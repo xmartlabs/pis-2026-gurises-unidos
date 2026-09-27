@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import {
+  hasSessionExpired,
+  SESSION_EXPIRATION_COOKIE,
+  SESSION_EXPIRATION_REASON,
+} from '@/lib/auth/session-expiration';
 
 const PUBLIC_ROUTES = ['/', '/login'];
 
@@ -8,7 +13,20 @@ export const proxy = auth((request) => {
     return NextResponse.next();
   }
 
-  return NextResponse.redirect(new URL('/login', request.nextUrl));
+  const loginUrl = new URL('/login', request.nextUrl);
+  const expirationCookie = request.cookies.get(SESSION_EXPIRATION_COOKIE)?.value;
+
+  if (hasSessionExpired(expirationCookie)) {
+    loginUrl.searchParams.set('reason', SESSION_EXPIRATION_REASON);
+  }
+
+  const response = NextResponse.redirect(loginUrl);
+
+  if (expirationCookie) {
+    response.cookies.delete(SESSION_EXPIRATION_COOKIE);
+  }
+
+  return response;
 });
 
 export const config = {
