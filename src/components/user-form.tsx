@@ -327,7 +327,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                       className="w-fit px-4"
                       disabled
                     >
-                      Restablecer contraseña (próximamente)
+                      Restablecer contraseña
                     </Button>
                   ) : (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

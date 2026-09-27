@@ -77,9 +77,9 @@ function ProfileFormContent({ profile, onCancel }: { profile: Profile; onCancel:
       action={formAction}
       onSubmit={handleSubmit}
       noValidate
-      className="flex min-w-0 flex-1 flex-col pt-6"
+      className="flex min-h-0 min-w-0 flex-1 flex-col pt-6"
     >
-      <div className="mx-auto w-full px-4 pb-6 sm:px-6">
+      <div className="mx-auto w-full flex-1 px-4 pb-6 sm:px-6">
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_425px]">
           <div className="flex min-w-0 flex-col gap-5">
             {state.formError && (
@@ -216,12 +216,7 @@ function ProfileFormContent({ profile, onCancel }: { profile: Profile; onCancel:
         </div>
       </div>
 
-      <FormActions
-        className="mt-auto shrink-0"
-        onCancel={onCancel}
-        submitLabel="Guardar cambios"
-        pending={pending}
-      />
+      <FormActions onCancel={onCancel} submitLabel="Guardar cambios" pending={pending} />
     </form>
   );
 }

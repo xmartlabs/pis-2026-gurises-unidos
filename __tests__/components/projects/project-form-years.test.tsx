@@ -4,6 +4,10 @@ import type { ComponentProps } from 'react';
 import type { SelectField } from '@/components/ui/forms/select-field';
 import { ProjectForm } from '@/components/projects/form/project-form';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@/components/ui/forms/select-field', () => ({
   SelectField: ({
     id,
