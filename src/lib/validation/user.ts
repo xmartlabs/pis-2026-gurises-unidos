@@ -56,20 +56,13 @@ export const userEditFormSchema = z.object({
   status: z.enum(['active', 'pendingInvitation', 'disabled']),
 });
 
-export const userFormSchema = userEditFormSchema
-  .omit({ status: true })
-  .extend({
-    password: z
-      .string()
-      .min(1, 'La contraseña es obligatoria.')
-      .min(8, 'La contraseña debe tener al menos 8 caracteres.')
-      .regex(/[A-Z]/, 'La contraseña debe tener al menos una mayúscula.')
-      .regex(/[a-z]/, 'La contraseña debe tener al menos una minúscula.')
-      .regex(/[0-9]/, 'La contraseña debe tener al menos un número.')
-      .max(72, 'La contraseña no puede superar los 72 caracteres.'),
-    passwordConfirm: z.string().min(1, 'Confirmá la contraseña.'),
-  })
-  .refine((data) => data.password === data.passwordConfirm, {
-    path: ['passwordConfirm'],
-    message: 'Las contraseñas no coinciden.',
-  });
+export const userFormSchema = userEditFormSchema.omit({ status: true }).extend({
+  password: z
+    .string()
+    .min(1, 'La contraseña es obligatoria.')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres.')
+    .regex(/[A-Z]/, 'La contraseña debe tener al menos una mayúscula.')
+    .regex(/[a-z]/, 'La contraseña debe tener al menos una minúscula.')
+    .regex(/[0-9]/, 'La contraseña debe tener al menos un número.')
+    .max(72, 'La contraseña no puede superar los 72 caracteres.'),
+});

@@ -96,12 +96,10 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const passwordConfirmRef = useRef<HTMLInputElement>(null);
 
   function handleGeneratePassword() {
     const generated = generateTemporaryPassword();
     if (passwordRef.current) passwordRef.current.value = generated;
-    if (passwordConfirmRef.current) passwordConfirmRef.current.value = generated;
   }
 
   async function handleCopyPassword() {
@@ -366,23 +364,6 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                           <FieldError messages={['No se pudo copiar. Cópiala manualmente.']} />
                         )}
                       </Field>
-                      <Field className="gap-1.25">
-                        <FieldLabel htmlFor="passwordConfirm" className="text-xs leading-4">
-                          Confirmar contraseña
-                        </FieldLabel>
-                        <Input
-                          ref={passwordConfirmRef}
-                          id="passwordConfirm"
-                          name="passwordConfirm"
-                          type="text"
-                          placeholder="Repetí la contraseña"
-                          required
-                          minLength={8}
-                          maxLength={72}
-                          className="h-9 rounded-md px-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] md:text-base md:leading-6"
-                        />
-                        <FieldError messages={fieldMessages('passwordConfirm')} />
-                      </Field>
                     </div>
                   )}
                   {!isEditing && (
@@ -450,18 +431,6 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
         >
           Cancelar
         </Link>
-        <Button
-          hidden
-          type={isEditing ? 'button' : 'submit'}
-          name="intent"
-          value="draft"
-          variant="outline"
-          size="lg"
-          className="h-auto min-h-9 w-full min-w-0 px-4 py-1.5 whitespace-normal md:order-2 md:h-9 md:w-auto md:py-0 md:whitespace-nowrap"
-          disabled={pending}
-        >
-          Guardar borrador
-        </Button>
         <Button
           type={isEditing ? 'button' : 'submit'}
           name="intent"
