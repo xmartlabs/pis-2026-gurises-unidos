@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { getUserList } from '@/lib/users';
+import { getUserList, getUserStats, parseUserListFilters } from '@/lib/users';
 import prisma from '@/lib/prisma';
 import { makeUser } from '../fixtures/user';
 
@@ -53,10 +53,14 @@ describe('getUserList', () => {
       expect.objectContaining({
         where: {
           deletedAt: null,
-          OR: [
-            { firstName: { contains: 'ana', mode: 'insensitive' } },
-            { lastName: { contains: 'ana', mode: 'insensitive' } },
-            { email: { contains: 'ana', mode: 'insensitive' } },
+          AND: [
+            {
+              OR: [
+                { firstName: { contains: 'ana', mode: 'insensitive' } },
+                { lastName: { contains: 'ana', mode: 'insensitive' } },
+                { email: { contains: 'ana', mode: 'insensitive' } },
+              ],
+            },
           ],
         },
       })
@@ -69,10 +73,41 @@ describe('getUserList', () => {
     expect(prisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          OR: [
-            { firstName: { contains: 'ana', mode: 'insensitive' } },
-            { lastName: { contains: 'ana', mode: 'insensitive' } },
-            { email: { contains: 'ana', mode: 'insensitive' } },
+          AND: [
+            {
+              OR: [
+                { firstName: { contains: 'ana', mode: 'insensitive' } },
+                { lastName: { contains: 'ana', mode: 'insensitive' } },
+                { email: { contains: 'ana', mode: 'insensitive' } },
+              ],
+            },
+          ],
+        }),
+      })
+    );
+  });
+
+  test('matches first and last name together when the search has several words', async () => {
+    await getUserList({ search: 'Ana García' });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: [
+            {
+              OR: [
+                { firstName: { contains: 'Ana', mode: 'insensitive' } },
+                { lastName: { contains: 'Ana', mode: 'insensitive' } },
+                { email: { contains: 'Ana', mode: 'insensitive' } },
+              ],
+            },
+            {
+              OR: [
+                { firstName: { contains: 'García', mode: 'insensitive' } },
+                { lastName: { contains: 'García', mode: 'insensitive' } },
+                { email: { contains: 'García', mode: 'insensitive' } },
+              ],
+            },
           ],
         }),
       })
@@ -96,7 +131,7 @@ describe('getUserList', () => {
           deletedAt: null,
           role: 'admin',
           status: 'active',
-          OR: expect.any(Array),
+          AND: expect.any(Array),
         }),
       })
     );
@@ -133,5 +168,58 @@ describe('getUserList', () => {
     vi.mocked(prisma.user.findMany).mockResolvedValue(users);
 
     await expect(getUserList()).resolves.toEqual(users);
+  });
+});
+
+describe('parseUserListFilters', () => {
+  test('maps url params to filters', () => {
+    expect(
+      parseUserListFilters({ q: 'ana', role: 'admin', status: 'active', sort: 'lastAccess' })
+    ).toEqual({ search: 'ana', role: 'admin', status: 'active', sortBy: 'lastAccess' });
+  });
+
+  test('ignores invalid role and status', () => {
+    expect(parseUserListFilters({ role: 'hola', status: 'nope' })).toEqual({
+      search: undefined,
+      role: undefined,
+      status: undefined,
+      sortBy: 'name',
+    });
+  });
+
+  test('falls back to sorting by name when sort is not recognized', () => {
+    expect(parseUserListFilters({ sort: 'xxx' }).sortBy).toBe('name');
+  });
+
+  test('takes the first value when a param is repeated', () => {
+    expect(parseUserListFilters({ q: ['ana', 'juan'] }).search).toBe('ana');
+  });
+});
+
+describe('getUserStats', () => {
+  test('counts only non-deleted users', async () => {
+    vi.mocked(prisma.user.count)
+      .mockResolvedValueOnce(10)
+      .mockResolvedValueOnce(3)
+      .mockResolvedValueOnce(7)
+      .mockResolvedValueOnce(2);
+
+    await expect(getUserStats()).resolves.toEqual({
+      total: 10,
+      admins: 3,
+      coordinators: 7,
+      pendingInvitations: 2,
+    });
+
+    expect(prisma.user.count).toHaveBeenCalledWith({ where: { deletedAt: null } });
+    expect(prisma.user.count).toHaveBeenCalledWith({
+      where: { deletedAt: null, role: 'admin' },
+    });
+    expect(prisma.user.count).toHaveBeenCalledWith({
+      where: { deletedAt: null, role: 'coordinator' },
+    });
+    expect(prisma.user.count).toHaveBeenCalledWith({
+      where: { deletedAt: null, status: 'pendingInvitation' },
+    });
   });
 });

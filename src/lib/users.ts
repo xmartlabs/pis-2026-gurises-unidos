@@ -69,19 +69,21 @@ function resolveSortBy(sortBy?: string): UserSortBy {
 
 export async function getUserList(filters: UserListFilters = {}): Promise<UserListItem[]> {
   const { search, role, status, sortBy } = filters;
-  const trimmedSearch = search?.trim();
+  const searchTerms = search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
   const where: Prisma.UserWhereInput = {
     deletedAt: null,
     ...(role ? { role } : {}),
     ...(status ? { status } : {}),
-    ...(trimmedSearch
+    ...(searchTerms.length > 0
       ? {
-          OR: [
-            { firstName: { contains: trimmedSearch, mode: 'insensitive' } },
-            { lastName: { contains: trimmedSearch, mode: 'insensitive' } },
-            { email: { contains: trimmedSearch, mode: 'insensitive' } },
-          ],
+          AND: searchTerms.map((term) => ({
+            OR: [
+              { firstName: { contains: term, mode: 'insensitive' } },
+              { lastName: { contains: term, mode: 'insensitive' } },
+              { email: { contains: term, mode: 'insensitive' } },
+            ],
+          })),
         }
       : {}),
   };
@@ -99,4 +101,43 @@ export async function getUserList(filters: UserListFilters = {}): Promise<UserLi
     },
     orderBy: ORDER_BY[resolveSortBy(sortBy)],
   });
+}
+
+type UserListSearchParams = Record<string, string | string[] | undefined>;
+
+const NOT_DELETED_WHERE = { deletedAt: null };
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isUserRole(value?: string): value is UserRole {
+  return Object.values(UserRole).includes(value as UserRole);
+}
+
+function isUserStatus(value?: string): value is UserStatus {
+  return Object.values(UserStatus).includes(value as UserStatus);
+}
+
+export function parseUserListFilters(searchParams: UserListSearchParams): UserListFilters {
+  const role = firstValue(searchParams.role);
+  const status = firstValue(searchParams.status);
+
+  return {
+    search: firstValue(searchParams.q),
+    role: isUserRole(role) ? role : undefined,
+    status: isUserStatus(status) ? status : undefined,
+    sortBy: resolveSortBy(firstValue(searchParams.sort)),
+  };
+}
+
+export async function getUserStats() {
+  const [total, admins, coordinators, pendingInvitations] = await Promise.all([
+    prisma.user.count({ where: NOT_DELETED_WHERE }),
+    prisma.user.count({ where: { ...NOT_DELETED_WHERE, role: 'admin' } }),
+    prisma.user.count({ where: { ...NOT_DELETED_WHERE, role: 'coordinator' } }),
+    prisma.user.count({ where: { ...NOT_DELETED_WHERE, status: 'pendingInvitation' } }),
+  ]);
+
+  return { total, admins, coordinators, pendingInvitations };
 }
