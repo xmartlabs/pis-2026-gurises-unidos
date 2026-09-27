@@ -102,7 +102,7 @@ describe('AC1: paginated listing with each project data', () => {
 
     expect(projectBeneficiaries.orderBy).toEqual({ year: 'desc' });
     expect(projectBeneficiaries).not.toHaveProperty('take');
-    expect(projectBeneficiaries.where).toEqual({ year: undefined });
+    expect(projectBeneficiaries.where).toStrictEqual({ year: undefined });
   });
 
   test('lists projects alphabetically by name', async () => {
