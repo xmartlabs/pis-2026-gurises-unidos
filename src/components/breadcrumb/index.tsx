@@ -26,12 +26,11 @@ export function AppBreadcrumb() {
       <BreadcrumbList>
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
-          const isDisabled = index === 0;
 
           return (
             <Fragment key={crumb.href}>
               <BreadcrumbItem>
-                {isLast || isDisabled ? (
+                {isLast ? (
                   <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink render={<Link href={crumb.href} />}>{crumb.label}</BreadcrumbLink>

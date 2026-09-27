@@ -47,7 +47,7 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
       {
         id: 'dashboard',
         title: 'Dashboard',
-        href: '#',
+        href: '/dashboard',
         icon: HomeIcon,
         match: 'exact',
         children: [

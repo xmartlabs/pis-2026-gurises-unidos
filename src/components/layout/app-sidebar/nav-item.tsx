@@ -61,19 +61,14 @@ export function SidebarCollapsibleNavItem({ item, pathname }: SidebarNavItem) {
   return (
     <SidebarMenuItem>
       <Collapsible open={open} onOpenChange={handleOpenChange}>
-        <CollapsibleTrigger
-          render={
-            <SidebarMenuButton
-              tooltip={item.title}
-              isActive={
-                isItemActive(pathname, item) || children.some((c) => isItemActive(pathname, c))
-              }
-            />
-          }
+        <SidebarMenuButton
+          tooltip={item.title}
+          isActive={isItemActive(pathname, item) || children.some((c) => isItemActive(pathname, c))}
+          render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
         >
           <Icon />
           <span>{item.title}</span>
-        </CollapsibleTrigger>
+        </SidebarMenuButton>
         <CollapsibleTrigger
           render={<SidebarMenuAction />}
           aria-label={open ? `Contraer ${item.title}` : `Expandir ${item.title}`}
