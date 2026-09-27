@@ -1,4 +1,4 @@
-import type { MetricValues } from '@/lib/metrics';
+import type { MetricValues } from '@/lib/metrics/queries';
 
 export const METRIC_DEFINITIONS: {
   key: keyof MetricValues;
@@ -38,8 +38,8 @@ export const METRIC_DEFINITIONS: {
   },
   {
     key: 'active_projects',
-    name: 'Proyectos activos',
-    description: 'Proyectos en ejecución durante el año.',
+    name: 'Proyectos con actividad',
+    description: 'Proyectos con beneficiarios registrados durante el año seleccionado.',
     showPublicly: true,
   },
 ];

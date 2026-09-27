@@ -1,8 +1,8 @@
 import { MetricsForm } from '@/components/metrics-form';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics';
-import { MetricsYearSelect } from '@/components/metrics-year-select';
+import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics/queries';
+import { MetricsYearSelect } from '@/components/metrics/metrics-year-select';
 
 export default async function MetricsPage({
   searchParams,
@@ -13,19 +13,12 @@ export default async function MetricsPage({
   if (!session?.user) redirect('/login');
   if (session.user.role !== 'admin') redirect('/dashboard/projects');
 
-  const currentYear = Number(
-    new Intl.DateTimeFormat('es-UY', {
-      year: 'numeric',
-      timeZone: 'America/Montevideo',
-    }).format(new Date())
-  );
+  const currentYear = new Date().getFullYear();
   const years = await getMetricYears(currentYear);
   const requestedYear = (await searchParams).year;
-  const parsedYear =
-    typeof requestedYear === 'string' && /^\d{4}$/.test(requestedYear)
-      ? Number(requestedYear)
-      : NaN;
-  const year = years.includes(parsedYear) ? parsedYear : currentYear - 1;
+  const parsedYear = typeof requestedYear === 'string' ? Number(requestedYear) : NaN;
+  const isValidYear = Number.isInteger(parsedYear) && years.includes(parsedYear);
+  const year = isValidYear ? parsedYear : currentYear - 1;
   const [values, initialMetrics] = await Promise.all([getMetricValues(year), getMetricSettings()]);
 
   return (
@@ -45,12 +38,7 @@ export default async function MetricsPage({
         <div className="px-6">
           <MetricsYearSelect year={year} years={years} />
         </div>
-        <MetricsForm
-          year={String(year)}
-          values={values}
-          initialMetrics={initialMetrics}
-          canSave={session.user.role === 'admin'}
-        />
+        <MetricsForm year={String(year)} values={values} initialMetrics={initialMetrics} />
       </div>
     </main>
   );

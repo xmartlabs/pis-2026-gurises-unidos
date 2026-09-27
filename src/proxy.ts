@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 
-const PUBLIC_ROUTES = ['/', '/login', '/metrics-test'];
+const PUBLIC_ROUTES = ['/', '/login'];
 
 export const proxy = auth((request) => {
   if (request.auth || PUBLIC_ROUTES.includes(request.nextUrl.pathname)) {

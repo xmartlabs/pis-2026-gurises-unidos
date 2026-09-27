@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { METRIC_DEFINITIONS } from '@/lib/metric-definitions';
+import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
 
 export async function getMetricSettings() {
   const savedMetrics = await prisma.metric.findMany({
@@ -7,32 +7,26 @@ export async function getMetricSettings() {
   });
   return METRIC_DEFINITIONS.map((metric) => ({
     ...metric,
-    showPublicly: savedMetrics.find((saved) => saved.key === metric.key)?.showPublicly ?? false,
+    showPublicly:
+      savedMetrics.find((saved) => saved.key === metric.key)?.showPublicly ?? metric.showPublicly,
   }));
 }
 
 export type MetricSetting = Awaited<ReturnType<typeof getMetricSettings>>[number];
 
 export async function getMetricYears(currentYear: number) {
-  const [beneficiaries, projects] = await Promise.all([
-    prisma.projectBeneficiary.findMany({ select: { year: true }, distinct: ['year'] }),
-    prisma.project.findMany({ select: { startYear: true }, distinct: ['startYear'] }),
-  ]);
+  const beneficiaries = await prisma.projectBeneficiary.findMany({
+    select: { year: true },
+    distinct: ['year'],
+  });
 
-  return [
-    ...new Set([
-      currentYear - 1,
-      currentYear,
-      ...beneficiaries.map(({ year }) => year),
-      ...projects.map(({ startYear }) => startYear),
-    ]),
-  ]
+  return [...new Set([currentYear - 1, currentYear, ...beneficiaries.map(({ year }) => year)])]
     .filter((year) => year <= currentYear)
     .sort((a, b) => b - a);
 }
 
 export async function getMetricValues(year: number) {
-  const [beneficiaries, activeProjects, departments] = await Promise.all([
+  const [beneficiaries, projectRecords] = await Promise.all([
     prisma.projectBeneficiary.aggregate({
       where: { year },
       _sum: {
@@ -43,11 +37,12 @@ export async function getMetricValues(year: number) {
         coordinatedInstitutions: true,
       },
     }),
-    prisma.project.count({ where: { startYear: year, status: 'active' } }),
-    prisma.project.findMany({
-      where: { startYear: year },
-      select: { departmentId: true },
-      distinct: ['departmentId'],
+    prisma.projectBeneficiary.findMany({
+      where: { year },
+      select: {
+        projectId: true,
+        project: { select: { departmentId: true } },
+      },
     }),
   ]);
 
@@ -58,8 +53,8 @@ export async function getMetricValues(year: number) {
     families: beneficiaries._sum.families ?? 0,
     teachers: beneficiaries._sum.basicServiceStaff ?? 0,
     institutions: beneficiaries._sum.coordinatedInstitutions ?? 0,
-    departments: departments.length,
-    active_projects: activeProjects,
+    departments: new Set(projectRecords.map(({ project }) => project.departmentId)).size,
+    active_projects: projectRecords.length,
   };
 }
 

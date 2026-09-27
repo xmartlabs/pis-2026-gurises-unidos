@@ -14,7 +14,7 @@ vi.mock('@/lib/audit-log', () => ({ logAudit: auditMock }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidateMock }));
 
 import { saveMetricSettings } from '@/app/actions/metrics';
-import { METRIC_DEFINITIONS } from '@/lib/metric-definitions';
+import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
 
 const SETTINGS = METRIC_DEFINITIONS.map(({ key }, index) => ({ key, showPublicly: index === 0 }));
 
@@ -49,7 +49,7 @@ describe('saveMetricSettings', () => {
     expect(transactionMock).not.toHaveBeenCalled();
   });
 
-  it('persists enabled and disabled metrics and refreshes both pages', async () => {
+  it('persists enabled and disabled metrics and refreshes the management page', async () => {
     expect((await saveMetricSettings(SETTINGS)).success).toBe(true);
     expect(upsertMock).toHaveBeenCalledTimes(6);
     expect(upsertMock).toHaveBeenCalledWith(
@@ -66,7 +66,7 @@ describe('saveMetricSettings', () => {
     );
     expect(auditMock).toHaveBeenCalledTimes(6);
     expect(revalidateMock).toHaveBeenCalledWith('/management/metrics');
-    expect(revalidateMock).toHaveBeenCalledWith('/metrics-test');
+    expect(revalidateMock).toHaveBeenCalledTimes(1);
   });
 
   it('reports a database failure without reporting success', async () => {

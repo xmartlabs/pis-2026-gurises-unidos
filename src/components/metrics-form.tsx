@@ -6,19 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { formatNumber } from '@/lib/format';
-import { METRIC_DEFINITIONS } from '@/lib/metric-definitions';
-import type { MetricSetting, MetricValues } from '@/lib/metrics';
+import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
+import type { MetricSetting, MetricValues } from '@/lib/metrics/queries';
 
 export function MetricsForm({
   year,
   values,
   initialMetrics,
-  canSave,
 }: {
   year: string;
   values: MetricValues;
   initialMetrics: MetricSetting[];
-  canSave: boolean;
 }) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [isPending, startTransition] = useTransition();
@@ -50,13 +48,13 @@ export function MetricsForm({
     <div className="mx-auto grid w-full max-w-[1185px] items-start gap-y-6 xl:grid-cols-[minmax(0,760fr)_minmax(0,425fr)]">
       <section
         aria-label="Selección de métricas"
-        className="flex min-w-0 flex-col gap-5 bg-[#FAFAFB] px-6 pt-6 pb-8"
+        className="bg-surface-page flex min-w-0 flex-col gap-5 px-6 pt-6 pb-8"
       >
         <div className="grid gap-4 md:grid-cols-2">
           {metrics.map((metric) => (
             <article
               key={metric.key}
-              className="bg-card flex min-w-0 flex-col gap-3 rounded-[14px] border border-[#E5E5E7] p-5"
+              className="bg-card border-border-default flex min-w-0 flex-col gap-3 rounded-[14px] border p-5"
             >
               <h2 className="text-lg font-semibold">
                 <label htmlFor={`${metric.key}-value`}>{metric.name}</label>
@@ -78,7 +76,7 @@ export function MetricsForm({
                 <Switch
                   id={`${metric.key}-visibility`}
                   checked={metric.showPublicly}
-                  disabled={isPending || !canSave}
+                  disabled={isPending}
                   onCheckedChange={(checked) => setVisibility(metric.key, checked)}
                   aria-label={`Mostrar ${metric.name} en el sitio público`}
                 />
@@ -93,7 +91,7 @@ export function MetricsForm({
           <Button
             variant="ghost"
             className="h-9 w-fit flex-col gap-2.5 rounded-lg px-4 py-2"
-            disabled={isPending || !canSave}
+            disabled={isPending}
             onClick={() => {
               setMetrics((current) =>
                 current.map((metric) => ({
@@ -110,9 +108,9 @@ export function MetricsForm({
           </Button>
           <div className="flex flex-wrap gap-2">
             <Button
-              disabled={isPending || !canSave}
+              disabled={isPending}
               onClick={saveChanges}
-              className="h-9 w-fit flex-col gap-2.5 rounded-lg bg-[#1A1A1A] px-4 py-2 shadow-[0_1px_2px_0_rgb(0_0_0/10%)]"
+              className="h-9 w-fit flex-col gap-2.5 rounded-lg px-4 py-2 shadow-[0_1px_2px_0_rgb(0_0_0/10%)]"
               aria-describedby="metrics-save-status"
             >
               {isPending ? 'Guardando…' : 'Guardar cambios'}
@@ -124,24 +122,24 @@ export function MetricsForm({
           role="status"
           className="text-muted-foreground text-sm empty:hidden"
         >
-          {canSave ? message : 'Solo los administradores pueden guardar cambios.'}
+          {message}
         </p>
       </section>
       <aside
         aria-label="Vista previa del sitio público"
-        className="bg-card flex w-full flex-col overflow-hidden border border-[#E5E5E7] xl:mt-6"
+        className="bg-card border-border-default flex w-full flex-col overflow-hidden border xl:mt-6"
       >
-        <div className="flex h-12 w-full shrink-0 items-center justify-between gap-2 border-b border-[#E5E5E7] bg-[#FAFAFB] px-5 py-3 text-sm">
+        <div className="bg-surface-page border-border-default flex h-12 w-full shrink-0 items-center justify-between gap-2 border-b px-5 py-3 text-sm">
           <h2 className="font-medium">Vista previa</h2>
           <span className="text-muted-foreground">Actualización automática</span>
         </div>
-        <div className="flex w-full flex-col gap-3 bg-[#F5F5F5] px-6 py-8">
+        <div className="bg-surface-subtle flex w-full flex-col gap-3 px-6 py-8">
           <div
-            className="flex w-full flex-col gap-3.5 rounded-[14px] bg-[#0E3A2E] p-5"
+            className="bg-surface-brand-deep flex w-full flex-col gap-3.5 rounded-[14px] p-5"
             aria-live="polite"
             aria-atomic="true"
           >
-            <h3 className="w-fit font-sans text-xs leading-4 font-bold tracking-[0.06em] text-[#F5970C] uppercase">
+            <h3 className="text-text-accent w-fit font-sans text-xs leading-4 font-bold tracking-[0.06em] uppercase">
               Impacto {year}
             </h3>
             {visibleMetrics.length > 0 ? (
@@ -149,7 +147,7 @@ export function MetricsForm({
                 {visibleMetrics.map((metric) => (
                   <div key={metric.key} className="flex w-full items-center gap-2.5">
                     <dt className="order-2 text-sm text-white/70">{metric.name}</dt>
-                    <dd className="order-1 text-4xl font-bold text-[#ffa500]">
+                    <dd className="text-text-accent order-1 text-4xl font-bold">
                       {formatNumber(values[metric.key])}
                     </dd>
                   </div>
@@ -162,16 +160,6 @@ export function MetricsForm({
           <p className="text-muted-foreground text-center text-xs leading-relaxed">
             Estas cifras se actualizan automáticamente en el sitio público.
           </p>
-          <div className="text-center">
-            <a
-              href={`/metrics-test?year=${year}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-9 w-fit flex-col items-center justify-center gap-2.5 rounded-lg px-4 py-2 text-sm leading-5 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              Ver sitio público →
-            </a>
-          </div>
         </div>
       </aside>
     </div>

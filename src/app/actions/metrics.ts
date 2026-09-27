@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { logAudit } from '@/lib/audit-log';
-import { METRIC_DEFINITIONS } from '@/lib/metric-definitions';
+import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
 
 const METRIC_SETTINGS_SCHEMA = z
   .array(
@@ -60,6 +60,5 @@ export async function saveMetricSettings(input: unknown) {
   }
 
   revalidatePath('/management/metrics');
-  revalidatePath('/metrics-test');
-  return { success: true, message: 'Cambios guardados. Ya podés comprobar la página de prueba.' };
+  return { success: true, message: 'Cambios guardados.' };
 }
