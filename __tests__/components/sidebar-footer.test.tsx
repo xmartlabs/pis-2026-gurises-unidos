@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 
 const { isMobileMock } = vi.hoisted(() => ({ isMobileMock: vi.fn() }));
@@ -6,6 +6,7 @@ const { isMobileMock } = vi.hoisted(() => ({ isMobileMock: vi.fn() }));
 vi.mock('@/app/actions/auth', () => ({ logout: vi.fn() }));
 vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: isMobileMock }));
 
+import { logout } from '@/app/actions/auth';
 import { AppSidebarFooter } from '@/components/layout/app-sidebar/footer';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
@@ -20,6 +21,7 @@ function renderFooter() {
 }
 
 beforeEach(() => {
+  vi.mocked(logout).mockClear();
   isMobileMock.mockReturnValue(false);
 });
 
@@ -40,4 +42,23 @@ test('links to the profile directly on mobile', () => {
   expect(screen.getByRole('link', { name: 'Mi perfil' }).getAttribute('href')).toBe(
     '/management/profile'
   );
+});
+
+test('logs out from the user menu on desktop', async () => {
+  renderFooter();
+
+  fireEvent.click(screen.getByRole('button', { name: /Ana García/ }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: 'Cerrar sesión' }));
+
+  await waitFor(() => expect(logout).toHaveBeenCalledOnce());
+});
+
+test('logs out directly on mobile', async () => {
+  isMobileMock.mockReturnValue(true);
+
+  renderFooter();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+
+  await waitFor(() => expect(logout).toHaveBeenCalledOnce());
 });
