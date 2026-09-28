@@ -29,6 +29,7 @@ export const projectFiltersSchema = z
     departmentId: optionalPositiveInt,
     startYearFrom: optionalYear,
     startYearTo: optionalYear,
+    beneficiaryYear: optionalYear,
     page: z.coerce.number().int().positive().catch(1),
     pageSize: z.coerce
       .number()
