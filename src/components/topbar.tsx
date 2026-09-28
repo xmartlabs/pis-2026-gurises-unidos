@@ -1,5 +1,3 @@
-'use client';
-
 import { AppBreadcrumb } from '@/components/breadcrumb';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import Image from 'next/image';
@@ -7,7 +5,7 @@ import logo from '@/assets/logo.png';
 
 export function Topbar() {
   return (
-    <header className="border-border bg-background sticky top-0 z-10 flex h-15 items-center justify-between gap-4 border-b px-4 md:px-6">
+    <header className="border-border bg-background sticky top-0 z-10 flex h-15 items-center gap-4 border-b px-4 md:px-6">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
         <Image
