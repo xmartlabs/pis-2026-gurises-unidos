@@ -48,9 +48,10 @@ export const E2E_ACTIVE_PROJECT = {
 
 export const E2E_CLOSED_PROJECT = {
   name: 'E2E closed project',
-  status: 'completed',
+  status: 'closed',
   intensity: 'low',
   startYear: 2023,
+  endYear: 2024,
   zone: 'rural',
   coverPhoto: PROJECT_PLACEHOLDERS[1],
 } as const;
