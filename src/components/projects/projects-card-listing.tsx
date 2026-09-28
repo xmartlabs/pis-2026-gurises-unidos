@@ -55,7 +55,16 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       (year === ALL_YEARS || p.beneficiaries.some((b) => b.year === year))
   );
 
-  const filteredCountLabel = `${filtered.length} ${filtered.length === 1 ? 'proyecto' : 'proyectos'}`;
+  const cards = filtered.flatMap((project) => {
+    const shownBeneficiaries =
+      year === ALL_YEARS
+        ? project.beneficiaries
+        : project.beneficiaries.filter((b) => b.year === year);
+    const cardBeneficiaries = shownBeneficiaries.length > 0 ? shownBeneficiaries : [null];
+    return cardBeneficiaries.map((yearBeneficiaries) => ({ project, yearBeneficiaries }));
+  });
+
+  const filteredCountLabel = `${cards.length} ${cards.length === 1 ? 'proyecto' : 'proyectos'}`;
 
   const newProjectButton = (
     <Button
@@ -156,30 +165,25 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
         </p>
       )}
 
-      {filtered.length === 0 ? (
+      {cards.length === 0 ? (
         <p className="text-muted-foreground py-10 text-center text-sm">
           No hay proyectos con estas características.
         </p>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
-          {filtered.flatMap((p) => {
-            const shownBeneficiaries =
-              year === ALL_YEARS ? p.beneficiaries : p.beneficiaries.filter((b) => b.year === year);
-            const cardBeneficiaries = shownBeneficiaries.length > 0 ? shownBeneficiaries : [null];
-            return cardBeneficiaries.map((yearBeneficiaries) => (
-              <ProjectCard
-                key={`${p.id}-${yearBeneficiaries?.year ?? 'none'}`}
-                id={p.id}
-                name={p.name}
-                status={p.status}
-                territory={p.department}
-                coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
-                intensity={p.intensity}
-                year={yearBeneficiaries?.year ?? p.startYear}
-                totalReach={yearBeneficiaries?.total ?? null}
-              />
-            ));
-          })}
+          {cards.map(({ project: p, yearBeneficiaries }) => (
+            <ProjectCard
+              key={`${p.id}-${yearBeneficiaries?.year ?? 'none'}`}
+              id={p.id}
+              name={p.name}
+              status={p.status}
+              territory={p.department}
+              coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
+              intensity={p.intensity}
+              year={yearBeneficiaries?.year ?? p.startYear}
+              totalReach={yearBeneficiaries?.total ?? null}
+            />
+          ))}
         </div>
       )}
     </div>
