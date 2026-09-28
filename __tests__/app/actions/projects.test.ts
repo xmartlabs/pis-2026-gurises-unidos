@@ -165,6 +165,7 @@ describe.each([
     ['is before the start year', { status: 'closed', endYear: '2018' }],
     ['is set on a project that is not closed', { status: 'paused', endYear: '2020' }],
     ['is before the first project year', { status: 'closed', endYear: '1988' }],
+    ['is missing on a closed project', { status: 'closed', endYear: '' }],
   ])('rejects an end year that %s before writing', async (_case, overrides) => {
     const result = await submit(formData(overrides));
     expect(result.errors?.endYear?.length).toBeGreaterThan(0);

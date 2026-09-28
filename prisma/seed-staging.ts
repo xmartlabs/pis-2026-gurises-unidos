@@ -170,14 +170,11 @@ async function main() {
           createdBy: admin.id,
         };
 
-        const existing = await tx.project.findFirst({
-          where: { name, startYear },
-          orderBy: { id: 'asc' },
+        const project = await tx.project.upsert({
+          where: { name_startYear: { name, startYear } },
+          update: data,
+          create: data,
         });
-
-        const project = existing
-          ? await tx.project.update({ where: { id: existing.id }, data })
-          : await tx.project.create({ data });
 
         const yearCount = index % 7 === 0 ? 0 : 1 + (index % 4);
 

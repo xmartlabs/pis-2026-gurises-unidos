@@ -72,7 +72,7 @@ export function BasicInfoSection({
           onValueChange={(value) => updateField('intensity', value)}
           required
         />
-        <div className="grid min-w-0 grid-cols-2 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <SelectField
             id="startYear"
             name="startYear"
@@ -89,10 +89,12 @@ export function BasicInfoSection({
             label="Año de fin"
             value={values.endYear}
             placeholder="Seleccionar año..."
+            clearLabel="Sin año de fin"
             options={yearOptions}
             onValueChange={(value) => updateField('endYear', value)}
             messages={state.errors?.endYear}
             disabled={values.status !== 'closed'}
+            required={values.status === 'closed'}
           />
         </div>
       </div>

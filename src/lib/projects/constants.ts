@@ -1,18 +1,9 @@
 import type { ProjectStatus } from '@/generated/prisma/enums';
 
-export type ProjectStatusDisplay = 'active' | 'paused' | 'closed';
-
-export const PROJECT_STATUS_META: Record<
-  ProjectStatus,
-  {
-    displayStatus: ProjectStatusDisplay;
-    label: string;
-    badgeVariant: 'active' | 'pending' | 'neutral';
-  }
-> = {
-  active: { displayStatus: 'active', label: 'Activo', badgeVariant: 'active' },
-  paused: { displayStatus: 'paused', label: 'Pausado', badgeVariant: 'pending' },
-  closed: { displayStatus: 'closed', label: 'Cerrado', badgeVariant: 'neutral' },
+export const STATUS_BADGE_VARIANT: Record<ProjectStatus, 'active' | 'pending' | 'neutral'> = {
+  active: 'active',
+  paused: 'pending',
+  closed: 'neutral',
 };
 
 export const STATUS_FILTERS = [

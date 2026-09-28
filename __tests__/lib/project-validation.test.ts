@@ -93,6 +93,11 @@ it.each([
     'El año de fin no puede ser anterior al año de inicio',
   ],
   [
+    'is closed without an end year',
+    { endYear: '' },
+    'El año de fin es obligatorio para proyectos cerrados',
+  ],
+  [
     'has an end year without being closed',
     { status: 'active' },
     'Solo los proyectos cerrados tienen año de fin',
@@ -103,7 +108,7 @@ it.each([
   expect(result.error?.flatten().fieldErrors.endYear).toEqual([message]);
 });
 
-it('projectSchema accepts an end year equal to or after the start year, or none at all', () => {
+it('projectSchema accepts an end year equal to or after the start year, or none while not closed', () => {
   expect(projectSchema.safeParse(BASE_PROJECT).success).toBe(true);
   expect(projectSchema.safeParse({ ...BASE_PROJECT, endYear: '2020' }).success).toBe(true);
   expect(projectSchema.safeParse({ ...BASE_PROJECT, status: 'active', endYear: '' }).success).toBe(

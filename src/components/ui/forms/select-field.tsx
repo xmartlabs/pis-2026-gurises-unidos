@@ -20,6 +20,7 @@ export function SelectField({
   label,
   value,
   placeholder,
+  clearLabel,
   options,
   onValueChange,
   description,
@@ -32,6 +33,7 @@ export function SelectField({
   label: string;
   value: string;
   placeholder?: string;
+  clearLabel?: string;
   options: readonly SelectOption[];
   onValueChange: (value: string) => void;
   description?: string;
@@ -45,7 +47,7 @@ export function SelectField({
         {label}
       </FieldLabel>
       <Select
-        items={options}
+        items={clearLabel ? [{ value: null, label: clearLabel }, ...options] : options}
         name={name}
         value={value || null}
         onValueChange={(nextValue) => onValueChange(nextValue ?? '')}
@@ -60,6 +62,7 @@ export function SelectField({
           <SelectValue placeholder={placeholder} className="min-w-0 truncate" />
         </SelectTrigger>
         <SelectContent align="start">
+          {clearLabel && <SelectItem value={null}>{clearLabel}</SelectItem>}
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

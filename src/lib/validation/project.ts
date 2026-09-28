@@ -57,12 +57,21 @@ export const projectSchema = z
       .transform((value) => value || null),
   })
   .superRefine((data, ctx) => {
-    if (data.endYear === null) return;
     if (data.status !== 'closed') {
+      if (data.endYear !== null) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['endYear'],
+          message: 'Solo los proyectos cerrados tienen año de fin',
+        });
+      }
+      return;
+    }
+    if (data.endYear === null) {
       ctx.addIssue({
         code: 'custom',
         path: ['endYear'],
-        message: 'Solo los proyectos cerrados tienen año de fin',
+        message: 'El año de fin es obligatorio para proyectos cerrados',
       });
     } else if (data.endYear < data.startYear) {
       ctx.addIssue({
