@@ -1,4 +1,4 @@
-import { MetricsForm } from '@/components/metrics-form';
+import { MetricsForm } from '@/components/metrics/metrics-form';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics/queries';
