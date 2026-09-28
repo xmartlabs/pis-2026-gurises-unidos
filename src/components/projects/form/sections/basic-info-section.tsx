@@ -1,4 +1,3 @@
-import { FieldError } from '@/components/ui/field';
 import { INTENSITY_OPTIONS, STATUS_OPTIONS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
@@ -55,32 +54,21 @@ export function BasicInfoSection({
           onValueChange={(value) => updateField('status', value)}
           required
         />
-        <fieldset className="min-w-0 space-y-2" aria-describedby="topic-errors">
-          <legend className="text-xs font-medium">Temáticas</legend>
-          {topics.map((topic) => (
-            <label key={topic.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="topicIds"
-                value={String(topic.id)}
-                checked={values.topicIds.includes(String(topic.id))}
-                onChange={(event) =>
-                  updateField(
-                    'topicIds',
-                    event.currentTarget.checked
-                      ? [...values.topicIds, String(topic.id)]
-                      : values.topicIds.filter((id) => id !== String(topic.id))
-                  )
-                }
-              />
-              {topic.name}
-            </label>
-          ))}
-          {topics.length === 0 && (
-            <p className="text-muted-foreground text-sm">No hay temáticas disponibles.</p>
-          )}
-          <FieldError id="topic-errors">{state.errors?.topicIds?.[0]}</FieldError>
-        </fieldset>
+        <SelectField
+          id="topicId"
+          name="topicId"
+          label="Temática"
+          value={values.topicId || 'none'}
+          options={[
+            { value: 'none', label: 'Sin temática' },
+            ...topics.map((topic) => ({
+              value: String(topic.id),
+              label: topic.name,
+            })),
+          ]}
+          onValueChange={(value) => updateField('topicId', value === 'none' ? '' : value)}
+          messages={state.errors?.topicId}
+        />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SelectField

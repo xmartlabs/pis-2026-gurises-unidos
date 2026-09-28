@@ -58,8 +58,10 @@ it.each([
   expect(projectSchema.shape[field].safeParse('a'.repeat(limit)).success).toBe(true);
   expect(projectSchema.shape[field].safeParse('a'.repeat(limit + 1)).success).toBe(false);
 });
-it('rejects invalid topic ids and normalizes duplicate ids', () => {
-  expect(projectFormSchema.shape.topicIds.safeParse(['invalid']).success).toBe(false);
-  expect(projectFormSchema.shape.topicIds.safeParse(['0']).success).toBe(false);
-  expect(projectFormSchema.shape.topicIds.parse(['2', '1', '2'])).toEqual([1, 2]);
+it('accepts one topic or no topic and rejects invalid values', () => {
+  const schema = projectFormSchema.shape.topicId;
+  expect(schema.parse('2')).toBe(2);
+  for (const value of ['', 'none', undefined, null]) expect(schema.parse(value)).toBeNull();
+  for (const value of ['invalid', '0', ['1', '2']])
+    expect(schema.safeParse(value).success).toBe(false);
 });

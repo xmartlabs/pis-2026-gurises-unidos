@@ -89,7 +89,7 @@ it('keeps the original creation appearance separate from edit styling', () => {
   expect(screen.queryByRole('button', { name: 'Guardar borrador' })).toBeNull();
 });
 
-it('sends all checked topics and keeps them after a failed save', async () => {
+it('sends one selected topic and preserves it after a failed save', async () => {
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
@@ -104,7 +104,7 @@ it('sends all checked topics and keeps them after a failed save', async () => {
         name: 'Project',
         leadCoordinatorId: '2',
         departmentId: '3',
-        topicIds: ['1', '2'],
+        topicId: '1',
       }}
       submitAction={submitAction}
     />
@@ -112,9 +112,19 @@ it('sends all checked topics and keeps them after a failed save', async () => {
   await act(async () => {
     fireEvent.submit(container.querySelector('form')!);
   });
-  expect(submitAction.mock.calls[0][1].getAll('topicIds')).toEqual(['1', '2']);
-  expect((screen.getByLabelText('Education') as HTMLInputElement).checked).toBe(true);
-  expect((screen.getByLabelText('Health') as HTMLInputElement).checked).toBe(true);
-  fireEvent.click(screen.getByLabelText('Education'));
-  expect(new FormData(container.querySelector('form')!).getAll('topicIds')).toEqual(['2']);
+  expect(submitAction.mock.calls[0][1].getAll('topicId')).toEqual(['1']);
+  expect(screen.getByLabelText('Temática').textContent).toContain('Education');
+  fireEvent.click(screen.getByLabelText('Temática'));
+  fireEvent.keyDown(await screen.findByRole('option', { name: 'Health' }), { key: 'Enter' });
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+  expect(submitAction.mock.calls[1][1].getAll('topicId')).toEqual(['2']);
+  expect(screen.getByLabelText('Temática').textContent).toContain('Health');
+  fireEvent.click(screen.getByLabelText('Temática'));
+  fireEvent.keyDown(await screen.findByRole('option', { name: 'Sin temática' }), { key: 'Enter' });
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['none']);
 });

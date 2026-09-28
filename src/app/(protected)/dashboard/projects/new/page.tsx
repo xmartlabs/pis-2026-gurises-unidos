@@ -16,7 +16,7 @@ export default async function NewProjectPage() {
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
     }),
-    prisma.topic.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+    prisma.topic.findMany({  where: { isActive: true }, orderBy: { name: 'asc' }, select: { id: true, name: true } }),
   ]);
 
   return (

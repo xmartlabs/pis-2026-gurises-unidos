@@ -8,7 +8,6 @@ export const ADMIN = {
 } as const;
 
 export const TABLES = [
-  'ProjectTopic',
   'ProjectCoordinator',
   'ProjectBeneficiary',
   'AuditLog',

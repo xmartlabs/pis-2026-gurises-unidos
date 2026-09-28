@@ -69,7 +69,7 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
   transactionMock.mockImplementation(async (callback) =>
     callback({
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
-      topic: { count: vi.fn().mockResolvedValue(0) },
+      topic: { findUnique: vi.fn().mockResolvedValue(null) },
       project: { create: projectCreate },
       projectBeneficiary: { create: beneficiaryCreate },
     })
@@ -150,7 +150,7 @@ describe('createProject', () => {
         publicDescription: null,
         internalNotes: null,
         createdBy: 7,
-        projectTopics: { create: [] },
+        topicId: null,
       },
     });
     expect(beneficiaryCreate).toHaveBeenCalledWith({

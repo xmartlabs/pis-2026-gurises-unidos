@@ -86,7 +86,6 @@ beforeAll(async () => {
 afterAll(async () => {
   if (!database) return;
   await database.auditLog.deleteMany({ where: { authorId: state.authorId } });
-  await database.projectTopic.deleteMany({ where: { projectId } });
   await database.projectBeneficiary.deleteMany({ where: { projectId } });
   if (projectId) await database.project.delete({ where: { id: projectId } });
   if (topicId) await database.topic.delete({ where: { id: topicId } });
@@ -97,7 +96,7 @@ afterAll(async () => {
 });
 
 it.skipIf(!TEST_DATABASE_URL)(
-  'rolls back project, topics, beneficiaries and audit together, then persists a retry',
+  'rolls back project, topic, beneficiaries and audit together, then persists a retry',
   async () => {
     const data = new FormData();
     Object.entries({
@@ -110,7 +109,7 @@ it.skipIf(!TEST_DATABASE_URL)(
       zone: 'city',
       year: '2026',
       families: '35',
-      topicIds: String(topicId),
+      topicId: String(topicId),
       coverPhoto: '/forged-cover.png',
     }).forEach(([key, value]) => data.append(key, value));
     const original = await database!.project.findUniqueOrThrow({ where: { id: projectId } });
@@ -126,7 +125,6 @@ it.skipIf(!TEST_DATABASE_URL)(
       state.failAudit = false;
     }
     expect(await database!.project.findUnique({ where: { id: projectId } })).toEqual(original);
-    expect(await database!.projectTopic.count({ where: { projectId } })).toBe(0);
     expect(await database!.projectBeneficiary.count({ where: { projectId } })).toBe(1);
     expect(await database!.auditLog.count({ where: { authorId: state.authorId } })).toBe(0);
     await expect(updateProject(projectId, {}, data)).rejects.toThrow(
@@ -134,11 +132,10 @@ it.skipIf(!TEST_DATABASE_URL)(
     );
     const saved = await database!.project.findUniqueOrThrow({
       where: { id: projectId },
-      include: { projectTopics: true },
     });
     expect(saved.name).toBe('Changed project');
     expect(saved.coverPhoto).toBe('/existing-cover.png');
-    expect(saved.projectTopics.map(({ topicId }) => topicId)).toEqual([topicId]);
+    expect(saved.topicId).toBe(topicId);
     expect(
       await database!.projectBeneficiary.findUnique({
         where: { projectId_year: { projectId, year: 2025 } },

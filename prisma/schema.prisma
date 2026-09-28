@@ -87,10 +87,11 @@ model User {
 }
 
 model Topic {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  isActive Boolean @default(true)
 
-  projectTopics ProjectTopic[]
+  projects Project[]
 }
 
 model Department {
@@ -101,29 +102,30 @@ model Department {
 }
 
 model Project {
-  id                   Int            @id @default(autoincrement())
-  name                 String         @db.VarChar(100)
+  id                   Int           @id @default(autoincrement())
+  name                 String        @db.VarChar(100)
   status               ProjectStatus
   intensity            Intensity
   startYear            Int
   leadCoordinatorId    Int
   departmentId         Int
-  localityNeighborhood String?        @db.VarChar(100)
+  localityNeighborhood String?       @db.VarChar(100)
   zone                 Zone
-  generalObjective     String?        @db.VarChar(500)
-  publicDescription    String?        @db.VarChar(1000)
+  generalObjective     String?       @db.VarChar(500)
+  publicDescription    String?       @db.VarChar(1000)
   coverPhoto           String?
-  internalNotes        String?        @db.VarChar(1000)
-  createdAt            DateTime       @default(now())
+  internalNotes        String?       @db.VarChar(1000)
+  createdAt            DateTime      @default(now())
   createdBy            Int?
-  updatedAt            DateTime?      @updatedAt
+  updatedAt            DateTime?     @updatedAt
+  topicId              Int?
 
   leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
   department      Department @relation(fields: [departmentId], references: [id])
   creator         User?      @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+  topic           Topic?     @relation(fields: [topicId], references: [id], onDelete: Restrict)
 
   projectCoordinators  ProjectCoordinator[]
-  projectTopics        ProjectTopic[]
   projectBeneficiaries ProjectBeneficiary[]
 }
 
@@ -135,16 +137,6 @@ model ProjectCoordinator {
   user    User    @relation(fields: [userId], references: [id])
 
   @@id([projectId, userId])
-}
-
-model ProjectTopic {
-  projectId Int
-  topicId   Int
-
-  project Project @relation(fields: [projectId], references: [id])
-  topic   Topic   @relation(fields: [topicId], references: [id])
-
-  @@id([projectId, topicId])
 }
 
 model ProjectBeneficiary {

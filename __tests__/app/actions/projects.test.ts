@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   findUser: vi.fn(),
   findCoordinator: vi.fn(),
   findProject: vi.fn(),
-  countTopics: vi.fn(),
+  findTopic: vi.fn(),
   transaction: vi.fn(),
   createProject: vi.fn(),
   updateProject: vi.fn(),
@@ -38,7 +38,7 @@ const TX = {
     findUnique: mocks.findProject,
   },
   user: { findFirst: mocks.findCoordinator },
-  topic: { count: mocks.countTopics },
+  topic: { findFirst: mocks.findTopic },
   projectBeneficiary: {
     create: mocks.createBeneficiary,
     findUnique: mocks.findBeneficiary,
@@ -89,8 +89,8 @@ beforeEach(() => {
   mocks.auth.mockResolvedValue({ user: { id: '7', role: 'admin' } });
   mocks.findUser.mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null });
   mocks.findCoordinator.mockResolvedValue({ id: 2 });
-  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, projectTopics: [] });
-  mocks.countTopics.mockResolvedValue(0);
+  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: null });
+  mocks.findTopic.mockResolvedValue({ id: 2 });
   mocks.redirect.mockImplementation((path: string) => {
     throw new Error(`Redirect: ${path}`);
   });
@@ -212,6 +212,7 @@ describe('updateProject persistence', () => {
           startYear: 2019,
           leadCoordinatorId: 2,
           departmentId: 3,
+          topicId: null,
           zone: 'city',
           localityNeighborhood: 'Neighborhood',
           generalObjective: 'Objective',
@@ -261,9 +262,7 @@ describe('updateProject persistence', () => {
           details: { year: 2024, changedFields: expect.any(Array) },
         },
       });
-      expect(mocks.revalidatePath.mock.calls).toEqual([
-        ['/dashboard/projects', 'layout'],
-      ]);
+      expect(mocks.revalidatePath.mock.calls).toEqual([['/dashboard/projects', 'layout']]);
     }
   );
 
@@ -389,7 +388,7 @@ function unchangedRecords() {
   const { projectData, beneficiaryData } = splitProjectFormData(
     projectFormSchema.parse(readProjectFormData(formData()))
   );
-  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, projectTopics: [] });
+  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: null });
   mocks.findBeneficiary.mockResolvedValue({ id: 20, ...beneficiaryData });
 }
 
@@ -496,18 +495,11 @@ describe('project review regressions', () => {
     expect(mocks.updateProject).not.toHaveBeenCalled();
   });
 
-  it('saves multiple unique topics and audits a topic-only change', async () => {
+  it('saves one topic and audits a topic-only change', async () => {
     unchangedRecords();
-    mocks.countTopics.mockResolvedValue(2);
-    const data = formData();
-    for (const id of ['4', '2', '4']) data.append('topicIds', id);
-    await expect(updateProject(10, {}, data)).rejects.toThrow('Redirect:');
+    await expect(updateProject(10, {}, formData({ topicId: '2' }))).rejects.toThrow('Redirect:');
     expect(mocks.updateProject).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          projectTopics: { deleteMany: {}, create: [{ topicId: 2 }, { topicId: 4 }] },
-        }),
-      })
+      expect.objectContaining({ data: expect.objectContaining({ topicId: 2 }) })
     );
     expect(mocks.audit).toHaveBeenCalledExactlyOnceWith({
       data: {
@@ -515,63 +507,57 @@ describe('project review regressions', () => {
         action: 'update',
         entity: 'project',
         entityId: 10,
-        details: { changedFields: ['topicIds'] },
+        details: { changedFields: ['topicId'] },
       },
     });
     expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
   });
 
-  it('creates topic relations in the same project write', async () => {
-    mocks.countTopics.mockResolvedValue(2);
-    const data = formData();
-    data.append('topicIds', '2');
-    data.append('topicIds', '4');
-    await expect(createProject({}, data)).rejects.toThrow('Redirect:');
+  it('creates a project with one topic', async () => {
+    await expect(createProject({}, formData({ topicId: '2' }))).rejects.toThrow('Redirect:');
     expect(mocks.createProject).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        projectTopics: { create: [{ topicId: 2 }, { topicId: 4 }] },
-      }),
+      data: expect.objectContaining({ topicId: 2 }),
     });
-    expect(mocks.revalidatePath).toHaveBeenCalledWith('/dashboard/projects', 'layout');
+    expect(mocks.findTopic).toHaveBeenCalledWith({ where: { id: 2, isActive: true }, select: { id: true } });
   });
 
   it('rejects a nonexistent topic before any writes', async () => {
-    const data = formData();
-    data.append('topicIds', '999');
-    expect(await updateProject(10, {}, data)).toEqual({
-      errors: { topicIds: ['Elegí temáticas válidas'] },
+    mocks.findTopic.mockResolvedValue(null);
+    expect(await updateProject(10, {}, formData({ topicId: '999' }))).toEqual({
+      errors: { topicId: ['Elegí una temática válida'] },
     });
     expect(mocks.updateProject).not.toHaveBeenCalled();
     expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
   });
 
-  it('removes all topics when none are selected', async () => {
-    const { projectData } = splitProjectFormData(
-      projectFormSchema.parse(readProjectFormData(formData()))
-    );
-    mocks.findProject.mockResolvedValue({ ...projectData, projectTopics: [{ topicId: 2 }] });
-    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
-    expect(mocks.updateProject).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ projectTopics: { deleteMany: {}, create: [] } }),
-      })
-    );
+  it.each(['create', 'edit'])('rejects multiple submitted topics in %s mode', async (mode) => {
+    const data = formData({ topicId: '2' });
+    data.append('topicId', '4');
+    const result =
+      mode === 'create' ? await createProject({}, data) : await updateProject(10, {}, data);
+    expect(result.errors?.topicId).toBeDefined();
+    expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it('preserves topics regardless of ordering without audit', async () => {
+  it('clears the topic when none is selected', async () => {
     unchangedRecords();
     const { projectData } = splitProjectFormData(
       projectFormSchema.parse(readProjectFormData(formData()))
     );
-    mocks.findProject.mockResolvedValue({
-      ...projectData,
-      projectTopics: [{ topicId: 4 }, { topicId: 2 }],
-    });
-    mocks.countTopics.mockResolvedValue(2);
-    const data = formData();
-    data.append('topicIds', '2');
-    data.append('topicIds', '4');
-    await expect(updateProject(10, {}, data)).rejects.toThrow('Redirect:');
+    mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
+    await expect(updateProject(10, {}, formData({ topicId: 'none' }))).rejects.toThrow('Redirect:');
+    expect(mocks.updateProject).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ topicId: null }) })
+    );
+  });
+
+  it('preserves an unchanged topic without audit', async () => {
+    unchangedRecords();
+    const { projectData } = splitProjectFormData(
+      projectFormSchema.parse(readProjectFormData(formData()))
+    );
+    mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
+    await expect(updateProject(10, {}, formData({ topicId: '2' }))).rejects.toThrow('Redirect:');
     expect(mocks.updateProject).not.toHaveBeenCalled();
     expect(mocks.audit).not.toHaveBeenCalled();
   });

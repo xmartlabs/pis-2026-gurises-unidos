@@ -8,12 +8,7 @@ const prisma = new PrismaClient();
 type ProjectFixture = Required<
   Omit<
     Prisma.ProjectUncheckedCreateInput,
-    | 'id'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'projectCoordinators'
-    | 'projectTopics'
-    | 'projectBeneficiaries'
+    'id' | 'createdAt' | 'updatedAt' | 'projectCoordinators' | 'projectBeneficiaries'
   >
 >;
 
@@ -46,7 +41,7 @@ async function main() {
         create: { name: 'Education' },
       });
 
-      const health = await tx.topic.upsert({
+      await tx.topic.upsert({
         where: { name: 'Health' },
         update: {},
         create: { name: 'Health' },
@@ -112,6 +107,7 @@ async function main() {
         startYear: 2025,
         leadCoordinatorId: coordinator.id,
         departmentId: montevideo.id,
+        topicId: education.id,
         zone: 'city',
         localityNeighborhood: null,
         generalObjective: null,
@@ -130,17 +126,6 @@ async function main() {
       const project = existingProject
         ? await tx.project.update({ where: { id: existingProject.id }, data: projectData })
         : await tx.project.create({ data: projectData });
-
-      const topicIds = [education.id, health.id];
-
-      await tx.projectTopic.deleteMany({
-        where: { projectId: project.id, topicId: { notIn: topicIds } },
-      });
-
-      await tx.projectTopic.createMany({
-        data: topicIds.map((topicId) => ({ projectId: project.id, topicId })),
-        skipDuplicates: true,
-      });
 
       // --- Beneficiaries ---
       const BENEFICIARY_YEAR = 2025;

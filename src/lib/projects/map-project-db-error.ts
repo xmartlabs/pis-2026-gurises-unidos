@@ -9,7 +9,7 @@ export function mapProjectDbError(error: unknown): ProjectFormState | null {
     if (constraint.includes('leadCoordinatorId') || constraint.includes('departmentId'))
       return { formError: 'El coordinador o el departamento seleccionado no existe.' };
     if (constraint.includes('topicId'))
-      return { errors: { topicIds: ['Elegí temáticas válidas'] } };
+      return { errors: { topicId: ['Elegí una temática válida'] } };
     return { formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.' };
   }
   return null;
