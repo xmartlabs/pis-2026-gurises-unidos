@@ -7,6 +7,7 @@ import { TerritorySection } from './sections/territory-section';
 import { BasicInfoSection } from './sections/basic-info-section';
 
 import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from 'cn';
 import type { ProjectFormState } from '@/lib/validation/project';
 import {
@@ -48,6 +49,8 @@ export function ProjectForm({
   cancelHref = '/dashboard/projects',
   children,
 }: ProjectFormProps) {
+  const router = useRouter();
+
   async function submitProject(
     previousState: ProjectFormState,
     formData: FormData
@@ -221,7 +224,7 @@ export function ProjectForm({
 
       <FormActions
         variant={variant}
-        cancelHref={cancelHref}
+        onCancel={() => router.push(cancelHref)}
         submitLabel="Guardar cambios"
         pending={pending}
       />

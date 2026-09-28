@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { logout } from '@/app/actions/auth';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -18,7 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, UserRound } from 'lucide-react';
 import type { Session } from 'next-auth';
 import { getInitials } from '@/lib/utils';
 
@@ -55,7 +56,7 @@ function LogoutButton() {
 }
 
 export function AppSidebarFooter({ user }: Props) {
-  const { isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   if (isMobile) {
     return (
@@ -64,6 +65,15 @@ export function AppSidebarFooter({ user }: Props) {
           <SidebarUser user={user} />
         </div>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="h-10 gap-3 [&_svg]:size-5"
+              render={<Link href="/management/profile" onClick={() => setOpenMobile(false)} />}
+            >
+              <UserRound />
+              <span>Mi perfil</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <LogoutButton />
           </SidebarMenuItem>
@@ -92,6 +102,11 @@ export function AppSidebarFooter({ user }: Props) {
                   </span>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/management/profile" />}>
+                <UserRound />
+                <span>Mi perfil</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <form action={logout}>
                 <DropdownMenuItem

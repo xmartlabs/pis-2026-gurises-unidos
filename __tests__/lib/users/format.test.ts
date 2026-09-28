@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { makeUser } from '../../fixtures/user';
 import {
   compareUsers,
-  formatLastAccess,
+  formatDate,
   formatUserDate,
   formatUserCount,
   fullName,
@@ -15,13 +15,13 @@ describe('fullName', () => {
   });
 });
 
-describe('formatLastAccess', () => {
-  test('returns "Nunca" when there is no last access', () => {
-    expect(formatLastAccess(null)).toBe('Nunca');
+describe('formatDate', () => {
+  test('returns "Nunca" when the date is absent', () => {
+    expect(formatDate(null)).toBe('Nunca');
   });
 
   test('formats the date as dd/mm/yyyy in the Montevideo timezone', () => {
-    expect(formatLastAccess(new Date('2026-03-05T12:00:00.000Z'))).toBe('05/03/2026');
+    expect(formatDate(new Date('2026-03-05T12:00:00.000Z'))).toBe('05/03/2026');
   });
 });
 

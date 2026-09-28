@@ -2,7 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
 
+const { routerPushMock } = vi.hoisted(() => ({ routerPushMock: vi.fn() }));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: routerPushMock }),
+}));
+
 it('submits prefilled values and the recorded year, preserves edits on failure, and allows retry', async () => {
+  routerPushMock.mockClear();
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
@@ -27,7 +34,8 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
     'Existing project'
   );
   expect((screen.getByLabelText('Familias') as HTMLInputElement).value).toBe('30');
-  expect(screen.getByText('Cancelar').getAttribute('href')).toBe('/dashboard/projects/10');
+  fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+  expect(routerPushMock).toHaveBeenCalledWith('/dashboard/projects/10');
   fireEvent.change(screen.getByLabelText('Nombre del proyecto'), {
     target: { value: 'Edited project' },
   });

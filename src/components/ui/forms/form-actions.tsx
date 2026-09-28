@@ -2,33 +2,21 @@
 
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 type FormActionsProps = {
   variant?: 'default' | 'detailed';
-  cancelHref: string;
+  onCancel?: () => void;
   submitLabel: string;
   pending: boolean;
   secondaryAction?: ReactNode;
 };
 
-export function FormActions({
-  variant = 'default',
-  cancelHref,
-  submitLabel,
-  pending,
-  secondaryAction,
-}: FormActionsProps) {
+export function FormActions(props: FormActionsProps) {
+  const { variant = 'default', onCancel, submitLabel, pending, secondaryAction } = props;
   return (
     <footer className="bg-background sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4 sm:px-6">
-      <Button
-        nativeButton={false}
-        variant="ghost"
-        size="lg"
-        render={<Link href={cancelHref} />}
-        className={variant === 'detailed' ? 'rounded-[10px] px-4' : 'px-3'}
-      >
+      <Button type="button" variant="ghost" size="lg" onClick={onCancel}>
         Cancelar
       </Button>
       <div className="flex w-full flex-wrap gap-2 sm:w-auto">
