@@ -6,23 +6,23 @@ export type User = Pick<
   'id' | 'firstName' | 'lastName' | 'email' | 'role' | 'status' | 'lastAccess'
 >;
 
-export function fullName(user: User) {
+export function fullName(user: Pick<PrismaUser, 'firstName' | 'lastName'>) {
   return `${user.firstName} ${user.lastName}`;
 }
 
-export function formatLastAccess(lastAccess: Date | null) {
-  if (!lastAccess) return 'Nunca';
-  return formatUserDate(lastAccess);
-}
-
-export function formatUserDate(date: Date | null) {
-  if (!date) return '—';
+export function formatDate(date: Date | null) {
+  if (!date) return 'Nunca';
   return new Date(date).toLocaleDateString('es-UY', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     timeZone: 'America/Montevideo',
   });
+}
+
+export function formatUserDate(date: Date | null) {
+  if (!date) return '—';
+  return formatDate(date);
 }
 
 export function formatUserCount(count: number) {

@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { formatLastAccess, formatUserDate } from '@/lib/users/format';
+import { formatDate, formatUserDate } from '@/lib/users/format';
 import { UserForm } from '@/components/user-form';
 import { ErrorScreen } from '@/components/error-screen';
 
@@ -81,7 +81,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
               status: user.status,
               information: {
                 createdAt: formatUserDate(user.createdAt),
-                lastAccess: formatLastAccess(user.lastAccess),
+                lastAccess: formatDate(user.lastAccess),
                 createdBy: creatorName,
                 updatedAt: formatUserDate(user.updatedAt),
               },

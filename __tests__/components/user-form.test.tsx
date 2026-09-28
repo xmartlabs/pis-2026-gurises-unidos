@@ -13,7 +13,7 @@ test('disables or hides unavailable user editing actions', () => {
     name: 'Guardar usuario (próximamente)',
   }) as HTMLButtonElement;
   const resetPasswordButton = screen.getByRole('button', {
-    name: 'Restablecer contraseña (próximamente)',
+    name: 'Restablecer contraseña',
   }) as HTMLButtonElement;
 
   expect(saveButton.disabled).toBe(true);
