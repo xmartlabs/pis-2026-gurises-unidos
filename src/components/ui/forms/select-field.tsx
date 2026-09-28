@@ -47,7 +47,7 @@ export function SelectField({
         {label}
       </FieldLabel>
       <Select
-        items={clearLabel ? [{ value: null, label: clearLabel }, ...options] : options}
+        items={options}
         name={name}
         value={value || null}
         onValueChange={(nextValue) => onValueChange(nextValue ?? '')}

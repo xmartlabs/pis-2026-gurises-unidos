@@ -88,7 +88,7 @@ export function BasicInfoSection({
             name="endYear"
             label="Año de fin"
             value={values.endYear}
-            placeholder="Seleccionar año..."
+            placeholder="Seleccionar..."
             clearLabel="Sin año de fin"
             options={yearOptions}
             onValueChange={(value) => updateField('endYear', value)}
