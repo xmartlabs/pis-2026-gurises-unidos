@@ -5,10 +5,7 @@ import type { SectionProps } from './section-props';
 export function InternalNotesSection({
   variant,
   isEditing,
-  values,
-  state,
-  updateField,
-}: Pick<SectionProps, 'variant' | 'isEditing' | 'values' | 'state' | 'updateField'>) {
+}: Pick<SectionProps, 'variant' | 'isEditing'>) {
   return (
     <FormSection
       variant={variant}
@@ -23,10 +20,6 @@ export function InternalNotesSection({
         id="internalNotes"
         name="internalNotes"
         label="Notas internas"
-        value={values.internalNotes}
-        onValueChange={(value) => updateField('internalNotes', value)}
-        maxLength={1000}
-        messages={state.errors?.internalNotes}
         placeholder="Escribí un comentario para el equipo…"
       />
     </FormSection>

@@ -6,18 +6,16 @@ import { BeneficiariesSection } from './sections/beneficiaries-section';
 import { TerritorySection } from './sections/territory-section';
 import { BasicInfoSection } from './sections/basic-info-section';
 
-import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { startTransition, useActionState, useMemo, type SubmitEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { FormProvider, useForm, useWatch, type Resolver } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from 'cn';
 import type { ProjectFormState } from '@/lib/validation/project';
-import {
-  BENEFICIARY_FIELDS,
-  FIRST_PROJECT_YEAR,
-  type BeneficiaryCounts,
-} from '@/lib/project-display';
+import { FIRST_PROJECT_YEAR, type BeneficiaryCounts } from '@/lib/project-display';
 import { ProjectPreview } from './project-preview';
 import type { ProjectFormValues } from './project-form-values';
-import { projectFormSchema, readProjectFormData } from '@/lib/validation/project-form';
+import { projectFormSchema } from '@/lib/validation/project-form';
 import { FormActions } from '@/components/ui/forms/form-actions';
 import { getDefaultValues } from './get-default-values';
 import { getPreviewLabels } from './get-preview-labels';
@@ -50,17 +48,6 @@ export function ProjectForm({
   children,
 }: ProjectFormProps) {
   const router = useRouter();
-
-  async function submitProject(
-    previousState: ProjectFormState,
-    formData: FormData
-  ): Promise<ProjectFormState> {
-    const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
-    if (!parsed.success) {
-      return { errors: parsed.error.flatten().fieldErrors };
-    }
-    return submitAction(previousState, formData);
-  }
   const isEditing = mode === 'edit';
   const variant = isEditing ? 'detailed' : 'default';
   const yearOptions = useMemo(
@@ -87,43 +74,23 @@ export function ProjectForm({
       })),
     [departments]
   );
-  const [state, formAction, pending] = useActionState(submitProject, INITIAL_STATE);
-  const [values, setValues] = useState<ProjectFormValues>(() => ({
+  const defaultValues = {
     ...getDefaultValues(currentYear),
     ...initialValues,
-  }));
-  const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
-
-  useEffect(() => {
-    if (state.errors?.topicId) router.refresh();
-  }, [router, state.errors?.topicId]);
-
-  function selectYear(year: string) {
-    beneficiaryDrafts.current[values.year] = Object.fromEntries(
-      BENEFICIARY_FIELDS.map(({ key }) => [key, values[key]])
-    );
-    const record = beneficiaryRecords.find((record) => String(record.year) === year);
-    const counts = Object.fromEntries(
-      BENEFICIARY_FIELDS.map(({ key }) => [key, String(record?.[key] ?? 0)])
-    );
-    setValues((previous) => ({ ...previous, ...counts, ...beneficiaryDrafts.current[year], year }));
-  }
-  const submissionRef = useRef(false);
-
-  useEffect(() => {
-    if (!pending) submissionRef.current = false;
-  }, [pending, state]);
-
-  function updateField<K extends keyof ProjectFormValues>(field: K, value: ProjectFormValues[K]) {
-    if (field === 'startYear' && typeof value === 'string' && Number(value) > Number(values.year)) {
-      selectYear(value);
-    }
-
-    setValues((currentValues) => ({
-      ...currentValues,
-      [field]: value,
-    }));
-  }
+  };
+  const [state, formAction, pending] = useActionState(submitAction, INITIAL_STATE);
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectFormSchema) as unknown as Resolver<ProjectFormValues>,
+    defaultValues,
+    mode: 'onChange',
+  });
+  const { control, handleSubmit } = form;
+  const watchedValues = useWatch({ control });
+  const values = {
+    ...defaultValues,
+    ...watchedValues,
+    coverPhotoUrl: defaultValues.coverPhotoUrl ?? null,
+  } as ProjectFormValues;
 
   const { locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
     values,
@@ -135,111 +102,97 @@ export function ProjectForm({
     ({ value }) => Number(value) >= Number(values.startYear)
   );
 
-  return (
-    <form
-      action={formAction}
-      noValidate
-      className={cn(
-        'text-foreground flex min-h-0 min-w-0 flex-1 flex-col',
-        isEditing ? 'bg-surface-page' : 'bg-muted/30'
-      )}
-      aria-busy={pending}
-      onSubmit={(event) => {
-        if (submissionRef.current || pending) {
-          event.preventDefault();
-          return;
-        }
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    const formElement = event.currentTarget;
+    return handleSubmit(() => {
+      startTransition(() => {
+        formAction(new FormData(formElement));
+      });
+    })(event);
+  }
 
-        submissionRef.current = true;
-      }}
-    >
-      {!isEditing && values.coverPhotoUrl && (
-        <input type="hidden" name="projectPlaceholder" value={values.coverPhotoUrl} />
-      )}
-      <div
+  return (
+    <FormProvider {...form}>
+      <form
+        noValidate
         className={cn(
-          'grid flex-1 content-start items-start',
-          isEditing
-            ? 'lg:grid-cols-[minmax(0,152fr)_minmax(0,85fr)]'
-            : 'lg:grid-cols-[minmax(0,16fr)_minmax(0,9fr)]'
+          'text-foreground flex min-h-0 min-w-0 flex-1 flex-col',
+          isEditing ? 'bg-surface-page' : 'bg-muted/30'
         )}
+        aria-busy={pending}
+        onSubmit={onSubmit}
       >
+        {!isEditing && values.coverPhotoUrl && (
+          <input type="hidden" name="projectPlaceholder" value={values.coverPhotoUrl} />
+        )}
         <div
           className={cn(
-            'flex min-w-0 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6',
-            !isEditing && 'lg:pb-20'
+            'grid flex-1 content-start items-start',
+            isEditing
+              ? 'lg:grid-cols-[minmax(0,152fr)_minmax(0,85fr)]'
+              : 'lg:grid-cols-[minmax(0,16fr)_minmax(0,9fr)]'
           )}
         >
-          {state.formError && (
-            <p
-              role="alert"
-              className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm"
-            >
-              {state.formError}
-            </p>
-          )}
+          <div
+            className={cn(
+              'flex min-w-0 flex-col gap-5 px-4 pt-6 pb-8 sm:px-6',
+              !isEditing && 'lg:pb-20'
+            )}
+          >
+            {/* TODO: remove once the toast is implemented */}
+            {state.formError && (
+              <p
+                role="alert"
+                className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm"
+              >
+                {state.formError}
+              </p>
+            )}
 
-          <BasicInfoSection
+            <BasicInfoSection
+              variant={variant}
+              yearOptions={yearOptions}
+              coordinatorOptions={coordinatorOptions}
+              topics={topics}
+            />
+
+            <TerritorySection
+              variant={variant}
+              isEditing={isEditing}
+              departmentOptions={departmentOptions}
+              coverageLabel={coverageLabel}
+            />
+
+            <BeneficiariesSection
+              variant={variant}
+              isEditing={isEditing}
+              yearOptions={beneficiaryYearOptions}
+              beneficiaryRecords={beneficiaryRecords}
+            />
+
+            <PublicInfoSection variant={variant} />
+
+            <InternalNotesSection variant={variant} isEditing={isEditing} />
+            {children}
+          </div>
+
+          <ProjectPreview
             variant={variant}
             values={values}
-            state={state}
-            updateField={updateField}
-            yearOptions={yearOptions}
-            coordinatorOptions={coordinatorOptions}
-            topics={topics}
+            locationLabel={locationLabel}
+            beneficiaryTotal={beneficiaryTotal}
           />
-
-          <TerritorySection
-            variant={variant}
-            isEditing={isEditing}
-            values={values}
-            state={state}
-            updateField={updateField}
-            departmentOptions={departmentOptions}
-            coverageLabel={coverageLabel}
-          />
-
-          <BeneficiariesSection
-            variant={variant}
-            isEditing={isEditing}
-            values={values}
-            state={state}
-            updateField={updateField}
-            yearOptions={beneficiaryYearOptions}
-            selectYear={selectYear}
-          />
-
-          <PublicInfoSection
-            variant={variant}
-            values={values}
-            state={state}
-            updateField={updateField}
-          />
-
-          <InternalNotesSection
-            variant={variant}
-            isEditing={isEditing}
-            values={values}
-            state={state}
-            updateField={updateField}
-          />
-          {children}
         </div>
 
-        <ProjectPreview
+        <FormActions
           variant={variant}
-          values={values}
-          locationLabel={locationLabel}
-          beneficiaryTotal={beneficiaryTotal}
+          onCancel={() => router.push(cancelHref)}
+          submitLabel="Guardar cambios"
+          pending={pending}
         />
-      </div>
-
-      <FormActions
-        variant={variant}
-        onCancel={() => router.push(cancelHref)}
-        submitLabel="Guardar cambios"
-        pending={pending}
-      />
-    </form>
+      </form>
+    </FormProvider>
   );
 }

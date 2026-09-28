@@ -4,12 +4,7 @@ import { TextareaField } from '@/components/ui/forms/textarea-field';
 import { FormSection } from '@/components/ui/forms/form-section';
 import type { SectionProps } from './section-props';
 
-export function PublicInfoSection({
-  variant,
-  values,
-  state,
-  updateField,
-}: Pick<SectionProps, 'variant' | 'values' | 'state' | 'updateField'>) {
+export function PublicInfoSection({ variant }: Pick<SectionProps, 'variant'>) {
   return (
     <FormSection
       variant={variant}
@@ -18,14 +13,10 @@ export function PublicInfoSection({
     >
       <TextInputField
         variant={variant}
-        maxLength={500}
         id="generalObjective"
         name="generalObjective"
         label="Objetivo general"
-        value={values.generalObjective}
-        onValueChange={(value) => updateField('generalObjective', value)}
         placeholder="Ej: Acompañando a jóvenes en situación de vulnerabilidad"
-        messages={state.errors?.generalObjective}
         description="Aparece como subtítulo en la vista pública"
       />
       <TextareaField
@@ -33,11 +24,8 @@ export function PublicInfoSection({
         id="publicDescription"
         name="publicDescription"
         label="Descripción pública"
-        value={values.publicDescription}
-        onValueChange={(value) => updateField('publicDescription', value)}
-        maxLength={1000}
+        placeholder="Contá de qué trata el proyecto, a quiénes ayuda y cuál es su impacto..."
         description="Máx. 1000 caracteres"
-        messages={state.errors?.publicDescription}
       />
       <Field hidden>
         <FieldLabel htmlFor="coverPhoto">Foto de portada</FieldLabel>

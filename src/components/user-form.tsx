@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { startTransition, useActionState, useState, type SubmitEvent } from 'react';
+import { FormProvider, useController, useForm, type Resolver } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from 'cn';
 
 import { createUser } from '@/app/actions/users';
@@ -9,7 +11,7 @@ import { createUser } from '@/app/actions/users';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FieldDescription, FieldGroup } from '@/components/ui/field';
+import { FieldDescription, FieldError, FieldGroup } from '@/components/ui/field';
 import { SelectField } from '@/components/ui/forms/select-field';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { Label } from '@/components/ui/label';
@@ -30,6 +32,7 @@ type UserFormValues = {
   documentId: string;
   email: string;
   role: 'admin' | 'coordinator';
+  status: 'active' | 'pendingInvitation' | 'disabled';
   password: string;
 };
 
@@ -81,62 +84,48 @@ const STATUS_OPTIONS = [
   },
 ];
 
-function FieldError({ messages }: { messages?: string[] }) {
-  if (!messages?.length) return null;
-  return <p className="text-destructive text-xs leading-4">{messages[0]}</p>;
-}
-
 export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const isEditing = mode === 'edit';
   const [state, formAction, pending] = useActionState(createUser, initialState);
-  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  // TODO: remove formErrors and passwordCopied states once the toast is implemented
   const [formErrorDismissed, setFormErrorDismissed] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
-  const [values, setValues] = useState<UserFormValues>({
-    firstName: initialValues?.firstName ?? '',
-    lastName: initialValues?.lastName ?? '',
-    documentId: initialValues?.documentId ?? '',
-    email: initialValues?.email ?? '',
-    role: initialValues?.role ?? 'coordinator',
-    password: '',
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(
+      isEditing ? userEditFormSchema : userFormSchema
+    ) as unknown as Resolver<UserFormValues>,
+    defaultValues: {
+      firstName: initialValues?.firstName ?? '',
+      lastName: initialValues?.lastName ?? '',
+      documentId: initialValues?.documentId ?? '',
+      email: initialValues?.email ?? '',
+      role: initialValues?.role ?? 'coordinator',
+      status: initialValues?.status ?? 'active',
+      password: '',
+    },
+    mode: 'onChange',
   });
-  const [preservedValues, setPreservedValues] = useState(state.values);
-
-  if (state.values !== preservedValues) {
-    setPreservedValues(state.values);
-    if (state.values) {
-      setValues((currentValues) => ({
-        ...currentValues,
-        firstName: state.values?.firstName ?? currentValues.firstName,
-        lastName: state.values?.lastName ?? currentValues.lastName,
-        documentId: state.values?.documentId ?? currentValues.documentId,
-        email: state.values?.email ?? currentValues.email,
-        role: (state.values?.role as UserFormValues['role'] | undefined) ?? currentValues.role,
-      }));
-    }
-  }
-
-  function updateField<K extends keyof UserFormValues>(field: K, value: UserFormValues[K]) {
-    setValues((currentValues) => ({
-      ...currentValues,
-      [field]: value,
-    }));
-  }
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = form;
+  const statusField = useController({ name: 'status', control });
 
   function handleGeneratePassword() {
     const generated = generateTemporaryPassword();
-    setValues((currentValues) => ({
-      ...currentValues,
-      password: generated,
-    }));
+    setValue('password', generated, { shouldValidate: true });
   }
 
   async function handleCopyPassword() {
-    if (!values.password) return;
+    const password = getValues('password');
+    if (!password) return;
 
     try {
-      await navigator.clipboard.writeText(values.password);
+      await navigator.clipboard.writeText(password);
       setCopyFailed(false);
       setPasswordCopied(true);
       setTimeout(() => setPasswordCopied(false), COPIED_FEEDBACK_MS);
@@ -145,292 +134,258 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
     }
   }
 
-  function fieldMessages(field: string) {
-    return clientErrors[field] ? [clientErrors[field]] : state.errors?.[field];
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
     setFormErrorDismissed(true);
-
-    const formData = new FormData(event.currentTarget);
-    const formValues = Object.fromEntries(formData);
-    const result = isEditing
-      ? userEditFormSchema.safeParse(formValues)
-      : userFormSchema.safeParse(formValues);
-
-    if (!result.success) {
-      event.preventDefault();
-      const errors: Record<string, string> = {};
-
-      for (const issue of result.error.issues) {
-        const field = String(issue.path[0]);
-        errors[field] ??= issue.message;
-      }
-
-      setClientErrors(errors);
-      return;
-    }
-
-    setClientErrors({});
-    setFormErrorDismissed(false);
-
-    if (isEditing) event.preventDefault();
+    const formElement = event.currentTarget;
+    const submitter = event.nativeEvent.submitter;
+    return handleSubmit(() => {
+      setFormErrorDismissed(false);
+      if (isEditing) return;
+      startTransition(() => {
+        formAction(submitter ? new FormData(formElement, submitter) : new FormData(formElement));
+      });
+    })(event);
   }
 
   return (
-    <form
-      action={isEditing ? undefined : formAction}
-      onSubmit={handleSubmit}
-      noValidate
-      className="flex min-w-0 flex-1 flex-col pt-6"
-    >
-      <div className={cn('mx-auto w-full px-6 pb-6', !isEditing && 'max-w-[1185px]')}>
-        <div
-          className={cn(
-            'grid grid-cols-1 gap-6',
-            isEditing && 'xl:grid-cols-[minmax(0,1fr)_425px]'
-          )}
-        >
-          <div className="flex min-w-0 flex-col gap-5">
-            {state.formError && !formErrorDismissed && (
-              <p className="border-destructive bg-destructive/10 text-destructive hidden rounded-lg border px-4 py-3 text-sm md:block">
-                {state.formError}
-              </p>
+    <FormProvider {...form}>
+      <form onSubmit={onSubmit} noValidate className="flex min-w-0 flex-1 flex-col pt-6">
+        <div className={cn('mx-auto w-full px-6 pb-6', !isEditing && 'max-w-[1185px]')}>
+          <div
+            className={cn(
+              'grid grid-cols-1 gap-6',
+              isEditing && 'xl:grid-cols-[minmax(0,1fr)_425px]'
             )}
+          >
+            <div className="flex min-w-0 flex-col gap-5">
+              {/* TODO: remove once the toast is implemented */}
+              {state.formError && !formErrorDismissed && (
+                <p className="border-destructive bg-destructive/10 text-destructive hidden rounded-lg border px-4 py-3 text-sm md:block">
+                  {state.formError}
+                </p>
+              )}
 
-            <Card className="gap-4 pt-5 pb-5">
-              <CardHeader className="px-6">
-                <CardTitle className="leading-6 font-semibold">Datos personales</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6">
-                <FieldGroup className="gap-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <TextInputField
-                      id="firstName"
-                      name="firstName"
-                      label="Nombre"
-                      value={values.firstName}
-                      onValueChange={(value) => updateField('firstName', value)}
-                      placeholder={isEditing ? 'Nombre' : 'Ej. Ana'}
-                      required
-                      maxLength={100}
-                      messages={fieldMessages('firstName')}
-                    />
-                    <TextInputField
-                      id="lastName"
-                      name="lastName"
-                      label="Apellido"
-                      value={values.lastName}
-                      onValueChange={(value) => updateField('lastName', value)}
-                      placeholder={isEditing ? 'Apellido' : 'Ej. García'}
-                      maxLength={100}
-                      messages={fieldMessages('lastName')}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <TextInputField
-                      id="documentId"
-                      name="documentId"
-                      label="Documento (Cédula)"
-                      value={values.documentId}
-                      onValueChange={(value) => updateField('documentId', value)}
-                      placeholder="1.234.567-8"
-                      messages={fieldMessages('documentId')}
-                    />
-                    <TextInputField
-                      id="email"
-                      name="email"
-                      label="Correo electrónico"
-                      type="email"
-                      value={values.email}
-                      onValueChange={(value) => updateField('email', value)}
-                      placeholder="nombre@gurises-unidos.org.uy"
-                      maxLength={254}
-                      messages={fieldMessages('email')}
-                    />
-                  </div>
-                </FieldGroup>
-              </CardContent>
-            </Card>
-
-            <Card className="gap-4 pt-5 pb-5">
-              <CardHeader className="px-6">
-                <CardTitle className="leading-6 font-semibold">Permisos</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6">
-                <SelectField
-                  id="role"
-                  name="role"
-                  label="Rol"
-                  value={values.role}
-                  options={ROLE_OPTIONS}
-                  onValueChange={(value) => updateField('role', value as UserFormValues['role'])}
-                  description="Los administradores pueden gestionar usuarios y configurar el sistema."
-                  messages={state.errors?.role}
-                />
-              </CardContent>
-            </Card>
-
-            {isEditing && (
               <Card className="gap-4 pt-5 pb-5">
                 <CardHeader className="px-6">
-                  <CardTitle className="leading-6 font-semibold">Estado</CardTitle>
+                  <CardTitle className="leading-6 font-semibold">Datos personales</CardTitle>
                 </CardHeader>
                 <CardContent className="px-6">
-                  <RadioGroup
-                    name="status"
-                    defaultValue={initialValues?.status ?? 'active'}
-                    className="gap-3.5"
-                  >
-                    {STATUS_OPTIONS.map((status) => (
-                      <Label
-                        key={status.value}
-                        htmlFor={`status-${status.value}`}
-                        className="w-fit gap-2.5 font-normal"
-                      >
-                        <RadioGroupItem
-                          value={status.value}
-                          id={`status-${status.value}`}
-                          className="border-input bg-background data-checked:border-input data-checked:bg-background data-checked:[&_[data-slot=radio-group-indicator]>span]:bg-foreground size-4 border shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] [&_[data-slot=radio-group-indicator]>span]:size-[6.67px]"
-                        />
-                        <Badge variant={status.variant} className={cn('px-2.5', status.className)}>
-                          {status.label}
-                        </Badge>
-                      </Label>
-                    ))}
-                  </RadioGroup>
-                  <FieldError messages={state.errors?.status} />
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="gap-4 pt-5 pb-5">
-              <CardHeader className="px-6">
-                <CardTitle className="leading-6 font-semibold">Seguridad</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6">
-                <FieldGroup className="gap-4">
-                  {isEditing ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      className="w-fit px-4"
-                      disabled
-                    >
-                      Restablecer contraseña
-                    </Button>
-                  ) : (
+                  <FieldGroup className="gap-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <TextInputField
-                        id="password"
-                        name="password"
-                        label="Contraseña temporal"
-                        type="text"
-                        value={values.password}
-                        onValueChange={(value) => updateField('password', value)}
-                        placeholder="Se genera automáticamente"
-                        required
-                        minLength={8}
-                        maxLength={72}
-                        messages={
-                          fieldMessages('password') ??
-                          (copyFailed ? ['No se pudo copiar. Cópiala manualmente.'] : undefined)
-                        }
-                        trailingAction={
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label="Copiar contraseña"
-                            onClick={handleCopyPassword}
-                          >
-                            {passwordCopied ? (
-                              <Check className="size-3" />
-                            ) : (
-                              <Copy className="size-3" />
-                            )}
-                          </Button>
-                        }
+                        id="firstName"
+                        name="firstName"
+                        label="Nombre"
+                        placeholder={isEditing ? 'Nombre' : 'Ej. Ana'}
+                      />
+                      <TextInputField
+                        id="lastName"
+                        name="lastName"
+                        label="Apellido"
+                        placeholder={isEditing ? 'Apellido' : 'Ej. García'}
                       />
                     </div>
-                  )}
-                  {!isEditing && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      className="h-auto min-h-9 w-fit max-w-full px-4 py-1.5 whitespace-normal"
-                      onClick={handleGeneratePassword}
-                    >
-                      Generar contraseña automáticamente
-                    </Button>
-                  )}
-                  <FieldDescription className="text-xs leading-4">
-                    {isEditing
-                      ? 'Se enviará una nueva contraseña temporal para que la persona vuelva a ingresar.'
-                      : 'El administrador comparte esta contraseña con la persona. El ingreso al sistema es por cédula.'}
-                  </FieldDescription>
-                </FieldGroup>
-              </CardContent>
-            </Card>
-          </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <TextInputField
+                        id="documentId"
+                        name="documentId"
+                        label="Documento (Cédula)"
+                        placeholder="1.234.567-8"
+                      />
+                      <TextInputField
+                        id="email"
+                        name="email"
+                        label="Correo electrónico"
+                        type="email"
+                        placeholder="nombre@gurises-unidos.org.uy"
+                      />
+                    </div>
+                  </FieldGroup>
+                </CardContent>
+              </Card>
 
-          {isEditing && (
-            <div className="min-w-0">
               <Card className="gap-4 pt-5 pb-5">
                 <CardHeader className="px-6">
-                  <CardTitle className="leading-6 font-semibold">Información</CardTitle>
+                  <CardTitle className="leading-6 font-semibold">Permisos</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col gap-4 px-6">
-                  <dl className="flex flex-col gap-4">
-                    {INFO_ROWS.map((row) => (
-                      <div
-                        key={row.label}
-                        className="flex items-center justify-between text-xs leading-4 font-medium"
+                <CardContent className="px-6">
+                  <SelectField
+                    id="role"
+                    name="role"
+                    label="Rol"
+                    options={ROLE_OPTIONS}
+                    description="Los administradores pueden gestionar usuarios y configurar el sistema."
+                  />
+                </CardContent>
+              </Card>
+
+              {isEditing && (
+                <Card className="gap-4 pt-5 pb-5">
+                  <CardHeader className="px-6">
+                    <CardTitle className="leading-6 font-semibold">Estado</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-6">
+                    <RadioGroup
+                      name="status"
+                      value={statusField.field.value}
+                      onValueChange={statusField.field.onChange}
+                      className="gap-3.5"
+                    >
+                      {STATUS_OPTIONS.map((status) => (
+                        <Label
+                          key={status.value}
+                          htmlFor={`status-${status.value}`}
+                          className="w-fit gap-2.5 font-normal"
+                        >
+                          <RadioGroupItem
+                            value={status.value}
+                            id={`status-${status.value}`}
+                            className="border-input bg-background data-checked:border-input data-checked:bg-background data-checked:[&_[data-slot=radio-group-indicator]>span]:bg-foreground size-4 border shadow-[0_1px_2px_0_rgb(0_0_0/0.1)] [&_[data-slot=radio-group-indicator]>span]:size-[6.67px]"
+                          />
+                          <Badge
+                            variant={status.variant}
+                            className={cn('px-2.5', status.className)}
+                          >
+                            {status.label}
+                          </Badge>
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                    <FieldError className="text-xs leading-4">
+                      {statusField.fieldState.error?.message}
+                    </FieldError>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card className="gap-4 pt-5 pb-5">
+                <CardHeader className="px-6">
+                  <CardTitle className="leading-6 font-semibold">Seguridad</CardTitle>
+                </CardHeader>
+                <CardContent className="px-6">
+                  <FieldGroup className="gap-4">
+                    {isEditing ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="w-fit px-4"
+                        disabled
                       >
-                        <dt className="text-foreground">{row.label}</dt>
-                        <dd className="text-foreground">
-                          {initialValues?.information[row.key] ?? '—'}
-                        </dd>
+                        Restablecer contraseña
+                      </Button>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <TextInputField
+                          id="password"
+                          name="password"
+                          label="Contraseña temporal"
+                          type="text"
+                          placeholder="Se genera automáticamente"
+                          messages={
+                            errors.password
+                              ? undefined
+                              : copyFailed
+                                ? ['No se pudo copiar. Cópiala manualmente.']
+                                : undefined
+                          }
+                          trailingAction={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              aria-label="Copiar contraseña"
+                              onClick={handleCopyPassword}
+                            >
+                              {passwordCopied ? (
+                                <Check className="size-3" />
+                              ) : (
+                                <Copy className="size-3" />
+                              )}
+                            </Button>
+                          }
+                        />
                       </div>
-                    ))}
-                  </dl>
+                    )}
+                    {!isEditing && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="h-auto min-h-9 w-fit max-w-full px-4 py-1.5 whitespace-normal"
+                        onClick={handleGeneratePassword}
+                      >
+                        Generar contraseña automáticamente
+                      </Button>
+                    )}
+                    <FieldDescription className="text-xs leading-4">
+                      {isEditing
+                        ? 'Se enviará una nueva contraseña temporal para que la persona vuelva a ingresar.'
+                        : 'El administrador comparte esta contraseña con la persona. El ingreso al sistema es por cédula.'}
+                    </FieldDescription>
+                  </FieldGroup>
                 </CardContent>
               </Card>
             </div>
-          )}
-        </div>
-      </div>
 
-      <div className="bg-background sticky bottom-0 z-10 mt-auto grid shrink-0 grid-cols-2 gap-x-2 gap-y-3 border-t px-6 py-4 md:flex md:flex-wrap md:items-center md:justify-between">
-        {state.formError && !formErrorDismissed && (
-          <p className="border-destructive bg-destructive/10 text-destructive col-span-2 rounded-lg border px-4 py-3 text-sm md:hidden">
-            {state.formError}
-          </p>
-        )}
-        <Link
-          href="/management/users"
-          aria-disabled={pending}
-          className={cn(
-            buttonVariants({ variant: 'ghost', size: 'lg' }),
-            'col-span-1 h-auto min-h-9 w-full px-4 md:order-1 md:mr-auto md:h-9 md:w-auto',
-            pending && 'pointer-events-none opacity-50'
+            {isEditing && (
+              <div className="min-w-0">
+                <Card className="gap-4 pt-5 pb-5">
+                  <CardHeader className="px-6">
+                    <CardTitle className="leading-6 font-semibold">Información</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4 px-6">
+                    <dl className="flex flex-col gap-4">
+                      {INFO_ROWS.map((row) => (
+                        <div
+                          key={row.label}
+                          className="flex items-center justify-between text-xs leading-4 font-medium"
+                        >
+                          <dt className="text-foreground">{row.label}</dt>
+                          <dd className="text-foreground">
+                            {initialValues?.information[row.key] ?? '—'}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TODO: Use a shared component for this forms footer */}
+        <div className="bg-background sticky bottom-0 z-10 mt-auto grid shrink-0 grid-cols-2 gap-x-2 gap-y-3 border-t px-6 py-4 md:flex md:flex-wrap md:items-center md:justify-between">
+          {state.formError && !formErrorDismissed && (
+            <p className="border-destructive bg-destructive/10 text-destructive col-span-2 rounded-lg border px-4 py-3 text-sm md:hidden">
+              {state.formError}
+            </p>
           )}
-        >
-          Cancelar
-        </Link>
-        <Button
-          type={isEditing ? 'button' : 'submit'}
-          name="intent"
-          value="submit"
-          size="lg"
-          className="col-span-1 w-full px-4 md:order-3 md:w-auto"
-          disabled={pending || isEditing}
-        >
-          {isEditing ? 'Guardar usuario (próximamente)' : 'Guardar usuario'}
-        </Button>
-      </div>
-    </form>
+          <Link
+            href="/management/users"
+            aria-disabled={pending}
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'lg' }),
+              'col-span-1 h-auto min-h-9 w-full px-4 md:order-1 md:mr-auto md:h-9 md:w-auto',
+              pending && 'pointer-events-none opacity-50'
+            )}
+          >
+            Cancelar
+          </Link>
+          <Button
+            type={isEditing ? 'button' : 'submit'}
+            name="intent"
+            value="submit"
+            size="lg"
+            className="col-span-1 w-full px-4 md:order-3 md:w-auto"
+            disabled={pending || isEditing}
+          >
+            {isEditing ? 'Guardar usuario (próximamente)' : 'Guardar usuario'}
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
   );
 }

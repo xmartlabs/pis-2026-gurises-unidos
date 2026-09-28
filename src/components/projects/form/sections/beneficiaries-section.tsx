@@ -1,21 +1,41 @@
+'use client';
+
+import { useRef } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
 import { FormSection } from '@/components/ui/forms/form-section';
+import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
 
 export function BeneficiariesSection({
   variant,
   isEditing,
-  values,
-  state,
-  updateField,
   yearOptions,
-  selectYear,
-}: Pick<
-  SectionProps,
-  'variant' | 'isEditing' | 'values' | 'state' | 'updateField' | 'yearOptions' | 'selectYear'
->) {
+  beneficiaryRecords,
+}: Pick<SectionProps, 'variant' | 'isEditing' | 'yearOptions' | 'beneficiaryRecords'>) {
+  const { getValues, setValue } = useFormContext<ProjectFormValues>();
+  const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
+
+  // TODO: Implement multiple years support on the backend
+  // right now we only support one year
+  function selectYear(year: string) {
+    const current = getValues();
+    beneficiaryDrafts.current[current.year] = Object.fromEntries(
+      BENEFICIARY_FIELDS.map(({ key }) => [key, current[key]])
+    );
+    const record = beneficiaryRecords.find((item) => String(item.year) === year);
+    const counts = Object.fromEntries(
+      BENEFICIARY_FIELDS.map(({ key }) => [key, String(record?.[key] ?? 0)])
+    );
+    const nextCounts = { ...counts, ...beneficiaryDrafts.current[year] };
+    for (const { key } of BENEFICIARY_FIELDS) {
+      setValue(key, String(nextCounts[key] ?? '0'), { shouldValidate: true });
+    }
+    setValue('year', year);
+  }
+
   return (
     <FormSection
       variant={variant}
@@ -29,11 +49,8 @@ export function BeneficiariesSection({
           id="year"
           name="year"
           label="Año de beneficiarios"
-          value={values.year}
           options={yearOptions}
           onValueChange={selectYear}
-          messages={state.errors?.year}
-          required
         />
         <p className="text-muted-foreground mt-2 text-xs">
           Se guardan únicamente los beneficiarios del año seleccionado. Los cambios de otros años no
@@ -49,14 +66,6 @@ export function BeneficiariesSection({
           label={field.label}
           type="text"
           inputMode="numeric"
-          pattern="[0-9]*"
-          value={values[field.key]}
-          messages={state.errors?.[field.key]}
-          onValueChange={(value) => {
-            if (/^[0-9]*$/.test(value)) {
-              updateField(field.key, value);
-            }
-          }}
           className={index === BENEFICIARY_FIELDS.length - 1 ? 'sm:col-span-2' : undefined}
         />
       ))}
