@@ -111,17 +111,24 @@ export function ProjectForm({
   }, [pending, state]);
 
   function updateField<K extends keyof ProjectFormValues>(field: K, value: ProjectFormValues[K]) {
+    if (field === 'startYear' && typeof value === 'string' && Number(value) > Number(values.year)) {
+      selectYear(value);
+    }
+
     setValues((currentValues) => ({
       ...currentValues,
       [field]: value,
     }));
   }
 
-  const { topicLabel, locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
+  const { locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
     values,
     departments,
-    topics,
     isEditing
+  );
+
+  const beneficiaryYearOptions = yearOptions.filter(
+    ({ value }) => Number(value) >= Number(values.startYear)
   );
 
   return (
@@ -192,7 +199,7 @@ export function ProjectForm({
             values={values}
             state={state}
             updateField={updateField}
-            yearOptions={yearOptions}
+            yearOptions={beneficiaryYearOptions}
             selectYear={selectYear}
           />
 
@@ -216,7 +223,6 @@ export function ProjectForm({
         <ProjectPreview
           variant={variant}
           values={values}
-          topicLabel={topicLabel}
           locationLabel={locationLabel}
           beneficiaryTotal={beneficiaryTotal}
         />
