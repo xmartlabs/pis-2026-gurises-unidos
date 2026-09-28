@@ -1,5 +1,5 @@
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { getUserStats } from '@/lib/users';
+import type { getUserStats } from '@/lib/users/list';
 
 type UserStats = Awaited<ReturnType<typeof getUserStats>>;
 

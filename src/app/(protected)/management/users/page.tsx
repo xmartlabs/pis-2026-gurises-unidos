@@ -15,7 +15,7 @@ import { UsersListToolbar } from '@/components/users/users-list-toolbar';
 import { UsersTable } from '@/components/users/users-table';
 import { UserStatsCards } from '@/components/users/user-stats-cards';
 import { ErrorScreen } from '@/components/error-screen';
-import { getUserList, getUserStats, parseUserListFilters } from '@/lib/users';
+import { getUserList, getUserStats, parseUserListFilters } from '@/lib/users/list';
 
 export default async function UsersPage({
   searchParams,

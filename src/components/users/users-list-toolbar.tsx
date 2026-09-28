@@ -21,7 +21,7 @@ import {
   type SortBy,
 } from '@/lib/users/constants';
 import { formatUserCount } from '@/lib/users/format';
-import type { UserListFilters } from '@/lib/users';
+import type { UserListFilters } from '@/lib/users/list';
 
 const SEARCH_DEBOUNCE_MS = 300;
 

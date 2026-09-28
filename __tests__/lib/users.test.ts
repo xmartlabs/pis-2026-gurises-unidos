@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { getUserList, getUserStats, parseUserListFilters } from '@/lib/users';
+import { getUserList, getUserStats, parseUserListFilters } from '@/lib/users/list';
 import prisma from '@/lib/prisma';
 import { makeUser } from '../fixtures/user';
 
