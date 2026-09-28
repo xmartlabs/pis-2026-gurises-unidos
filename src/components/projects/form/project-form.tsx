@@ -108,6 +108,10 @@ export function ProjectForm({
   }, [pending, state]);
 
   function updateField<K extends keyof ProjectFormValues>(field: K, value: ProjectFormValues[K]) {
+    if (field === 'startYear' && typeof value === 'string' && Number(value) > Number(values.year)) {
+      selectYear(value);
+    }
+
     setValues((currentValues) => ({
       ...currentValues,
       [field]: value,
