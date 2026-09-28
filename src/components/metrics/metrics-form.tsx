@@ -160,6 +160,11 @@ export function MetricsForm({
           <p className="text-muted-foreground text-center text-xs leading-relaxed">
             Estas cifras se actualizan automáticamente en el sitio público.
           </p>
+          <div className="text-center">
+            <Button type="button" variant="link" size="lg">
+              Ver sitio público →
+            </Button>
+          </div>
         </div>
       </aside>
     </div>
