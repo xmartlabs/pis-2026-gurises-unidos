@@ -54,6 +54,7 @@ export async function getProjectDetail(
       leadCoordinatorId: true,
       generalObjective: true,
       publicDescription: true,
+      coverPhoto: true,
       zone: true,
       localityNeighborhood: true,
       leadCoordinator: {

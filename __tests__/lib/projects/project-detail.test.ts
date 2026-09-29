@@ -42,6 +42,7 @@ const PROJECT = {
   leadCoordinatorId: 2,
   generalObjective: 'Support children and families',
   publicDescription: 'Community project',
+  coverPhoto: '/images/project-placeholders/2.webp',
   zone: 'city',
   localityNeighborhood: 'Casavalle',
   leadCoordinator: {
@@ -130,6 +131,7 @@ describe('getProjectDetail', () => {
     }
 
     expect(result.data).toMatchObject({
+      project: { coverPhoto: '/images/project-placeholders/2.webp' },
       selectedYear: 2026,
       comparisonYear: 2025,
       availableYears: [2026, 2025],
@@ -170,6 +172,11 @@ describe('getProjectDetail', () => {
       },
     });
 
+    expect(prismaMock.project.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ coverPhoto: true }),
+      })
+    );
     expect(result.data.distribution).toHaveLength(7);
     expect(result.data.distribution).toContainEqual({
       key: 'directChildrenAdolescents',
