@@ -137,13 +137,19 @@ describe('jwt', () => {
     vi.mocked(prisma.user.findUnique).mockReset();
   });
 
-  test('sets sub, role, and remember when a user is present', async () => {
+  test('sets sub, role, avatar color, and remember when a user is present', async () => {
     const token = { sub: 'old' };
-    const user = { id: '42', role: 'coordinator' as const, remember: true };
+    const user = {
+      id: '42',
+      role: 'coordinator' as const,
+      avatarColorIndex: 7,
+      remember: true,
+    };
 
     await expect(capturedConfig().callbacks?.jwt?.({ token, user } as never)).resolves.toEqual({
       sub: '42',
       role: 'coordinator',
+      avatarColorIndex: 7,
       remember: true,
     });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
@@ -177,6 +183,7 @@ describe('jwt', () => {
         firstName: 'Ana',
         lastName: 'Admin',
         email: 'ana@example.com',
+        documentId: '41234567',
         role: 'admin',
         passwordChangedAt: null,
       })
@@ -187,6 +194,7 @@ describe('jwt', () => {
       name: 'Ana Admin',
       email: 'ana@example.com',
       role: 'admin',
+      avatarColorIndex: 7,
       iat: 1_000,
     });
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
@@ -195,6 +203,7 @@ describe('jwt', () => {
         firstName: true,
         lastName: true,
         email: true,
+        documentId: true,
         role: true,
         status: true,
         passwordChangedAt: true,
@@ -236,12 +245,12 @@ describe('jwt', () => {
 });
 
 describe('session', () => {
-  test('copies id and role from the token onto session.user', () => {
+  test('copies id, role, and avatar color from the token onto session.user', () => {
     const session = { user: { name: 'Ana Admin' }, expires: '2026-01-01T00:00:00.000Z' };
-    const token = { sub: '42', role: 'coordinator' as const };
+    const token = { sub: '42', role: 'coordinator' as const, avatarColorIndex: 7 };
 
     expect(capturedConfig().callbacks?.session?.({ session, token } as never)).toEqual({
-      user: { name: 'Ana Admin', id: '42', role: 'coordinator' },
+      user: { name: 'Ana Admin', id: '42', role: 'coordinator', avatarColorIndex: 7 },
       expires: '2026-01-01T00:00:00.000Z',
     });
   });

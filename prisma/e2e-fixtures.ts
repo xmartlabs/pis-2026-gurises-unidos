@@ -1,3 +1,5 @@
+import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
+
 export const E2E_DEPARTMENT = 'Montevideo';
 
 export const E2E_SECONDARY_DEPARTMENT = 'Canelones';
@@ -41,6 +43,7 @@ export const E2E_ACTIVE_PROJECT = {
   intensity: 'medium',
   startYear: E2E_BENEFICIARY_YEAR,
   zone: 'city',
+  coverPhoto: PROJECT_PLACEHOLDERS[0],
 } as const;
 
 export const E2E_CLOSED_PROJECT = {
@@ -49,6 +52,7 @@ export const E2E_CLOSED_PROJECT = {
   intensity: 'low',
   startYear: 2023,
   zone: 'rural',
+  coverPhoto: PROJECT_PLACEHOLDERS[1],
 } as const;
 
 export const E2E_PROJECTS = [E2E_ACTIVE_PROJECT, E2E_CLOSED_PROJECT] as const;

@@ -6,6 +6,10 @@ import { requireUser } from '@/lib/auth/require-user';
 import { canEditProject } from '@/lib/projects/permissions';
 import { mapProjectDbError } from '@/lib/projects/map-project-db-error';
 import { revalidateProject } from '@/lib/projects/revalidate-project';
+import {
+  getRandomProjectPlaceholder,
+  isProjectPlaceholder,
+} from '@/lib/projects/project-placeholders';
 import { parseId } from '@/lib/validation/ids';
 import { logAudit } from '@/lib/audit-log';
 import type { ProjectFormState } from '@/lib/validation/project';
@@ -49,6 +53,10 @@ export async function createProject(
   const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
   const { projectData, beneficiaryData, topicIds } = splitProjectFormData(parsed.data);
+  const submittedPlaceholder = formData.get('projectPlaceholder');
+  const coverPhoto = isProjectPlaceholder(submittedPlaceholder)
+    ? submittedPlaceholder
+    : getRandomProjectPlaceholder();
   let projectId: number;
   try {
     const result = await prisma.$transaction(
@@ -58,6 +66,7 @@ export async function createProject(
         const project = await tx.project.create({
           data: {
             ...projectData,
+            coverPhoto,
             createdBy: user.id,
             projectTopics: { create: topicIds.map((topicId) => ({ topicId })) },
           },
