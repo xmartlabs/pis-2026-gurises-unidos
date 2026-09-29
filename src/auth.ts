@@ -4,6 +4,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { toAuthUser, verifyUserCredentials } from './lib/credentials';
 import prisma from './lib/prisma';
 import { fullName } from './lib/users/format';
+import { getAvatarColorIndex } from './lib/users/avatar';
 
 const SESSION_MAX_AGE = 12 * 60 * 60; // 12 hours
 const REMEMBER_ME_MAX_AGE = 30 * 24 * 60 * 60;
@@ -49,6 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.sub = user.id;
         token.role = user.role;
+        token.avatarColorIndex = user.avatarColorIndex;
         token.remember = user.remember;
         return token;
       }
@@ -69,6 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           firstName: true,
           lastName: true,
           email: true,
+          documentId: true,
           role: true,
           status: true,
           passwordChangedAt: true,
@@ -90,6 +93,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       token.name = fullName(currentUser);
       token.email = currentUser.email;
       token.role = currentUser.role;
+      token.avatarColorIndex = getAvatarColorIndex(currentUser.documentId);
 
       return token;
     },
@@ -97,6 +101,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user && token.sub) {
         session.user.id = token.sub;
         session.user.role = token.role;
+        session.user.avatarColorIndex = token.avatarColorIndex;
       }
       return session;
     },

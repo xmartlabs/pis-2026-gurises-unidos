@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
+import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import { ADMIN } from './fixtures';
 
 const prisma = new PrismaClient();
@@ -112,7 +113,7 @@ async function main() {
         localityNeighborhood: null,
         generalObjective: null,
         publicDescription: null,
-        coverPhoto: null,
+        coverPhoto: PROJECT_PLACEHOLDERS[0],
         internalNotes: null,
         createdBy: admin.id,
       };
