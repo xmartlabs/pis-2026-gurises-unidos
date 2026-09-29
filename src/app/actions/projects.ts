@@ -40,12 +40,12 @@ async function validateRelations(
   if (!coordinator) return { errors: { leadCoordinatorId: ['Elegí un coordinador válido'] } };
   if (topicId !== null) {
     const topic = await tx.topic.findFirst({
-    where: {
-      id: topicId,
-      ...(topicId === currentTopicId ? {} : { isActive: true }),
-    },
-    select: { id: true },
-  });
+      where: {
+        id: topicId,
+        ...(topicId === currentTopicId ? {} : { isActive: true }),
+      },
+      select: { id: true },
+    });
 
     if (!topic) {
       return { errors: { topicId: ['Elegí una temática válida'] } };
