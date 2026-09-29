@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useActionState, useState, type SubmitEvent } from 'react';
+import { startTransition, useActionState, useEffect, type SubmitEvent } from 'react';
 import { FormProvider, useController, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from 'cn';
@@ -17,14 +17,13 @@ import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-import { Check, Copy } from 'lucide-react';
+import { Copy } from 'lucide-react';
 
 import { userEditFormSchema, userFormSchema, type UserFormState } from '@/lib/validation/user';
 import { generateTemporaryPassword } from '@/lib/users';
+import { notify } from '@/lib/notify';
 
 const initialState: UserFormState = {};
-
-const COPIED_FEEDBACK_MS = 2000;
 
 type UserFormValues = {
   firstName: string;
@@ -87,10 +86,6 @@ const STATUS_OPTIONS = [
 export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
   const isEditing = mode === 'edit';
   const [state, formAction, pending] = useActionState(createUser, initialState);
-  // TODO: remove formErrors and passwordCopied states once the toast is implemented
-  const [formErrorDismissed, setFormErrorDismissed] = useState(false);
-  const [passwordCopied, setPasswordCopied] = useState(false);
-  const [copyFailed, setCopyFailed] = useState(false);
   const form = useForm<UserFormValues>({
     resolver: zodResolver(
       isEditing ? userEditFormSchema : userFormSchema
@@ -126,27 +121,28 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
 
     try {
       await navigator.clipboard.writeText(password);
-      setCopyFailed(false);
-      setPasswordCopied(true);
-      setTimeout(() => setPasswordCopied(false), COPIED_FEEDBACK_MS);
+      notify.success({ title: 'Contraseña copiada al portapapeles' });
     } catch {
-      setCopyFailed(true);
+      notify.error({ title: 'No se pudo copiar la contraseña' });
     }
   }
 
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFormErrorDismissed(true);
     const formElement = event.currentTarget;
     const submitter = event.nativeEvent.submitter;
     return handleSubmit(() => {
-      setFormErrorDismissed(false);
       if (isEditing) return;
       startTransition(() => {
         formAction(submitter ? new FormData(formElement, submitter) : new FormData(formElement));
       });
     })(event);
   }
+
+  useEffect(() => {
+    if (!state.formError) return;
+    notify.error({ title: state.formError });
+  }, [state]);
 
   return (
     <FormProvider {...form}>
@@ -159,13 +155,6 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
             )}
           >
             <div className="flex min-w-0 flex-col gap-5">
-              {/* TODO: remove once the toast is implemented */}
-              {state.formError && !formErrorDismissed && (
-                <p className="border-destructive bg-destructive/10 text-destructive hidden rounded-lg border px-4 py-3 text-sm md:block">
-                  {state.formError}
-                </p>
-              )}
-
               <Card className="gap-4 pt-5 pb-5">
                 <CardHeader className="px-6">
                   <CardTitle className="leading-6 font-semibold">Datos personales</CardTitle>
@@ -283,13 +272,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                           label="Contraseña temporal"
                           type="text"
                           placeholder="Se genera automáticamente"
-                          messages={
-                            errors.password
-                              ? undefined
-                              : copyFailed
-                                ? ['No se pudo copiar. Cópiala manualmente.']
-                                : undefined
-                          }
+                          messages={[errors?.password?.message ?? '']}
                           trailingAction={
                             <Button
                               type="button"
@@ -298,11 +281,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                               aria-label="Copiar contraseña"
                               onClick={handleCopyPassword}
                             >
-                              {passwordCopied ? (
-                                <Check className="size-3" />
-                              ) : (
-                                <Copy className="size-3" />
-                              )}
+                              <Copy className="size-3" />
                             </Button>
                           }
                         />
@@ -358,11 +337,6 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
 
         {/* TODO: Use a shared component for this forms footer */}
         <div className="bg-background sticky bottom-0 z-10 mt-auto grid shrink-0 grid-cols-2 gap-x-2 gap-y-3 border-t px-6 py-4 md:flex md:flex-wrap md:items-center md:justify-between">
-          {state.formError && !formErrorDismissed && (
-            <p className="border-destructive bg-destructive/10 text-destructive col-span-2 rounded-lg border px-4 py-3 text-sm md:hidden">
-              {state.formError}
-            </p>
-          )}
           <Link
             href="/management/users"
             aria-disabled={pending}

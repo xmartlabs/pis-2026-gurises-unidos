@@ -6,7 +6,14 @@ import { BeneficiariesSection } from './sections/beneficiaries-section';
 import { TerritorySection } from './sections/territory-section';
 import { BasicInfoSection } from './sections/basic-info-section';
 
-import { startTransition, useActionState, useMemo, type SubmitEvent, type ReactNode } from 'react';
+import {
+  startTransition,
+  useActionState,
+  useMemo,
+  type SubmitEvent,
+  type ReactNode,
+  useEffect,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { FormProvider, useForm, useWatch, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +26,7 @@ import { projectFormSchema } from '@/lib/validation/project-form';
 import { FormActions } from '@/components/ui/forms/form-actions';
 import { getDefaultValues } from './get-default-values';
 import { getPreviewLabels } from './get-preview-labels';
+import { notify } from '@/lib/notify';
 
 type ProjectFormProps = {
   mode?: 'create' | 'edit';
@@ -113,6 +121,11 @@ export function ProjectForm({
     })(event);
   }
 
+  useEffect(() => {
+    if (!state.formError) return;
+    notify.error({ title: state.formError });
+  }, [state]);
+
   return (
     <FormProvider {...form}>
       <form
@@ -141,16 +154,6 @@ export function ProjectForm({
               !isEditing && 'lg:pb-20'
             )}
           >
-            {/* TODO: remove once the toast is implemented */}
-            {state.formError && (
-              <p
-                role="alert"
-                className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm"
-              >
-                {state.formError}
-              </p>
-            )}
-
             <BasicInfoSection
               variant={variant}
               yearOptions={yearOptions}
