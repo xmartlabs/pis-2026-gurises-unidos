@@ -6,7 +6,7 @@ on:
 
 jobs:
   integration:
-    name: vitest
+    name: integration
     runs-on: ubuntu-latest
     services:
       postgres:
