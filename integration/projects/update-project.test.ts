@@ -1,13 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { updateProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
-import { deleteExtraCatalogs, loadSeedData, type SeedData } from '../fixtures';
+import { loadSeedData, type SeedData } from '../fixtures';
 import { signInAs } from '../session';
 
 const BENEFICIARY_YEAR = 2024;
 
 let seed: SeedData;
-let projectId: number;
+let createdProjectIds: number[] = [];
 
 function buildFormData(overrides: Record<string, string | string[]> = {}): FormData {
   const fields: Record<string, string | string[]> = {
@@ -69,6 +69,7 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
       },
     },
   });
+  createdProjectIds.push(project.id);
   return project.id;
 }
 
@@ -117,27 +118,22 @@ async function auditLogsFor(id: number) {
 }
 
 async function expectRedirectToProject(result: Promise<unknown>, id: number) {
-  await expect(result).rejects.toThrow(`NEXT_REDIRECT:/dashboard/projects/${id}`);
+  await expect(result).rejects.toThrow(new RegExp(`^NEXT_REDIRECT:/dashboard/projects/${id}$`));
 }
 
 beforeAll(async () => {
   seed = await loadSeedData();
 });
 
-afterAll(async () => {
-  await deleteExtraCatalogs();
-});
-
-beforeEach(async () => {
-  projectId = await createProjectFixture();
-});
-
 afterEach(async () => {
-  await deleteProject(projectId);
+  const ids = createdProjectIds;
+  createdProjectIds = [];
+  for (const id of ids) await deleteProject(id);
 });
 
 describe('updateProject (integration)', () => {
   test('persists changed fields and topics and audits only what changed', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
     const newTopicIds = seed.topicIds.slice(1, 3);
 
@@ -175,6 +171,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('writes nothing when the submitted form matches the stored project', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
     const before = await loadProject(projectId);
 
@@ -185,6 +182,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('updates the beneficiaries of an existing year in place', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
 
     await expectRedirectToProject(
@@ -207,6 +205,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('adds a beneficiary row for a new year and keeps the previous one', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
 
     await expectRedirectToProject(
@@ -229,6 +228,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('lets the lead coordinator edit their own project', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.coordinatorId);
 
     await expectRedirectToProject(
@@ -243,8 +243,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('rejects a coordinator who does not lead the project', async () => {
-    await deleteProject(projectId);
-    projectId = await createProjectFixture(seed.disabledCoordinatorId);
+    const projectId = await createProjectFixture(seed.disabledCoordinatorId);
     signInAs(seed.coordinatorId);
     const before = await loadProject(projectId);
 
@@ -263,8 +262,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('keeps a lead coordinator who was disabled after being assigned', async () => {
-    await deleteProject(projectId);
-    projectId = await createProjectFixture(seed.disabledCoordinatorId);
+    const projectId = await createProjectFixture(seed.disabledCoordinatorId);
     signInAs(seed.adminId);
 
     await expectRedirectToProject(
@@ -286,6 +284,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('rejects switching to a disabled lead coordinator', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
     const before = await loadProject(projectId);
 
@@ -300,6 +299,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('rejects an unknown topic without touching the project', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
     const before = await loadProject(projectId);
     const unknownTopicId = Math.max(0, ...seed.topicIds) + 1000;
@@ -315,6 +315,7 @@ describe('updateProject (integration)', () => {
   });
 
   test('rolls back every change when the department does not exist', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.adminId);
     const before = await loadProject(projectId);
 
@@ -346,12 +347,13 @@ describe('updateProject (integration)', () => {
   });
 
   test('redirects to login when the session user is not active', async () => {
+    const projectId = await createProjectFixture();
     signInAs(seed.disabledCoordinatorId);
     const before = await loadProject(projectId);
 
     await expect(
       updateProject(projectId, {}, buildFormData({ name: 'Should not persist' }))
-    ).rejects.toThrow('NEXT_REDIRECT:/login');
+    ).rejects.toThrow(/^NEXT_REDIRECT:\/login$/);
     expect(await loadProject(projectId)).toEqual(before);
   });
 });

@@ -1,5 +1,9 @@
 export const E2E_DEPARTMENT = 'Montevideo';
 
+export const E2E_SECONDARY_DEPARTMENT = 'Canelones';
+
+export const E2E_TOPICS = ['E2E topic A', 'E2E topic B', 'E2E topic C'] as const;
+
 export const E2E_ADMIN = {
   firstName: 'Emilia',
   lastName: 'Admin',

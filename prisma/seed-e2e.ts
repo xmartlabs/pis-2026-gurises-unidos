@@ -11,6 +11,8 @@ import {
   E2E_COORDINATOR,
   E2E_DEPARTMENT,
   E2E_DISABLED_COORDINATOR,
+  E2E_SECONDARY_DEPARTMENT,
+  E2E_TOPICS,
 } from './e2e-fixtures';
 
 loadEnvFiles({
@@ -75,6 +77,8 @@ async function main() {
         await tx.$executeRawUnsafe(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
 
         const department = await tx.department.create({ data: { name: E2E_DEPARTMENT } });
+        await tx.department.create({ data: { name: E2E_SECONDARY_DEPARTMENT } });
+        await tx.topic.createMany({ data: E2E_TOPICS.map((name) => ({ name })) });
 
         const admin = await tx.user.create({ data: { ...E2E_ADMIN, passwordHash } });
         const coordinator = await tx.user.create({
