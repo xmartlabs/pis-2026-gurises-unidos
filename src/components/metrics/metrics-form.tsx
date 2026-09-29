@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { formatNumber } from '@/lib/format';
 import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
 import type { MetricSetting, MetricValues } from '@/lib/metrics/queries';
+import { notify } from '@/lib/notify';
 
 export function MetricsForm({
   year,
@@ -20,25 +21,26 @@ export function MetricsForm({
 }) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState('');
   const visibleMetrics = metrics.filter((metric) => metric.showPublicly);
 
   function saveChanges() {
-    setMessage('');
     startTransition(async () => {
       try {
         const result = await saveMetricSettings(
           metrics.map(({ key, showPublicly }) => ({ key, showPublicly }))
         );
-        setMessage(result.message);
+        if (!result.success) {
+          notify.error({ title: result.message });
+          return;
+        }
+        notify.success({ title: result.message });
       } catch {
-        setMessage('No se pudieron guardar los cambios. Intentá de nuevo.');
+        notify.error({ title: 'No se pudieron guardar los cambios. Intentá de nuevo.' });
       }
     });
   }
 
   function setVisibility(key: string, showPublicly: boolean) {
-    setMessage('');
     setMetrics((current) =>
       current.map((metric) => (metric.key === key ? { ...metric, showPublicly } : metric))
     );
@@ -101,7 +103,6 @@ export function MetricsForm({
                       ?.showPublicly ?? false,
                 }))
               );
-              setMessage('');
             }}
           >
             <span className="flex w-fit items-center gap-2.5 leading-5">Restablecer valores</span>
@@ -117,13 +118,6 @@ export function MetricsForm({
             </Button>
           </div>
         </div>
-        <p
-          id="metrics-save-status"
-          role="status"
-          className="text-muted-foreground text-sm empty:hidden"
-        >
-          {message}
-        </p>
       </section>
       <aside
         aria-label="Vista previa del sitio público"
