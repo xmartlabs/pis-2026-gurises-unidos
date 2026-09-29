@@ -1,6 +1,3 @@
-import Link from 'next/link';
-import { MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -10,53 +7,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
+import { UserActionsMenu } from '@/components/users/user-actions-menu';
 import { ROLE_LABELS, STATUS_LABELS, STATUS_CLASSNAMES } from '@/lib/users/constants';
 import { fullName, formatDate, type User } from '@/lib/users/format';
 
-function UserActionsMenu({ user }: { user: User }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button variant="ghost" size="icon" aria-label={`Acciones para ${fullName(user)}`}>
-            <MoreHorizontal />
-          </Button>
-        }
-      />
-      <DropdownMenuContent align="end" className="max-h-104 w-56 rounded-md border">
-        <DropdownMenuItem
-          render={<Link href={`/management/users/${user.id}/edit`} />}
-          className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
-        >
-          Editar
-        </DropdownMenuItem>
-        {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-          Restablecer contraseña
-        </DropdownMenuItem> */}
-        {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-          Desactivar
-        </DropdownMenuItem> */}
-        <DropdownMenuSeparator />
-        {/* <DropdownMenuItem
-          variant="destructive"
-          className="h-8 w-54 gap-2 rounded-sm px-2 py-1.5 font-sans text-sm leading-5 font-medium tracking-normal"
-        >
-          Eliminar
-        </DropdownMenuItem> */}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-export function UsersTable({ users }: { users: User[] }) {
+export function UsersTable({ users, currentUserId }: { users: User[]; currentUserId: number }) {
   return (
     <>
       <div className="flex max-h-130 flex-col gap-3 overflow-y-auto xl:hidden">
@@ -73,7 +29,7 @@ export function UsersTable({ users }: { users: User[] }) {
                 <p className="text-muted-foreground truncate text-sm">{user.email}</p>
                 <p className="text-foreground mt-1 text-sm">{ROLE_LABELS[user.role]}</p>
               </div>
-              <UserActionsMenu user={user} />
+              <UserActionsMenu user={user} canDelete={user.id !== currentUserId} />
             </CardContent>
             <CardContent className="flex items-center justify-between gap-3 px-4">
               <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
@@ -127,7 +83,7 @@ export function UsersTable({ users }: { users: User[] }) {
                   {formatDate(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
-                  <UserActionsMenu user={user} />
+                  <UserActionsMenu user={user} canDelete={user.id !== currentUserId} />
                 </TableCell>
               </TableRow>
             ))}
