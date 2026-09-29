@@ -19,25 +19,13 @@ type LoginFormValues = {
 export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean }) {
   const [state, formAction, pending] = useActionState(login, {});
   const [showPassword, setShowPassword] = useState(false);
-  // TODO: Remove both serverErrorDismissed and prevState once the toast component is implemented
-  const [serverErrorDismissed, setServerErrorDismissed] = useState(false);
-  const [prevState, setPrevState] = useState(state);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema) as Resolver<LoginFormValues>,
     defaultValues: { documentId: '', password: '' },
   });
   const { handleSubmit } = form;
 
-  if (state !== prevState) {
-    setPrevState(state);
-    setServerErrorDismissed(false);
-  }
-
-  function dismissServerError() {
-    setServerErrorDismissed(true);
-  }
-
-  const showCredentialsError = state.formError && !serverErrorDismissed;
+  const showCredentialsError = state.formError;
 
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +57,6 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             type="text"
             autoComplete="username"
             placeholder="Ej. 4.123.456-7"
-            onChange={dismissServerError}
           />
           <TextInputField
             id="password"
@@ -77,7 +64,6 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             label="Contraseña"
             type={showPassword ? 'text' : 'password'}
             placeholder="Tu contraseña"
-            onChange={dismissServerError}
             messages={showCredentialsError ? ['Credenciales incorrectas'] : undefined}
             trailingAction={
               <button

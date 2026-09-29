@@ -38,11 +38,16 @@ export function TextareaField({
         {...register(name)}
         id={id}
         aria-invalid={Boolean(errorMessage)}
-        aria-describedby={description ? `${id}-description` : undefined}
+        aria-describedby={
+          errorMessage ? `${id}-error` : description ? `${id}-description` : undefined
+        }
         className="border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base md:text-sm"
       />
-      {description && <FieldDescription id={`${id}-description`}>{description}</FieldDescription>}
-      <FieldError>{errorMessage}</FieldError>
+      {errorMessage ? (
+        <FieldError id={`${id}-error`}>{errorMessage}</FieldError>
+      ) : description ? (
+        <FieldDescription id={`${id}-description`}>{description}</FieldDescription>
+      ) : null}
     </Field>
   );
 }

@@ -78,12 +78,13 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
-      {description && (
+      {errorMessage ? (
+        <FieldError className="text-xs leading-4">{errorMessage}</FieldError>
+      ) : description ? (
         <FieldDescription className="text-muted-foreground text-xs leading-4">
           {description}
         </FieldDescription>
-      )}
-      <FieldError className="text-xs leading-4">{errorMessage}</FieldError>
+      ) : null}
     </Field>
   );
 }

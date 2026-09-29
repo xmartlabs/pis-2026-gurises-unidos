@@ -65,12 +65,13 @@ export function TextInputField({
           <div className="absolute top-1/2 right-1 -translate-y-1/2">{trailingAction}</div>
         )}
       </div>
-      {description && (
+      {errorMessage ? (
+        <FieldError className="text-xs leading-4">{errorMessage}</FieldError>
+      ) : description ? (
         <FieldDescription className="text-muted-foreground text-xs leading-4">
           {description}
         </FieldDescription>
-      )}
-      <FieldError className="text-xs leading-4">{errorMessage}</FieldError>
+      ) : null}
     </Field>
   );
 }
