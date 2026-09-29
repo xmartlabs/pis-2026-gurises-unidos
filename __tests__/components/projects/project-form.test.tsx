@@ -79,7 +79,9 @@ it('keeps the original creation appearance separate from edit styling', () => {
   expect(screen.queryByText('Cobertura')).toBeNull();
   expect(screen.queryByText('Ver vista pública →')).toBeNull();
   expect(screen.getByLabelText('Nombre del proyecto').classList.contains('md:text-sm')).toBe(true);
-  expect((screen.getByLabelText('Foto de portada') as HTMLInputElement).disabled).toBe(true);
+  expect(
+    screen.getByLabelText('Foto de portada').closest('[data-slot="field"]')?.hasAttribute('hidden')
+  ).toBe(true);
   expect(
     screen
       .getByText('Información básica')
@@ -87,6 +89,26 @@ it('keeps the original creation appearance separate from edit styling', () => {
       ?.classList.contains('ring-1')
   ).toBe(true);
   expect(screen.queryByRole('button', { name: 'Guardar borrador' })).toBeNull();
+});
+
+it('shows and submits the selected project placeholder during creation', () => {
+  const { container } = render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[]}
+      departments={[]}
+      initialValues={{ coverPhotoUrl: '/images/project-placeholders/2.webp' }}
+      submitAction={vi.fn()}
+    />
+  );
+
+  expect(container.querySelector('img')?.getAttribute('src')).toContain(
+    'project-placeholders%2F2.webp'
+  );
+  expect(new FormData(container.querySelector('form')!).get('projectPlaceholder')).toBe(
+    '/images/project-placeholders/2.webp'
+  );
 });
 
 it('sends all checked topics and keeps them after a failed save', async () => {
