@@ -22,7 +22,7 @@ function buildFormData(overrides: Record<string, string | string[]> = {}): FormD
     generalObjective: 'Objective',
     publicDescription: '',
     internalNotes: '',
-    topicIds: seed.topicIds.slice(0, 2).map(String),
+    topicId: String(seed.topicIds[0]),
     year: String(BENEFICIARY_YEAR),
     directChildrenAdolescents: '10',
     indirectChildrenAdolescents: '5',
@@ -53,7 +53,7 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
       localityNeighborhood: 'Barrio Sur',
       generalObjective: 'Objective',
       createdBy: seed.adminId,
-      projectTopics: { create: seed.topicIds.slice(0, 2).map((topicId) => ({ topicId })) },
+      topicId: seed.topicIds[0],
       projectBeneficiaries: {
         create: {
           year: BENEFICIARY_YEAR,
@@ -86,7 +86,6 @@ async function deleteProject(id: number) {
         ],
       },
     }),
-    prisma.projectTopic.deleteMany({ where: { projectId: id } }),
     prisma.projectBeneficiary.deleteMany({ where: { projectId: id } }),
     prisma.project.deleteMany({ where: { id } }),
   ]);
@@ -96,7 +95,6 @@ function loadProject(id: number) {
   return prisma.project.findUniqueOrThrow({
     where: { id },
     include: {
-      projectTopics: { orderBy: { topicId: 'asc' } },
       projectBeneficiaries: { orderBy: { year: 'asc' } },
     },
   });
@@ -132,10 +130,10 @@ afterEach(async () => {
 });
 
 describe('updateProject (integration)', () => {
-  test('persists changed fields and topics and audits only what changed', async () => {
+  test('persists changed fields and topic and audits only what changed', async () => {
     const projectId = await createProjectFixture();
     signInAs(seed.adminId);
-    const newTopicIds = seed.topicIds.slice(1, 3);
+    const newTopicId = seed.topicIds[1];
 
     await expectRedirectToProject(
       updateProject(
@@ -145,7 +143,7 @@ describe('updateProject (integration)', () => {
           name: 'Renamed project',
           zone: 'city',
           departmentId: String(seed.departmentIds[1]),
-          topicIds: newTopicIds.map(String),
+          topicId: String(newTopicId),
         })
       ),
       projectId
@@ -159,13 +157,13 @@ describe('updateProject (integration)', () => {
       status: 'active',
       startYear: 2020,
     });
-    expect(project.projectTopics.map(({ topicId }) => topicId)).toEqual(newTopicIds);
+    expect(project.topicId).toBe(newTopicId);
     expect(await auditLogsFor(projectId)).toEqual([
       expect.objectContaining({
         entity: 'project',
         action: 'update',
         authorId: seed.adminId,
-        details: { changedFields: ['name', 'departmentId', 'zone', 'topicIds'] },
+        details: { changedFields: ['name', 'departmentId', 'zone', 'topicId'] },
       }),
     ]);
   });
@@ -307,10 +305,10 @@ describe('updateProject (integration)', () => {
     const result = await updateProject(
       projectId,
       {},
-      buildFormData({ name: 'Should not persist', topicIds: [String(unknownTopicId)] })
+      buildFormData({ name: 'Should not persist', topicId: String(unknownTopicId) })
     );
 
-    expect(result.errors?.topicIds).toEqual(['Elegí temáticas válidas']);
+    expect(result.errors?.topicId).toEqual(['Elegí una temática válida']);
     expect(await loadProject(projectId)).toEqual(before);
   });
 

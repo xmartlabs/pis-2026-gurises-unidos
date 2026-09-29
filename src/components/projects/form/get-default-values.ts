@@ -5,7 +5,7 @@ export function getDefaultValues(currentYear: number): ProjectFormValues {
     year: String(currentYear),
     name: '',
     status: 'active',
-    topicIds: [],
+    topicId: '',
     intensity: 'high',
     startYear: String(currentYear),
     leadCoordinatorId: '',

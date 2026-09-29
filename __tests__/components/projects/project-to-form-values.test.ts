@@ -18,10 +18,7 @@ const PROJECT = {
   createdAt: new Date('2024-01-01'),
   createdBy: 1,
   updatedAt: null,
-  projectTopics: [
-    { projectId: 10, topicId: 1 },
-    { projectId: 10, topicId: 2 },
-  ],
+  topicId: 1,
   projectBeneficiaries: [
     {
       id: 1,
@@ -45,7 +42,7 @@ it('defaults to the current year without copying historical beneficiary counts',
     year: '2026',
     families: '0',
     directChildrenAdolescents: '0',
-    topicIds: ['1', '2'],
+    topicId: '1',
     coverPhotoUrl: '/cover.png',
     internalNotes: '',
   });
@@ -65,4 +62,8 @@ it('maps all counts from the requested year without mutating the project', () =>
     basicServiceStaff: '5',
   });
   expect(PROJECT).toEqual(original);
+});
+
+it('maps a missing topic to an empty selection', () => {
+  expect(projectToFormValues({ ...PROJECT, topicId: null }, 2026).topicId).toBe('');
 });

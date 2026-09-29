@@ -21,7 +21,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { projectBeneficiaries: { orderBy: { year: 'desc' } }, projectTopics: true },
+    include: { projectBeneficiaries: { orderBy: { year: 'desc' } } },
   });
 
   if (!project) {
@@ -54,7 +54,16 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         author: { select: { firstName: true, lastName: true } },
       },
     }),
-    prisma.topic.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+    prisma.topic.findMany({
+      where: {
+        OR: [
+          { isActive: true },
+          ...(project.topicId !== null ? [{ id: project.topicId }] : []),
+        ],
+      },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    })  
   ]);
 
   const submitAction = updateProject.bind(null, project.id);

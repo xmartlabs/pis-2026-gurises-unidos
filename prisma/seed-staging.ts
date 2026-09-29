@@ -154,6 +154,7 @@ async function main() {
           startYear,
           leadCoordinatorId: coordinatorIds[index % coordinatorIds.length],
           departmentId: departments.get(departmentName)!,
+          topicId: topicIds[index % topicIds.length],
           zone: ZONES[index % ZONES.length],
           localityNeighborhood: index % 3 === 0 ? null : `Barrio ${index + 1}`,
           generalObjective: null,
@@ -171,19 +172,6 @@ async function main() {
         const project = existing
           ? await tx.project.update({ where: { id: existing.id }, data })
           : await tx.project.create({ data });
-
-        const projectTopicIds = [
-          topicIds[index % topicIds.length],
-          topicIds[(index + 2) % topicIds.length],
-        ];
-
-        await tx.projectTopic.deleteMany({
-          where: { projectId: project.id, topicId: { notIn: projectTopicIds } },
-        });
-        await tx.projectTopic.createMany({
-          data: projectTopicIds.map((topicId) => ({ projectId: project.id, topicId })),
-          skipDuplicates: true,
-        });
 
         const yearCount = index % 7 === 0 ? 0 : 1 + (index % 4);
 
