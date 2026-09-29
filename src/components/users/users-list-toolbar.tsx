@@ -39,7 +39,7 @@ export function UsersListToolbar({
 
   const roleFilter = filters.role ?? 'all';
   const statusFilter = filters.status ?? 'all';
-  const sortBy = (filters.sortBy ?? 'name') as SortBy;
+  const sortBy = filters.sortBy ?? 'name';
 
   function updateParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(window.location.search);

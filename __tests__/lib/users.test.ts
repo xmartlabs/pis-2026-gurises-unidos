@@ -157,16 +157,6 @@ describe('getUserList', () => {
     );
   });
 
-  test('falls back to sorting by name when sortBy is not recognized', async () => {
-    await getUserList({ sortBy: 'not-a-real-column' });
-
-    expect(prisma.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }],
-      })
-    );
-  });
-
   test('returns an empty list when there are no matches', async () => {
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
@@ -199,6 +189,11 @@ describe('parseUserListFilters', () => {
 
   test('falls back to sorting by name when sort is not recognized', () => {
     expect(parseUserListFilters({ sort: 'xxx' }).sortBy).toBe('name');
+  });
+
+  test('ignores sort values inherited from the object prototype', () => {
+    expect(parseUserListFilters({ sort: 'constructor' }).sortBy).toBe('name');
+    expect(parseUserListFilters({ sort: 'toString' }).sortBy).toBe('name');
   });
 
   test('takes the first value when a param is repeated', () => {

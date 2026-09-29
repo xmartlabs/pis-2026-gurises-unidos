@@ -1,24 +1,14 @@
 import type { Prisma } from '@/generated/prisma/client';
 import { UserRole, UserStatus } from '@/generated/prisma/enums';
 import prisma from '@/lib/prisma';
-
-export type UserSortBy = 'name' | 'role' | 'status' | 'lastAccess';
+import type { SortBy } from '@/lib/users/constants';
+import type { User } from '@/lib/users/format';
 
 export type UserListFilters = {
   search?: string;
   role?: UserRole;
   status?: UserStatus;
-  sortBy?: string;
-};
-
-export type UserListItem = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  status: UserStatus;
-  lastAccess: Date | null;
+  sortBy?: SortBy;
 };
 
 const NAME_ORDER: Prisma.UserOrderByWithRelationInput[] = [
@@ -27,18 +17,18 @@ const NAME_ORDER: Prisma.UserOrderByWithRelationInput[] = [
   { id: 'asc' },
 ];
 
-const ORDER_BY: Record<UserSortBy, Prisma.UserOrderByWithRelationInput[]> = {
+const ORDER_BY: Record<SortBy, Prisma.UserOrderByWithRelationInput[]> = {
   name: NAME_ORDER,
   role: [{ role: 'asc' }, ...NAME_ORDER],
   status: [{ status: 'asc' }, ...NAME_ORDER],
   lastAccess: [{ lastAccess: { sort: 'desc', nulls: 'last' } }, ...NAME_ORDER],
 };
 
-function resolveSortBy(sortBy?: string): UserSortBy {
-  return sortBy === 'role' || sortBy === 'status' || sortBy === 'lastAccess' ? sortBy : 'name';
+function resolveSortBy(sortBy?: string): SortBy {
+  return sortBy && Object.hasOwn(ORDER_BY, sortBy) ? (sortBy as SortBy) : 'name';
 }
 
-export async function getUserList(filters: UserListFilters = {}): Promise<UserListItem[]> {
+export async function getUserList(filters: UserListFilters = {}): Promise<User[]> {
   const { search, role, status, sortBy } = filters;
   const searchTerms = search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
@@ -70,7 +60,7 @@ export async function getUserList(filters: UserListFilters = {}): Promise<UserLi
       status: true,
       lastAccess: true,
     },
-    orderBy: ORDER_BY[resolveSortBy(sortBy)],
+    orderBy: ORDER_BY[sortBy ?? 'name'],
   });
 }
 
