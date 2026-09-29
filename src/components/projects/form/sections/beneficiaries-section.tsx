@@ -10,11 +10,10 @@ import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
 
 export function BeneficiariesSection({
-  variant,
   isEditing,
   yearOptions,
   beneficiaryRecords,
-}: Pick<SectionProps, 'variant' | 'isEditing' | 'yearOptions' | 'beneficiaryRecords'>) {
+}: Pick<SectionProps, 'isEditing' | 'yearOptions' | 'beneficiaryRecords'>) {
   const { getValues, setValue } = useFormContext<ProjectFormValues>();
   const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
 
@@ -38,7 +37,6 @@ export function BeneficiariesSection({
 
   return (
     <FormSection
-      variant={variant}
       title="Beneficiarios principales"
       descriptionSpacing={isEditing ? 'relaxed' : 'compact'}
       description="Estas categorías son el núcleo del impacto. Completá lo que aplica."
@@ -59,7 +57,6 @@ export function BeneficiariesSection({
       </div>
       {BENEFICIARY_FIELDS.map((field, index) => (
         <TextInputField
-          variant={variant}
           key={field.key}
           id={field.key}
           name={field.key}

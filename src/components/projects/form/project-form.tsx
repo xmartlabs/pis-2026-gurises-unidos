@@ -57,7 +57,6 @@ export function ProjectForm({
 }: ProjectFormProps) {
   const router = useRouter();
   const isEditing = mode === 'edit';
-  const variant = isEditing ? 'detailed' : 'default';
   const yearOptions = useMemo(
     () =>
       Array.from({ length: currentYear - FIRST_PROJECT_YEAR + 1 }, (_, index) => ({
@@ -155,42 +154,38 @@ export function ProjectForm({
             )}
           >
             <BasicInfoSection
-              variant={variant}
               yearOptions={yearOptions}
               coordinatorOptions={coordinatorOptions}
               topics={topics}
             />
 
             <TerritorySection
-              variant={variant}
               isEditing={isEditing}
               departmentOptions={departmentOptions}
               coverageLabel={coverageLabel}
             />
 
             <BeneficiariesSection
-              variant={variant}
               isEditing={isEditing}
               yearOptions={beneficiaryYearOptions}
               beneficiaryRecords={beneficiaryRecords}
             />
 
-            <PublicInfoSection variant={variant} />
+            <PublicInfoSection />
 
-            <InternalNotesSection variant={variant} isEditing={isEditing} />
+            <InternalNotesSection isEditing={isEditing} />
             {children}
           </div>
 
           <ProjectPreview
-            variant={variant}
             values={values}
             locationLabel={locationLabel}
             beneficiaryTotal={beneficiaryTotal}
+            isEditing={isEditing}
           />
         </div>
 
         <FormActions
-          variant={variant}
           onCancel={() => router.push(cancelHref)}
           submitLabel="Guardar cambios"
           pending={pending}

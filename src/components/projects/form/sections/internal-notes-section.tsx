@@ -2,13 +2,9 @@ import { TextareaField } from '@/components/ui/forms/textarea-field';
 import { FormSection } from '@/components/ui/forms/form-section';
 import type { SectionProps } from './section-props';
 
-export function InternalNotesSection({
-  variant,
-  isEditing,
-}: Pick<SectionProps, 'variant' | 'isEditing'>) {
+export function InternalNotesSection({ isEditing }: Pick<SectionProps, 'isEditing'>) {
   return (
     <FormSection
-      variant={variant}
       title="Notas internas"
       description="Comentarios para el equipo. No se muestran en la vista pública."
       separator={!isEditing}
@@ -16,7 +12,6 @@ export function InternalNotesSection({
       contentClassName={isEditing ? 'pt-4' : 'pt-3'}
     >
       <TextareaField
-        variant={variant}
         id="internalNotes"
         name="internalNotes"
         label="Notas internas"

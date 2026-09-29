@@ -1,7 +1,6 @@
 import type { BeneficiaryCounts } from '@/lib/project-display';
 
 export type SectionProps = {
-  variant: 'default' | 'detailed';
   isEditing: boolean;
   yearOptions: { value: string; label: string }[];
   coordinatorOptions: { value: string; label: string }[];

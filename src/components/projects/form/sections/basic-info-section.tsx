@@ -9,18 +9,16 @@ import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
 
 export function BasicInfoSection({
-  variant,
   yearOptions,
   coordinatorOptions,
   topics,
-}: Pick<SectionProps, 'variant' | 'yearOptions' | 'coordinatorOptions' | 'topics'>) {
+}: Pick<SectionProps, 'yearOptions' | 'coordinatorOptions' | 'topics'>) {
   const { setValue } = useFormContext<ProjectFormValues>();
   const status = useWatch<ProjectFormValues, 'status'>({ name: 'status' });
 
   return (
-    <FormSection variant={variant} title="Información básica">
+    <FormSection title="Información básica">
       <TextInputField
-        variant={variant}
         maxLength={100}
         id="name"
         name="name"

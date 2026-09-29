@@ -13,17 +13,15 @@ import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
 
 export function TerritorySection({
-  variant,
   isEditing,
   departmentOptions,
   coverageLabel,
-}: Pick<SectionProps, 'variant' | 'isEditing' | 'departmentOptions' | 'coverageLabel'>) {
+}: Pick<SectionProps, 'isEditing' | 'departmentOptions' | 'coverageLabel'>) {
   const { control } = useFormContext<ProjectFormValues>();
   const zoneField = useController({ name: 'zone', control });
 
   return (
     <FormSection
-      variant={variant}
       title="Territorio"
       description="¿En qué zonas opera este proyecto?"
       descriptionSpacing={isEditing ? 'relaxed' : 'compact'}
@@ -37,7 +35,6 @@ export function TerritorySection({
           options={departmentOptions}
         />
         <TextInputField
-          variant={variant}
           id="localityNeighborhood"
           name="localityNeighborhood"
           label="Localidad / Barrio"

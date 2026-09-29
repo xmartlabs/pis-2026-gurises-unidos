@@ -2,7 +2,6 @@
 
 import type { ComponentProps } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
-import { cn } from 'cn';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 
@@ -10,7 +9,6 @@ type TextareaFieldProps = Omit<ComponentProps<typeof Textarea>, 'onChange' | 'va
   id: string;
   name: string;
   label: string;
-  variant?: 'default' | 'detailed';
   messages?: string[];
   description?: string;
 };
@@ -19,7 +17,6 @@ export function TextareaField({
   id,
   name,
   label,
-  variant = 'default',
   messages,
   description,
   ...props
@@ -42,10 +39,7 @@ export function TextareaField({
         id={id}
         aria-invalid={Boolean(errorMessage)}
         aria-describedby={description ? `${id}-description` : undefined}
-        className={cn(
-          'border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base',
-          variant === 'detailed' ? 'leading-6 shadow-sm' : 'md:text-sm'
-        )}
+        className="border-input bg-background min-h-20 resize-y rounded-lg px-3 py-2 text-base md:text-sm"
       />
       {description && <FieldDescription id={`${id}-description`}>{description}</FieldDescription>}
       <FieldError>{errorMessage}</FieldError>

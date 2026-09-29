@@ -2,17 +2,14 @@ import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { TextareaField } from '@/components/ui/forms/textarea-field';
 import { FormSection } from '@/components/ui/forms/form-section';
-import type { SectionProps } from './section-props';
 
-export function PublicInfoSection({ variant }: Pick<SectionProps, 'variant'>) {
+export function PublicInfoSection() {
   return (
     <FormSection
-      variant={variant}
       title="Información pública"
       description="Aparece en la vista pública para donantes y aliados."
     >
       <TextInputField
-        variant={variant}
         id="generalObjective"
         name="generalObjective"
         label="Objetivo general"
@@ -20,7 +17,6 @@ export function PublicInfoSection({ variant }: Pick<SectionProps, 'variant'>) {
         description="Aparece como subtítulo en la vista pública"
       />
       <TextareaField
-        variant={variant}
         id="publicDescription"
         name="publicDescription"
         label="Descripción pública"
