@@ -111,7 +111,7 @@ it('shows and submits the selected project placeholder during creation', () => {
   );
 });
 
-it('sends all checked topics and keeps them after a failed save', async () => {
+it('sends one selected topic and preserves it after a failed save', async () => {
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm

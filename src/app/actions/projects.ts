@@ -64,7 +64,7 @@ export async function createProject(
   const user = await requireUser();
   const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
-  const { projectData, beneficiaryData, topicIds } = splitProjectFormData(parsed.data);
+  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
   const submittedPlaceholder = formData.get('projectPlaceholder');
   const coverPhoto = isProjectPlaceholder(submittedPlaceholder)
     ? submittedPlaceholder
