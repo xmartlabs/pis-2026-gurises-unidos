@@ -1,14 +1,17 @@
 import { Prisma } from '@/generated/prisma/client';
 import type { ProjectFormState } from '@/lib/validation/project';
 
+export const DUPLICATE_PROJECT_MESSAGE = 'Ya existe un proyecto con ese nombre y año de inicio';
+
 export function mapProjectDbError(error: unknown): ProjectFormState | null {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return null;
   if (error.code === 'P2025') return { formError: 'El proyecto no existe o fue eliminado.' };
   if (error.code === 'P2002') {
     const target = error.meta?.target;
     const fields = Array.isArray(target) ? target.map(String) : [String(target ?? '')];
-    if (fields.includes('name') && fields.includes('startYear'))
-      return { errors: { name: ['Ya existe un proyecto con ese nombre y año de inicio'] } };
+    const isNameYearIndex = fields.some((field) => field.includes('name_lower_startYear'));
+    if ((fields.includes('name') && fields.includes('startYear')) || isNameYearIndex)
+      return { errors: { name: [DUPLICATE_PROJECT_MESSAGE] } };
     return null;
   }
   if (error.code === 'P2003') {

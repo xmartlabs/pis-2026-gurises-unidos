@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   findUser: vi.fn(),
   findCoordinator: vi.fn(),
   findProject: vi.fn(),
+  findDuplicateProject: vi.fn(),
   findTopic: vi.fn(),
   transaction: vi.fn(),
   createProject: vi.fn(),
@@ -36,6 +37,7 @@ const TX = {
     create: mocks.createProject,
     update: mocks.updateProject,
     findUnique: mocks.findProject,
+    findFirst: mocks.findDuplicateProject,
   },
   user: { findFirst: mocks.findCoordinator },
   topic: { findFirst: mocks.findTopic },
@@ -91,6 +93,7 @@ beforeEach(() => {
   mocks.findCoordinator.mockResolvedValue({ id: 2 });
   mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: null });
   mocks.findTopic.mockResolvedValue({ id: 2 });
+  mocks.findDuplicateProject.mockResolvedValue(null);
   mocks.redirect.mockImplementation((path: string) => {
     throw new Error(`Redirect: ${path}`);
   });
@@ -106,6 +109,20 @@ describe.each([
   ['createProject', (data: FormData) => createProject({}, data)],
   ['updateProject', (data: FormData) => updateProject(10, {}, data)],
 ] as const)('%s', (_name, submit) => {
+  it('rejects a name that matches another project in the same year ignoring case', async () => {
+    mocks.findDuplicateProject.mockResolvedValue({ id: 99 });
+    const result = await submit(formData());
+    expect(result).toEqual({
+      errors: { name: ['Ya existe un proyecto con ese nombre y año de inicio'] },
+    });
+    expect(mocks.findDuplicateProject.mock.calls[0][0].where).toMatchObject({
+      name: { equals: 'Updated project', mode: 'insensitive' },
+      startYear: 2019,
+    });
+    expect(mocks.createProject).not.toHaveBeenCalled();
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+  });
+
   it('redirects unauthenticated users before accessing the database', async () => {
     mocks.auth.mockResolvedValue(null);
     await expect(submit(formData())).rejects.toThrow('Redirect: /login');
@@ -559,7 +576,10 @@ describe('project review regressions', () => {
     expect(mocks.createProject).toHaveBeenCalledWith({
       data: expect.objectContaining({ topicId: 2 }),
     });
-    expect(mocks.findTopic).toHaveBeenCalledWith({ where: { id: 2, isActive: true }, select: { id: true } });
+    expect(mocks.findTopic).toHaveBeenCalledWith({
+      where: { id: 2, isActive: true },
+      select: { id: true },
+    });
   });
 
   it('rejects a nonexistent topic before any writes', async () => {
