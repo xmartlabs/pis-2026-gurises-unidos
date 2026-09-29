@@ -7,7 +7,8 @@ import { INTENSITY_LABEL, STATUS_LABEL } from '@/lib/project-display';
 import { STATUS_BADGE_VARIANT } from '@/lib/projects/constants';
 import type { ProjectListItem } from '@/lib/projects/list';
 
-export type ProjectCardProps = {
+type InternalProjectCardProps = {
+  variant?: 'internal';
   id: number;
   name: string;
   status: ProjectListItem['status'];
@@ -18,7 +19,89 @@ export type ProjectCardProps = {
   totalReach: number | null;
 };
 
-export function ProjectCard({
+type PublicProjectCardProps = {
+  variant: 'public-dark' | 'public-light';
+  territory: string;
+  name: string;
+  description: string;
+  reach: number;
+};
+
+export type ProjectCardProps = InternalProjectCardProps | PublicProjectCardProps;
+
+const PUBLIC_VARIANT_STYLES = {
+  'public-dark': {
+    card: 'bg-card border-primary',
+    image: 'bg-status-success/25',
+    dot: 'bg-primary',
+    territory: 'text-foreground',
+    name: 'text-foreground',
+    description: 'text-muted-foreground',
+    reach: 'text-primary',
+    reachLabel: 'text-muted-foreground',
+  },
+  'public-light': {
+    card: 'bg-white border-status-success',
+    image: 'bg-(image:--project-cover)',
+    dot: 'bg-status-success',
+    territory: 'text-neutral-500',
+    name: 'text-neutral-950',
+    description: 'text-neutral-500',
+    reach: 'text-neutral-950',
+    reachLabel: 'text-neutral-500',
+  },
+};
+
+function isPublicProps(props: ProjectCardProps): props is PublicProjectCardProps {
+  return props.variant === 'public-dark' || props.variant === 'public-light';
+}
+
+export function ProjectCard(props: ProjectCardProps) {
+  if (isPublicProps(props)) {
+    return <PublicProjectCard {...props} />;
+  }
+  return <InternalProjectCard {...props} />;
+}
+
+function PublicProjectCard({
+  variant,
+  territory,
+  name,
+  description,
+  reach,
+}: PublicProjectCardProps) {
+  const styles = PUBLIC_VARIANT_STYLES[variant];
+
+  return (
+    <article
+      className={`${styles.card} flex flex-col overflow-hidden rounded-xl border-t-4 lg:border-t-0`}
+    >
+      <div className={`${styles.image} hidden h-54.5 w-full lg:block`} />
+      <div className="flex flex-col gap-2 px-5 py-4">
+        <div className="flex items-center gap-2">
+          <span className={`${styles.dot} size-1.5 rounded-full`} />
+          <span className={`${styles.territory} text-xs leading-4 font-normal tracking-normal`}>
+            {territory}
+          </span>
+        </div>
+        <h3 className={`${styles.name} text-base leading-6 font-medium tracking-normal`}>{name}</h3>
+        <p className={`${styles.description} text-sm leading-5 font-normal tracking-normal`}>
+          {description}
+        </p>
+        <div className="flex items-baseline gap-2">
+          <span className={`${styles.reach} text-xl leading-7 font-bold tracking-normal`}>
+            {formatNumber(reach)}
+          </span>
+          <span className={`${styles.reachLabel} text-xs leading-4 font-normal tracking-normal`}>
+            personas alcanzadas
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function InternalProjectCard({
   id,
   name,
   status,
@@ -27,7 +110,7 @@ export function ProjectCard({
   intensity,
   year,
   totalReach,
-}: ProjectCardProps) {
+}: InternalProjectCardProps) {
   return (
     <Link href={`/dashboard/projects/${id}`} className="block">
       <Card className="bg-card flex flex-col gap-3.5 rounded-lg px-5 py-4.5 hover:shadow-sm/10">
