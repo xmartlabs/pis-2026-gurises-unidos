@@ -31,6 +31,7 @@ type FormDataInput = Record<string, string | undefined>;
 
 const VALID_FIELDS: FormDataInput = {
   name: 'Community Center',
+  topicId: '1',
   status: 'active',
   intensity: 'high',
   startYear: '2020',
@@ -69,7 +70,7 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
   transactionMock.mockImplementation(async (callback) =>
     callback({
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
-      topic: { findUnique: vi.fn().mockResolvedValue(null) },
+      topic: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },
       projectBeneficiary: { create: beneficiaryCreate },
     })
@@ -152,7 +153,7 @@ describe('createProject', () => {
         internalNotes: null,
         coverPhoto: expect.stringMatching(/^\/images\/project-placeholders\/[1-6]\.webp$/),
         createdBy: 7,
-        topicId: null,
+        topicId: 1,
       },
     });
     expect(beneficiaryCreate).toHaveBeenCalledWith({

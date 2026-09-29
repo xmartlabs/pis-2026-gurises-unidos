@@ -24,7 +24,7 @@ export function projectToFormValues(
     publicDescription: project.publicDescription ?? '',
     internalNotes: project.internalNotes ?? '',
     coverPhotoUrl: project.coverPhoto,
-    topicId: project.topicId === null ? '' : String(project.topicId),
+    topicId: String(project.topicId),
     ...Object.fromEntries(
       BENEFICIARY_FIELDS.map(({ key }) => [key, String(beneficiary?.[key] ?? 0)])
     ),

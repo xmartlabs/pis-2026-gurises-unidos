@@ -34,9 +34,9 @@ async function lockTopics(tx: Prisma.TransactionClient, topicIds: (number | null
 async function validateRelations(
   tx: Prisma.TransactionClient,
   coordinatorId: number,
-  topicId: number | null,
+  topicId: number,
   currentCoordinatorId?: number,
-  currentTopicId?: number | null
+  currentTopicId?: number
 ): Promise<ProjectFormState | null> {
   const coordinator = await tx.user.findFirst({
     where: {
@@ -48,18 +48,16 @@ async function validateRelations(
     select: { id: true },
   });
   if (!coordinator) return { errors: { leadCoordinatorId: ['Elegí un coordinador válido'] } };
-  if (topicId !== null) {
-    const topic = await tx.topic.findFirst({
-      where: {
-        id: topicId,
-        ...(topicId === currentTopicId ? {} : { isActive: true }),
-      },
-      select: { id: true },
-    });
+  const topic = await tx.topic.findFirst({
+    where: {
+      id: topicId,
+      ...(topicId === currentTopicId ? {} : { isActive: true }),
+    },
+    select: { id: true },
+  });
 
-    if (!topic) {
-      return { errors: { topicId: ['Elegí una temática válida'] } };
-    }
+  if (!topic) {
+    return { errors: { topicId: ['Elegí una temática válida'] } };
   }
   return null;
 }

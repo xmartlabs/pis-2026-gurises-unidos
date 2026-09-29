@@ -1,0 +1,11 @@
+BEGIN;
+
+LOCK TABLE "Project" IN ACCESS EXCLUSIVE MODE;
+
+UPDATE "Project"
+SET "topicId" = (SELECT MIN("id") FROM "Topic")
+WHERE "topicId" IS NULL;
+
+ALTER TABLE "Project" ALTER COLUMN "topicId" SET NOT NULL;
+
+COMMIT;

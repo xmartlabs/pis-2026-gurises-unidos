@@ -28,13 +28,14 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
-      topics={[]}
+      topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       mode="edit"
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Existing project',
+        topicId: '1',
         status: 'paused',
         leadCoordinatorId: '2',
         departmentId: '3',
@@ -161,11 +162,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
   expect(submitAction.mock.calls[1][1].getAll('topicId')).toEqual(['2']);
   expect(screen.getByLabelText('Temática').textContent).toContain('Health');
   fireEvent.click(screen.getByLabelText('Temática'));
-  fireEvent.keyDown(await screen.findByRole('option', { name: 'Sin temática' }), { key: 'Enter' });
-  await act(async () => {
-    fireEvent.submit(container.querySelector('form')!);
-  });
-  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['']);
+  expect(screen.queryByRole('option', { name: 'Sin temática' })).toBeNull();
 });
 
 function renderFormWith(initialValues: Record<string, string>) {
@@ -200,7 +197,7 @@ it('submits the end year of a closed project', async () => {
   const submitAction = vi.fn().mockResolvedValue({});
   const { container } = render(
     <ProjectForm
-      topics={[]}
+      topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
@@ -211,6 +208,7 @@ it('submits the end year of a closed project', async () => {
         status: 'closed',
         startYear: '2020',
         endYear: '2022',
+        topicId: '1',
       }}
       submitAction={submitAction}
     />

@@ -43,12 +43,20 @@ export function BasicInfoSection({
           id="topicId"
           name="topicId"
           label="Temática"
-          placeholder="Sin temática"
-          clearLabel="Sin temática"
+          placeholder="Seleccionar temática..."
           options={topics.map((topic) => ({
             value: String(topic.id),
             label: topic.name,
           }))}
+          disabled={topics.length === 0}
+          messages={
+            topics.length === 0
+              ? [
+                  'No hay temáticas disponibles. Un administrador debe crear o activar una antes de crear proyectos.',
+                ]
+              : undefined
+          }
+          required
         />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
