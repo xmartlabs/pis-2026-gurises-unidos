@@ -21,11 +21,17 @@ export type UserListItem = {
   lastAccess: Date | null;
 };
 
+const NAME_ORDER: Prisma.UserOrderByWithRelationInput[] = [
+  { firstName: 'asc' },
+  { lastName: 'asc' },
+  { id: 'asc' },
+];
+
 const ORDER_BY: Record<UserSortBy, Prisma.UserOrderByWithRelationInput[]> = {
-  name: [{ firstName: 'asc' }, { lastName: 'asc' }],
-  role: [{ role: 'asc' }],
-  status: [{ status: 'asc' }],
-  lastAccess: [{ lastAccess: { sort: 'desc', nulls: 'last' } }],
+  name: NAME_ORDER,
+  role: [{ role: 'asc' }, ...NAME_ORDER],
+  status: [{ status: 'asc' }, ...NAME_ORDER],
+  lastAccess: [{ lastAccess: { sort: 'desc', nulls: 'last' } }, ...NAME_ORDER],
 };
 
 function resolveSortBy(sortBy?: string): UserSortBy {

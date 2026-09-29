@@ -22,7 +22,7 @@ describe('getUserList', () => {
         status: true,
         lastAccess: true,
       },
-      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }],
     });
   });
 
@@ -138,9 +138,17 @@ describe('getUserList', () => {
   });
 
   test.each([
-    ['role', [{ role: 'asc' }]],
-    ['status', [{ status: 'asc' }]],
-    ['lastAccess', [{ lastAccess: { sort: 'desc', nulls: 'last' } }]],
+    ['role', [{ role: 'asc' }, { firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }]],
+    ['status', [{ status: 'asc' }, { firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }]],
+    [
+      'lastAccess',
+      [
+        { lastAccess: { sort: 'desc', nulls: 'last' } },
+        { firstName: 'asc' },
+        { lastName: 'asc' },
+        { id: 'asc' },
+      ],
+    ],
   ] as const)('sorts by %s when requested', async (sortBy, expectedOrderBy) => {
     await getUserList({ sortBy });
 
@@ -153,7 +161,9 @@ describe('getUserList', () => {
     await getUserList({ sortBy: 'not-a-real-column' });
 
     expect(prisma.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }] })
+      expect.objectContaining({
+        orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }],
+      })
     );
   });
 
