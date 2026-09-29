@@ -4,6 +4,7 @@ import type { UserRole } from '@/generated/prisma/enums';
 declare module 'next-auth' {
   interface User {
     role: UserRole;
+    avatarColorIndex: number;
     remember?: boolean;
   }
 
@@ -11,6 +12,7 @@ declare module 'next-auth' {
     user: {
       id: string;
       role: UserRole;
+      avatarColorIndex: number;
     } & DefaultSession['user'];
   }
 }
@@ -18,6 +20,7 @@ declare module 'next-auth' {
 declare module '@auth/core/jwt' {
   interface JWT {
     role: UserRole;
+    avatarColorIndex: number;
     remember?: boolean;
   }
 }

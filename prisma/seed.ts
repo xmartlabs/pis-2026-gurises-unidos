@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
+import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import { ADMIN } from './fixtures';
 
 const prisma = new PrismaClient();
@@ -8,12 +9,7 @@ const prisma = new PrismaClient();
 type ProjectFixture = Required<
   Omit<
     Prisma.ProjectUncheckedCreateInput,
-    | 'id'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'projectCoordinators'
-    | 'projectTopics'
-    | 'projectBeneficiaries'
+    'id' | 'createdAt' | 'updatedAt' | 'projectCoordinators' | 'projectBeneficiaries'
   >
 >;
 
@@ -46,7 +42,7 @@ async function main() {
         create: { name: 'Education' },
       });
 
-      const health = await tx.topic.upsert({
+      await tx.topic.upsert({
         where: { name: 'Health' },
         update: {},
         create: { name: 'Health' },
@@ -68,7 +64,7 @@ async function main() {
           documentId: '33333333',
           email: 'admin2@gurisesunidos.test',
           role: 'admin',
-          status: 'pendingInvitation',
+          status: 'active',
           passwordHash,
           createdBy: admin.id,
         },
@@ -104,46 +100,43 @@ async function main() {
         },
       });
 
-      // --- Test project ---
-      const projectData: ProjectFixture = {
+      // --- Test projects ---
+      const baseProject: ProjectFixture = {
         name: 'Test project',
         status: 'active',
         intensity: 'medium',
         startYear: 2025,
+        endYear: null,
         leadCoordinatorId: coordinator.id,
         departmentId: montevideo.id,
+        topicId: education.id,
         zone: 'city',
         localityNeighborhood: null,
         generalObjective: null,
         publicDescription: null,
-        coverPhoto: null,
+        coverPhoto: PROJECT_PLACEHOLDERS[0],
         internalNotes: null,
         createdBy: admin.id,
       };
 
-      // a project is identified by name + startYear, but there is no unique index yet
-      const existingProject = await tx.project.findFirst({
-        where: { name: projectData.name, startYear: projectData.startYear },
-        orderBy: { id: 'asc' },
-      });
-
-      const project = existingProject
-        ? await tx.project.update({ where: { id: existingProject.id }, data: projectData })
-        : await tx.project.create({ data: projectData });
-
-      const topicIds = [education.id, health.id];
-
-      await tx.projectTopic.deleteMany({
-        where: { projectId: project.id, topicId: { notIn: topicIds } },
-      });
-
-      await tx.projectTopic.createMany({
-        data: topicIds.map((topicId) => ({ projectId: project.id, topicId })),
-        skipDuplicates: true,
-      });
-
-      // --- Beneficiaries ---
-      const BENEFICIARY_YEAR = 2025;
+      const projectFixtures: ProjectFixture[] = [
+        baseProject,
+        {
+          ...baseProject,
+          name: 'Closed test project',
+          status: 'closed',
+          intensity: 'low',
+          startYear: 2022,
+          endYear: 2024,
+          zone: 'rural',
+        },
+        {
+          ...baseProject,
+          name: 'Paused test project',
+          status: 'paused',
+          startYear: 2023,
+        },
+      ];
 
       const beneficiaryData = {
         directChildrenAdolescents: 50,
@@ -156,11 +149,21 @@ async function main() {
         authorId: coordinator.id,
       };
 
-      await tx.projectBeneficiary.upsert({
-        where: { projectId_year: { projectId: project.id, year: BENEFICIARY_YEAR } },
-        update: beneficiaryData,
-        create: { projectId: project.id, year: BENEFICIARY_YEAR, ...beneficiaryData },
-      });
+      for (const projectData of projectFixtures) {
+        const project = await tx.project.upsert({
+          where: { name_startYear: { name: projectData.name, startYear: projectData.startYear } },
+          update: projectData,
+          create: projectData,
+        });
+
+        const beneficiaryYear = projectData.endYear ?? 2025;
+
+        await tx.projectBeneficiary.upsert({
+          where: { projectId_year: { projectId: project.id, year: beneficiaryYear } },
+          update: beneficiaryData,
+          create: { projectId: project.id, year: beneficiaryYear, ...beneficiaryData },
+        });
+      }
 
       // --- Sample metric ---
       await tx.metric.upsert({

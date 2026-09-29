@@ -4,6 +4,10 @@ import type { ComponentProps } from 'react';
 import type { SelectField } from '@/components/ui/forms/select-field';
 import { ProjectForm } from '@/components/projects/form/project-form';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@/components/ui/forms/select-field', () => ({
   SelectField: ({
     id,
@@ -50,6 +54,7 @@ it('loads only the selected year and retains unsaved drafts when switching years
       departments={[]}
       beneficiaryRecords={[{ ...counts, year: 2025 }]}
       submitAction={vi.fn()}
+      initialValues={{ startYear: '2020' }}
     />
   );
   expect((screen.getByLabelText('Familias') as HTMLInputElement).value).toBe('0');

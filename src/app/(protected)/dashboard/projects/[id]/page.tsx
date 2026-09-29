@@ -23,7 +23,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     include: {
       leadCoordinator: true,
       department: true,
-      projectTopics: { include: { topic: true } },
+      topic: true,
       projectBeneficiaries: { orderBy: { year: 'desc' }, take: 1 },
     },
   });
@@ -55,11 +55,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <p>
           Coordinador/a: {project.leadCoordinator.firstName} {project.leadCoordinator.lastName}
         </p>
-        <p>
-          Temáticas:{' '}
-          {project.projectTopics.map(({ topic }) => topic.name).join(', ') || 'Sin temática'}
-        </p>
+        <p>Temáticas: {project.topic?.name ?? 'Sin temática'}</p>
         <p>Desde {project.startYear}</p>
+        {project.endYear && <p>Hasta {project.endYear}</p>}
         <p>Estado: {STATUS_LABEL[project.status]}</p>
         <p>Intensidad: {INTENSITY_LABEL[project.intensity]}</p>
       </div>

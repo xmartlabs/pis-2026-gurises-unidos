@@ -51,7 +51,7 @@ const PROJECTS = [
   {
     id: 2,
     name: 'Escuela rural',
-    status: 'completed',
+    status: 'closed',
     intensity: 'low',
     startYear: 2021,
     zone: 'rural',
@@ -102,6 +102,7 @@ describe('AC1: paginated listing with each project data', () => {
 
     expect(projectBeneficiaries.orderBy).toEqual({ year: 'desc' });
     expect(projectBeneficiaries).not.toHaveProperty('take');
+    expect(projectBeneficiaries.where).toStrictEqual({ year: undefined });
   });
 
   test('lists projects alphabetically by name', async () => {
@@ -150,9 +151,9 @@ describe('AC1: paginated listing with each project data', () => {
 
 describe('AC2: filters', () => {
   test('by status', async () => {
-    await listWith({ status: 'completed' });
+    await listWith({ status: 'closed' });
 
-    expect(findManyArgs().where).toEqual({ status: 'completed' });
+    expect(findManyArgs().where).toEqual({ status: 'closed' });
   });
 
   test('by lead coordinator', async () => {
@@ -204,10 +205,10 @@ describe('AC2: filters', () => {
   });
 
   test('applies the same filters to the total count', async () => {
-    await listWith({ status: 'active', departmentId: '1' });
+    await listWith({ status: 'active', departmentId: '1', beneficiaryYear: '2025' });
 
     expect(prismaMock.project.count).toHaveBeenCalledWith({
-      where: { status: 'active', departmentId: 1 },
+      where: { status: 'active', departmentId: 1, projectBeneficiaries: { some: { year: 2025 } } },
     });
   });
 
@@ -219,6 +220,7 @@ describe('AC2: filters', () => {
       departmentId: '0',
       startYearFrom: '1500',
       startYearTo: '3000',
+      beneficiaryYear: '3000',
     });
 
     expect(findManyArgs().where).toEqual({});
@@ -228,10 +230,22 @@ describe('AC2: filters', () => {
     prismaMock.project.count.mockResolvedValue(1);
     prismaMock.project.findMany.mockResolvedValue([PROJECTS[1]]);
 
-    const result = await listProjects(parseProjectFilters({ status: 'completed', page: '4' }));
+    const result = await listProjects(parseProjectFilters({ status: 'closed', page: '4' }));
 
     expect(result).toMatchObject({ page: 1, total: 1, totalPages: 1 });
     expect(result.items.map((item) => item.name)).toEqual(['Escuela rural']);
+  });
+
+  test('by beneficiary year', async () => {
+    await listWith({ beneficiaryYear: '2025' });
+
+    expect(findManyArgs().where).toEqual({ projectBeneficiaries: { some: { year: 2025 } } });
+  });
+
+  test('requests only the selected beneficiary year', async () => {
+    await listWith({ beneficiaryYear: '2025' });
+
+    expect(findManyArgs().select.projectBeneficiaries.where).toEqual({ year: 2025 });
   });
 });
 
@@ -249,7 +263,7 @@ describe('AC3: no projects', () => {
   });
 
   test('returns an empty page when no project matches the filters', async () => {
-    const result = await listWith({ status: 'archived', leadCoordinatorId: '3' }, []);
+    const result = await listWith({ status: 'paused', leadCoordinatorId: '3' }, []);
 
     expect(result.items).toEqual([]);
     expect(result.total).toBe(0);
@@ -291,18 +305,26 @@ describe('parseProjectFilters', () => {
   });
 
   test('uses the first value of repeated params', () => {
-    expect(parseProjectFilters({ status: ['completed', 'active'] }).status).toBe('completed');
+    expect(parseProjectFilters({ status: ['closed', 'active'] }).status).toBe('closed');
+  });
+
+  test('parses the beneficiary year and ignores invalid ones', () => {
+    expect(parseProjectFilters({ beneficiaryYear: '2025' }).beneficiaryYear).toBe(2025);
+    expect(parseProjectFilters({ beneficiaryYear: 'abc' }).beneficiaryYear).toBeUndefined();
+    expect(parseProjectFilters({ beneficiaryYear: '3000' }).beneficiaryYear).toBeUndefined();
   });
 });
 
 describe('listProjectFilterOptions', () => {
-  test('returns coordinators and departments that lead or host projects', async () => {
+  test('returns coordinators and departments that lead or host projects and beneficiaries years', async () => {
     prismaMock.user.findMany.mockResolvedValue([CARLOS]);
     prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
+    prismaMock.projectBeneficiary.findMany.mockResolvedValue([{ year: 2025 }, { year: 2024 }]);
 
     expect(await listProjectFilterOptions()).toEqual({
       coordinators: [CARLOS],
       departments: [MONTEVIDEO],
+      years: [2025, 2024],
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { ledProjects: { some: {} } } })
@@ -310,5 +332,10 @@ describe('listProjectFilterOptions', () => {
     expect(prismaMock.department.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { projects: { some: {} } } })
     );
+    expect(prismaMock.projectBeneficiary.findMany).toHaveBeenCalledWith({
+      distinct: ['year'],
+      select: { year: true },
+      orderBy: { year: 'desc' },
+    });
   });
 });

@@ -69,8 +69,8 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
   transactionMock.mockImplementation(async (callback) =>
     callback({
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
-      topic: { count: vi.fn().mockResolvedValue(0) },
-      project: { create: projectCreate },
+      topic: { findUnique: vi.fn().mockResolvedValue(null) },
+      project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },
       projectBeneficiary: { create: beneficiaryCreate },
     })
   );
@@ -142,6 +142,7 @@ describe('createProject', () => {
         status: 'active',
         intensity: 'high',
         startYear: 2020,
+        endYear: null,
         leadCoordinatorId: 1,
         departmentId: 2,
         zone: 'city',
@@ -149,8 +150,9 @@ describe('createProject', () => {
         generalObjective: null,
         publicDescription: null,
         internalNotes: null,
+        coverPhoto: expect.stringMatching(/^\/images\/project-placeholders\/[1-6]\.webp$/),
         createdBy: 7,
-        projectTopics: { create: [] },
+        topicId: null,
       },
     });
     expect(beneficiaryCreate).toHaveBeenCalledWith({

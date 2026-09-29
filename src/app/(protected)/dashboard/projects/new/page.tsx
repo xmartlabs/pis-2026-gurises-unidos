@@ -2,6 +2,7 @@ import { createProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
 import { ProjectForm } from '@/components/projects/form/project-form';
+import { getRandomProjectPlaceholder } from '@/lib/projects/project-placeholders';
 
 export default async function NewProjectPage() {
   await requireUser();
@@ -16,7 +17,7 @@ export default async function NewProjectPage() {
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
     }),
-    prisma.topic.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+    prisma.topic.findMany({  where: { isActive: true }, orderBy: { name: 'asc' }, select: { id: true, name: true } }),
   ]);
 
   return (
@@ -25,6 +26,7 @@ export default async function NewProjectPage() {
       currentYear={new Date().getFullYear()}
       coordinators={coordinators}
       departments={departments}
+      initialValues={{ coverPhotoUrl: getRandomProjectPlaceholder() }}
       submitAction={createProject}
     />
   );

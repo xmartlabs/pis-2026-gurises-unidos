@@ -7,6 +7,7 @@ import { TerritorySection } from './sections/territory-section';
 import { BasicInfoSection } from './sections/basic-info-section';
 
 import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from 'cn';
 import type { ProjectFormState } from '@/lib/validation/project';
 import {
@@ -48,6 +49,8 @@ export function ProjectForm({
   cancelHref = '/dashboard/projects',
   children,
 }: ProjectFormProps) {
+  const router = useRouter();
+
   async function submitProject(
     previousState: ProjectFormState,
     formData: FormData
@@ -108,17 +111,24 @@ export function ProjectForm({
   }, [pending, state]);
 
   function updateField<K extends keyof ProjectFormValues>(field: K, value: ProjectFormValues[K]) {
+    if (field === 'startYear' && typeof value === 'string' && Number(value) > Number(values.year)) {
+      selectYear(value);
+    }
+
     setValues((currentValues) => ({
       ...currentValues,
       [field]: value,
     }));
   }
 
-  const { topicLabel, locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
+  const { locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
     values,
     departments,
-    topics,
     isEditing
+  );
+
+  const beneficiaryYearOptions = yearOptions.filter(
+    ({ value }) => Number(value) >= Number(values.startYear)
   );
 
   return (
@@ -139,6 +149,9 @@ export function ProjectForm({
         submissionRef.current = true;
       }}
     >
+      {!isEditing && values.coverPhotoUrl && (
+        <input type="hidden" name="projectPlaceholder" value={values.coverPhotoUrl} />
+      )}
       <div
         className={cn(
           'grid flex-1 content-start items-start',
@@ -164,7 +177,6 @@ export function ProjectForm({
 
           <BasicInfoSection
             variant={variant}
-            isEditing={isEditing}
             values={values}
             state={state}
             updateField={updateField}
@@ -189,7 +201,7 @@ export function ProjectForm({
             values={values}
             state={state}
             updateField={updateField}
-            yearOptions={yearOptions}
+            yearOptions={beneficiaryYearOptions}
             selectYear={selectYear}
           />
 
@@ -213,7 +225,6 @@ export function ProjectForm({
         <ProjectPreview
           variant={variant}
           values={values}
-          topicLabel={topicLabel}
           locationLabel={locationLabel}
           beneficiaryTotal={beneficiaryTotal}
         />
@@ -221,7 +232,7 @@ export function ProjectForm({
 
       <FormActions
         variant={variant}
-        cancelHref={cancelHref}
+        onCancel={() => router.push(cancelHref)}
         submitLabel="Guardar cambios"
         pending={pending}
       />

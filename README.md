@@ -107,12 +107,91 @@ E2E_BASE_URL=http://localhost:3200 npm run test:e2e
 Ojo con eso: `E2E_DATABASE_URL` tiene que ser la base de _esa_ instancia, y el seed la trunca. No
 apuntes esto a staging ni a producción.
 
-El dataset vive en `prisma/e2e-fixtures.ts` y lo crea `prisma/seed-e2e.ts`: tres usuarios y dos
-proyectos, siempre los mismos. Por eso las aserciones pueden ser conteos exactos, y `prisma/seed.ts`
+El dataset vive en `prisma/e2e-fixtures.ts` y lo crea `prisma/seed-e2e.ts`: tres usuarios, dos
+proyectos, dos departamentos y tres temáticas, siempre los mismos. Por eso las aserciones pueden ser conteos exactos, y `prisma/seed.ts`
 puede cambiar sin romper los E2E.
 
 Cuando uno falla queda un reporte navegable en `playwright-report/`, con screenshot del momento del
 fallo. En CI el workflow `E2E` lo sube como artifact.
+
+## Tests de integración
+
+Vitest contra la misma base y el mismo dataset que E2E, pero sin browser ni server: llaman a las
+server actions directo. Usan `E2E_DATABASE_URL` y el mismo seed, así que la preparación es la de
+arriba.
+
+```bash
+npm run test:integration                                                  # toda la suite
+npm run test:integration -- integration/projects/update-project.test.ts  # un archivo
+npm run test:integration -- -t "rejects a coordinator"                   # tests por nombre
+```
+
+No corras las dos suites a la vez: cada una trunca y vuelve a sembrar la base al arrancar. Los
+archivos corren de a uno (`fileParallelism: false`) porque comparten la base. En CI los corre el
+workflow `Integration`, con un Postgres propio.
+
+`integration/setup.ts` mockea lo que depende de Next: `auth()` devuelve la sesión que armes con
+`signInAs`, `redirect()` lanza un error `NEXT_REDIRECT:<url>` y `revalidatePath` no hace nada.
+
+### Escribir un test nuevo
+
+Los tests van en `integration/<dominio>/<action>.test.ts`. El ejemplo de referencia es
+`integration/projects/update-project.test.ts`. El esqueleto:
+
+```ts
+import { afterEach, beforeAll, describe, expect, test } from 'vitest';
+import { someAction } from '@/app/actions/something';
+import prisma from '@/lib/prisma';
+import { loadSeedData, type SeedData } from '../fixtures';
+import { signInAs } from '../session';
+
+let seed: SeedData;
+let createdIds: number[] = [];
+
+async function createFixture() {
+  const row = await prisma.something.create({ data: { ... } });
+  createdIds.push(row.id);
+  return row.id;
+}
+
+beforeAll(async () => {
+  seed = await loadSeedData();
+});
+
+afterEach(async () => {
+  const ids = createdIds;
+  createdIds = [];
+  await prisma.something.deleteMany({ where: { id: { in: ids } } });
+});
+
+describe('someAction (integration)', () => {
+  test('does the thing', async () => {
+    const id = await createFixture();
+    signInAs(seed.adminId);
+
+    await expect(someAction(id, {}, formData)).rejects.toThrow(/^NEXT_REDIRECT:\/somewhere$/);
+
+    expect(await prisma.something.findUnique({ where: { id } })).toMatchObject({ ... });
+  });
+});
+```
+
+Las reglas que hacen que los archivos no se pisen entre sí:
+
+- **Usuarios, departamentos y temáticas salen del seed.** `loadSeedData()` devuelve sus ids. No
+  los crees en el test: tienen nombres únicos, y si dos archivos crean el mismo, el segundo falla con
+  P2002. Si necesitás uno más, agregalo a `prisma/e2e-fixtures.ts` y a `prisma/seed-e2e.ts`.
+- **No modifiques ni borres filas sembradas.** Las comparten todos los archivos y los E2E, y el seed
+  solo se reinicia al principio de cada corrida.
+- **Cada test crea sus propios datos** y guarda los ids, y el `afterEach` los borra. Incluí los
+  `AuditLog` y las filas hijas que genere la action. Crear los datos dentro de cada test, y no en un
+  `beforeEach`, deja que cada uno arme exactamente lo que necesita.
+- **Logueate antes de llamar a la action** con `signInAs(userId)`. La sesión se cierra sola al
+  terminar cada test. Sin `signInAs`, la action ve un usuario no logueado.
+- **Anclá los regex de redirect** (`^...$`): comparar un substring deja pasar
+  `/dashboard/projects/11` cuando esperabas `/dashboard/projects/1`.
+- **Verificá la base, no solo lo que devuelve la action.** Para los casos de error, leé la fila antes
+  y después y compará con `toEqual`, así se ve que la transacción no dejó nada a medias.
 
 ## Deploy
 

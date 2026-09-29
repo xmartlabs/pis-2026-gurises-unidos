@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatNumber } from '@/lib/format';
-import { INTENSITY_LABEL } from '@/lib/project-display';
-import { PROJECT_STATUS_META } from '@/lib/projects/constants';
+import { INTENSITY_LABEL, STATUS_LABEL } from '@/lib/project-display';
+import { STATUS_BADGE_VARIANT } from '@/lib/projects/constants';
 import type { ProjectListItem } from '@/lib/projects/list';
 
 export type ProjectCardProps = {
@@ -28,18 +28,16 @@ export function ProjectCard({
   year,
   totalReach,
 }: ProjectCardProps) {
-  const statusMeta = PROJECT_STATUS_META[status];
-
   return (
     <Link href={`/dashboard/projects/${id}`} className="block">
       <Card className="bg-card flex flex-col gap-3.5 rounded-lg px-5 py-4.5 hover:shadow-sm/10">
         <CardHeader className="text-primary flex flex-row justify-between p-0! text-base font-semibold">
           <h2>{name}</h2>
           <Badge
-            variant={statusMeta.badgeVariant}
+            variant={STATUS_BADGE_VARIANT[status]}
             className="h-5.5 gap-2.5 rounded-lg px-5.5 py-0.5 text-xs leading-4 font-medium tracking-normal"
           >
-            {statusMeta.label}
+            {STATUS_LABEL[status]}
           </Badge>
         </CardHeader>
         <div className="flex flex-col gap-1.5">

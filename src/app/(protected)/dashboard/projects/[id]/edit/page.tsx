@@ -21,7 +21,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { projectBeneficiaries: { orderBy: { year: 'desc' } }, projectTopics: true },
+    include: { projectBeneficiaries: { orderBy: { year: 'desc' } } },
   });
 
   if (!project) {
@@ -54,45 +54,56 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         author: { select: { firstName: true, lastName: true } },
       },
     }),
-    prisma.topic.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+    prisma.topic.findMany({
+      where: {
+        OR: [
+          { isActive: true },
+          ...(project.topicId !== null ? [{ id: project.topicId }] : []),
+        ],
+      },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    })  
   ]);
 
   const submitAction = updateProject.bind(null, project.id);
 
   return (
-    <div className="bg-surface-page flex min-h-0 min-w-0 flex-1 flex-col">
-      <div className="flex flex-col items-start gap-1.5 px-4 pt-6 pb-2.5 sm:px-6">
-        <p className="text-muted-foreground text-sm">Editar proyecto</p>
-        <h1 className="text-3xl leading-9 font-bold">{project.name}</h1>
-        <div className="text-muted-foreground flex items-center gap-1.5 text-sm leading-5">
-          <span
-            className={
-              project.status === 'active'
-                ? 'bg-status-success size-2 rounded-full'
-                : 'bg-muted-foreground size-2 rounded-full'
-            }
-          />
-          <span className={project.status === 'active' ? 'text-status-success' : undefined}>
-            {STATUS_LABEL[project.status]}
-          </span>
-          <span className="text-muted-foreground">•</span>
-          <span>{INTENSITY_LABEL[project.intensity]} intensidad</span>
+    <div className="bg-surface-page flex min-h-0 flex-1 flex-col">
+      <div className="mx-auto flex min-h-0 w-[1185px] max-w-full min-w-0 flex-1 flex-col">
+        <div className="flex flex-col items-start gap-1.5 px-4 pt-6 pb-2.5 sm:px-6">
+          <p className="text-muted-foreground text-sm">Editar proyecto</p>
+          <h1 className="text-3xl leading-9 font-bold">{project.name}</h1>
+          <div className="text-muted-foreground flex items-center gap-1.5 text-sm leading-5">
+            <span
+              className={
+                project.status === 'active'
+                  ? 'bg-status-success size-2 rounded-full'
+                  : 'bg-muted-foreground size-2 rounded-full'
+              }
+            />
+            <span className={project.status === 'active' ? 'text-status-success' : undefined}>
+              {STATUS_LABEL[project.status]}
+            </span>
+            <span className="text-muted-foreground">•</span>
+            <span>{INTENSITY_LABEL[project.intensity]} intensidad</span>
+          </div>
         </div>
+        <ProjectForm
+          key={project.id}
+          mode="edit"
+          initialValues={projectToFormValues(project, currentYear)}
+          beneficiaryRecords={project.projectBeneficiaries}
+          topics={topics}
+          currentYear={currentYear}
+          coordinators={coordinators}
+          departments={departments}
+          cancelHref={`/dashboard/projects/${project.id}`}
+          submitAction={submitAction}
+        >
+          <ProjectHistory entries={history} />
+        </ProjectForm>
       </div>
-      <ProjectForm
-        key={project.id}
-        mode="edit"
-        initialValues={projectToFormValues(project, currentYear)}
-        beneficiaryRecords={project.projectBeneficiaries}
-        topics={topics}
-        currentYear={currentYear}
-        coordinators={coordinators}
-        departments={departments}
-        cancelHref={`/dashboard/projects/${project.id}`}
-        submitAction={submitAction}
-      >
-        <ProjectHistory entries={history} />
-      </ProjectForm>
     </div>
   );
 }

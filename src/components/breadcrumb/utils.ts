@@ -4,6 +4,7 @@ const STATIC_SEGMENTS = new Set(['dashboard', 'projects', 'users', 'management',
 
 export const BREADCRUMB_SEGMENT_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
+  metrics: 'Métricas',
   management: 'Administración',
   projects: 'Proyectos',
   users: 'Usuarios',

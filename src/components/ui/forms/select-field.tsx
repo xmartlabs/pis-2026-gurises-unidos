@@ -1,6 +1,6 @@
 'use client';
 
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -20,20 +20,26 @@ export function SelectField({
   label,
   value,
   placeholder,
+  clearLabel,
   options,
   onValueChange,
+  description,
   messages,
   required,
+  disabled,
 }: {
   id: string;
   name?: string;
   label: string;
   value: string;
   placeholder?: string;
+  clearLabel?: string;
   options: readonly SelectOption[];
   onValueChange: (value: string) => void;
+  description?: string;
   messages?: string[];
   required?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Field className="min-w-0 gap-1.5" data-invalid={Boolean(messages?.length)}>
@@ -46,15 +52,17 @@ export function SelectField({
         value={value || null}
         onValueChange={(nextValue) => onValueChange(nextValue ?? '')}
         required={required}
+        disabled={disabled}
       >
         <SelectTrigger
           id={id}
           aria-invalid={Boolean(messages?.length)}
-          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm shadow-none data-[size=default]:h-9"
+          className="border-input bg-background w-full min-w-0 rounded-lg px-3 text-sm data-[size=default]:h-9"
         >
           <SelectValue placeholder={placeholder} className="min-w-0 truncate" />
         </SelectTrigger>
         <SelectContent align="start">
+          {clearLabel && <SelectItem value={null}>{clearLabel}</SelectItem>}
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
@@ -62,6 +70,11 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
+      {description && (
+        <FieldDescription className="text-muted-foreground text-xs leading-4">
+          {description}
+        </FieldDescription>
+      )}
       <FieldError className="text-xs leading-4">{messages?.[0]}</FieldError>
     </Field>
   );

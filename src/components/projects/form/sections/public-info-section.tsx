@@ -39,7 +39,7 @@ export function PublicInfoSection({
         description="Máx. 1000 caracteres"
         messages={state.errors?.publicDescription}
       />
-      <Field>
+      <Field hidden>
         <FieldLabel htmlFor="coverPhoto">Foto de portada</FieldLabel>
         <input
           id="coverPhoto"

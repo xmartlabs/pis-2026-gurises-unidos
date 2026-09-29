@@ -3,17 +3,26 @@ import { MAX_INT32 } from './ids';
 import { projectSchema } from './project';
 import { projectBeneficiarySchema } from './project-beneficiary';
 
-export const projectFormSchema = projectSchema.extend({
-  ...projectBeneficiarySchema.shape,
-  topicIds: z
-    .array(z.coerce.number().int().positive().max(MAX_INT32))
-    .default([])
-    .transform((ids) => [...new Set(ids)].sort((a, b) => a - b)),
-});
+export const projectFormSchema = projectSchema
+  .safeExtend({
+    ...projectBeneficiarySchema.shape,
+    topicId: z.preprocess(
+      (value) => (value === '' || value === 'none' || value === undefined ? null : value),
+      z.coerce
+        .number({ error: 'Elegí una temática válida' })
+        .int('Elegí una temática válida')
+        .positive('Elegí una temática válida')
+        .max(MAX_INT32)
+        .nullable()
+    ),
+  })
+  .refine((data) => data.year >= data.startYear, {
+    message: 'El año de beneficiarios no puede ser anterior al año de inicio',
+    path: ['year'],
+  });
 
 export function splitProjectFormData(data: z.infer<typeof projectFormSchema>) {
   const {
-    topicIds,
     year,
     directChildrenAdolescents,
     indirectChildrenAdolescents,
@@ -35,9 +44,14 @@ export function splitProjectFormData(data: z.infer<typeof projectFormSchema>) {
     basicServiceStaff,
   };
 
-  return { projectData, beneficiaryData, topicIds };
+  return { projectData, beneficiaryData };
 }
 
 export function readProjectFormData(formData: FormData) {
-  return { ...Object.fromEntries(formData), topicIds: formData.getAll('topicIds') };
+  const topicValues = formData.getAll('topicId');
+
+  return {
+    ...Object.fromEntries(formData),
+    topicId: topicValues.length > 1 ? 'invalid' : topicValues[0],
+  };
 }

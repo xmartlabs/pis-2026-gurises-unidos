@@ -63,6 +63,9 @@ export function buildProjectWhere(filters: ProjectFilters): Prisma.ProjectWhereI
   if (filters.startYearFrom !== undefined || filters.startYearTo !== undefined) {
     where.startYear = { gte: filters.startYearFrom, lte: filters.startYearTo };
   }
+  if (filters.beneficiaryYear !== undefined) {
+    where.projectBeneficiaries = { some: { year: filters.beneficiaryYear } };
+  }
 
   return where;
 }
@@ -88,7 +91,13 @@ export async function listProjects(filters: ProjectFilters): Promise<ProjectList
       ? []
       : await prisma.project.findMany({
           where,
-          select: PROJECT_LIST_SELECT,
+          select: {
+            ...PROJECT_LIST_SELECT,
+            projectBeneficiaries: {
+              ...PROJECT_LIST_SELECT.projectBeneficiaries,
+              where: { year: filters.beneficiaryYear },
+            },
+          },
           orderBy: [{ name: 'asc' }, { id: 'asc' }],
           skip: (page - 1) * filters.pageSize,
           take: filters.pageSize,
@@ -104,7 +113,7 @@ export async function listProjects(filters: ProjectFilters): Promise<ProjectList
 }
 
 export async function listProjectFilterOptions() {
-  const [coordinators, departments] = await Promise.all([
+  const [coordinators, departments, years] = await Promise.all([
     prisma.user.findMany({
       where: { ledProjects: { some: {} } },
       select: { id: true, firstName: true, lastName: true },
@@ -115,7 +124,12 @@ export async function listProjectFilterOptions() {
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.projectBeneficiary.findMany({
+      distinct: ['year'],
+      select: { year: true },
+      orderBy: { year: 'desc' },
+    }),
   ]);
 
-  return { coordinators, departments };
+  return { coordinators, departments, years: years.map(({ year }) => year) };
 }

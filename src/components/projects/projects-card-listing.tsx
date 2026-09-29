@@ -14,11 +14,7 @@ import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
 import { ProjectCard } from '@/components/projects/project-card';
 import type { ProjectListItem } from '@/lib/projects/list';
-import {
-  PROJECT_STATUS_META,
-  STATUS_FILTERS,
-  type StatusFilterValue,
-} from '@/lib/projects/constants';
+import { STATUS_FILTERS, type StatusFilterValue } from '@/lib/projects/constants';
 
 type ProjectsCardListProps = {
   projects: ProjectListItem[];
@@ -34,9 +30,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
   const [year, setYear] = useState<number>(projectYears[0] ?? new Date().getFullYear());
   const current = STATUS_FILTERS.find((f) => f.value === status)!;
 
-  const filtered = projects.filter(
-    (p) => status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status
-  );
+  const filtered = projects.filter((p) => status === 'all' || p.status === status);
 
   const filteredCountLabel = `${filtered.length} ${filtered.length === 1 ? 'proyecto' : 'proyectos'}`;
 
