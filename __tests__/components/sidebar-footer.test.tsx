@@ -10,13 +10,7 @@ import { logout } from '@/app/actions/auth';
 import { AppSidebarFooter } from '@/components/layout/app-sidebar/footer';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
-const USER = {
-  id: '1',
-  role: 'admin' as const,
-  name: 'Ana García',
-  email: 'ana@example.com',
-  avatarColorIndex: 0,
-};
+const USER = { id: '1', role: 'admin' as const, name: 'Ana García', email: 'ana@example.com', avatarColorIndex: 0 };
 
 function renderFooter() {
   render(

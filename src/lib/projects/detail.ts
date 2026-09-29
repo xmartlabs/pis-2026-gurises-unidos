@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { redirect } from 'next/navigation';
 import type { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';

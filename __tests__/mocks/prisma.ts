@@ -14,6 +14,8 @@ export const prismaMock = {
   },
   projectBeneficiary: {
     findMany: vi.fn(),
+    findUnique: vi.fn(),
+    aggregate: vi.fn(),
   },
   department: {
     findMany: vi.fn(),
