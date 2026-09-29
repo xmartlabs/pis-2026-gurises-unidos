@@ -4,7 +4,7 @@ import { projectSchema } from './project';
 import { projectBeneficiarySchema } from './project-beneficiary';
 
 export const projectFormSchema = projectSchema
-  .extend({
+  .safeExtend({
     ...projectBeneficiarySchema.shape,
     topicId: z.preprocess(
       (value) => (value === '' || value === 'none' || value === undefined ? null : value),

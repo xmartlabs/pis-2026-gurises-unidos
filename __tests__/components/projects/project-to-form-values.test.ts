@@ -7,6 +7,7 @@ const PROJECT = {
   status: 'active' as const,
   intensity: 'high' as const,
   startYear: 2024,
+  endYear: null,
   leadCoordinatorId: 2,
   departmentId: 3,
   zone: 'city' as const,

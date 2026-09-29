@@ -70,7 +70,7 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
     callback({
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       topic: { findUnique: vi.fn().mockResolvedValue(null) },
-      project: { create: projectCreate },
+      project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },
       projectBeneficiary: { create: beneficiaryCreate },
     })
   );
@@ -142,6 +142,7 @@ describe('createProject', () => {
         status: 'active',
         intensity: 'high',
         startYear: 2020,
+        endYear: null,
         leadCoordinatorId: 1,
         departmentId: 2,
         zone: 'city',

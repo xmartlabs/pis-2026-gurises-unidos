@@ -57,6 +57,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </p>
         <p>Temáticas: {project.topic?.name ?? 'Sin temática'}</p>
         <p>Desde {project.startYear}</p>
+        {project.endYear && <p>Hasta {project.endYear}</p>}
         <p>Estado: {STATUS_LABEL[project.status]}</p>
         <p>Intensidad: {INTENSITY_LABEL[project.intensity]}</p>
       </div>

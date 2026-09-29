@@ -64,7 +64,7 @@ async function main() {
           documentId: '33333333',
           email: 'admin2@gurisesunidos.test',
           role: 'admin',
-          status: 'pendingInvitation',
+          status: 'active',
           passwordHash,
           createdBy: admin.id,
         },
@@ -100,12 +100,13 @@ async function main() {
         },
       });
 
-      // --- Test project ---
-      const projectData: ProjectFixture = {
+      // --- Test projects ---
+      const baseProject: ProjectFixture = {
         name: 'Test project',
         status: 'active',
         intensity: 'medium',
         startYear: 2025,
+        endYear: null,
         leadCoordinatorId: coordinator.id,
         departmentId: montevideo.id,
         topicId: education.id,
@@ -118,18 +119,24 @@ async function main() {
         createdBy: admin.id,
       };
 
-      // a project is identified by name + startYear, but there is no unique index yet
-      const existingProject = await tx.project.findFirst({
-        where: { name: projectData.name, startYear: projectData.startYear },
-        orderBy: { id: 'asc' },
-      });
-
-      const project = existingProject
-        ? await tx.project.update({ where: { id: existingProject.id }, data: projectData })
-        : await tx.project.create({ data: projectData });
-
-      // --- Beneficiaries ---
-      const BENEFICIARY_YEAR = 2025;
+      const projectFixtures: ProjectFixture[] = [
+        baseProject,
+        {
+          ...baseProject,
+          name: 'Closed test project',
+          status: 'closed',
+          intensity: 'low',
+          startYear: 2022,
+          endYear: 2024,
+          zone: 'rural',
+        },
+        {
+          ...baseProject,
+          name: 'Paused test project',
+          status: 'paused',
+          startYear: 2023,
+        },
+      ];
 
       const beneficiaryData = {
         directChildrenAdolescents: 50,
@@ -142,11 +149,21 @@ async function main() {
         authorId: coordinator.id,
       };
 
-      await tx.projectBeneficiary.upsert({
-        where: { projectId_year: { projectId: project.id, year: BENEFICIARY_YEAR } },
-        update: beneficiaryData,
-        create: { projectId: project.id, year: BENEFICIARY_YEAR, ...beneficiaryData },
-      });
+      for (const projectData of projectFixtures) {
+        const project = await tx.project.upsert({
+          where: { name_startYear: { name: projectData.name, startYear: projectData.startYear } },
+          update: projectData,
+          create: projectData,
+        });
+
+        const beneficiaryYear = projectData.endYear ?? 2025;
+
+        await tx.projectBeneficiary.upsert({
+          where: { projectId_year: { projectId: project.id, year: beneficiaryYear } },
+          update: beneficiaryData,
+          create: { projectId: project.id, year: beneficiaryYear, ...beneficiaryData },
+        });
+      }
 
       // --- Sample metric ---
       await tx.metric.upsert({

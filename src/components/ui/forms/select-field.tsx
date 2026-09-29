@@ -20,22 +20,26 @@ export function SelectField({
   label,
   value,
   placeholder,
+  clearLabel,
   options,
   onValueChange,
   description,
   messages,
   required,
+  disabled,
 }: {
   id: string;
   name?: string;
   label: string;
   value: string;
   placeholder?: string;
+  clearLabel?: string;
   options: readonly SelectOption[];
   onValueChange: (value: string) => void;
   description?: string;
   messages?: string[];
   required?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Field className="min-w-0 gap-1.5" data-invalid={Boolean(messages?.length)}>
@@ -48,6 +52,7 @@ export function SelectField({
         value={value || null}
         onValueChange={(nextValue) => onValueChange(nextValue ?? '')}
         required={required}
+        disabled={disabled}
       >
         <SelectTrigger
           id={id}
@@ -57,6 +62,7 @@ export function SelectField({
           <SelectValue placeholder={placeholder} className="min-w-0 truncate" />
         </SelectTrigger>
         <SelectContent align="start">
+          {clearLabel && <SelectItem value={null}>{clearLabel}</SelectItem>}
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

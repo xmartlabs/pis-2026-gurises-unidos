@@ -15,6 +15,7 @@ export function projectToFormValues(
     status: project.status,
     intensity: project.intensity,
     startYear: String(project.startYear),
+    endYear: project.endYear === null ? '' : String(project.endYear),
     leadCoordinatorId: String(project.leadCoordinatorId),
     departmentId: String(project.departmentId),
     zone: project.zone,

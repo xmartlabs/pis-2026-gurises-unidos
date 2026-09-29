@@ -19,6 +19,7 @@ import {
   splitProjectFormData,
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
+import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 
 async function validateRelations(
   tx: Prisma.TransactionClient,
@@ -39,18 +40,35 @@ async function validateRelations(
   if (!coordinator) return { errors: { leadCoordinatorId: ['Elegí un coordinador válido'] } };
   if (topicId !== null) {
     const topic = await tx.topic.findFirst({
-    where: {
-      id: topicId,
-      ...(topicId === currentTopicId ? {} : { isActive: true }),
-    },
-    select: { id: true },
-  });
+      where: {
+        id: topicId,
+        ...(topicId === currentTopicId ? {} : { isActive: true }),
+      },
+      select: { id: true },
+    });
 
     if (!topic) {
       return { errors: { topicId: ['Elegí una temática válida'] } };
     }
   }
   return null;
+}
+
+async function validateUniqueName(
+  tx: Prisma.TransactionClient,
+  name: string,
+  startYear: number,
+  excludeId?: number
+): Promise<ProjectFormState | null> {
+  const duplicate = await tx.project.findFirst({
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      startYear,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    select: { id: true },
+  });
+  return duplicate ? { errors: { name: [DUPLICATE_PROJECT_MESSAGE] } } : null;
 }
 
 function changedFields<T extends object>(data: T, previous: T) {
@@ -79,6 +97,8 @@ export async function createProject(
           projectData.topicId
         );
         if (error) return { error };
+        const nameError = await validateUniqueName(tx, projectData.name, projectData.startYear);
+        if (nameError) return { error: nameError };
         const project = await tx.project.create({
           data: {
             ...projectData,
@@ -144,6 +164,13 @@ export async function updateProject(
           previous.topicId
         );
         if (relationError) return relationError;
+        const nameError = await validateUniqueName(
+          tx,
+          projectData.name,
+          projectData.startYear,
+          projectId
+        );
+        if (nameError) return nameError;
         const fields = changedFields(projectData, previous);
         if (fields.length) {
           await tx.project.update({
