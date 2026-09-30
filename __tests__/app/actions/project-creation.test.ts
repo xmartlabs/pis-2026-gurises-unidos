@@ -182,6 +182,18 @@ describe('createProject', () => {
       action: 'creation',
       entity: 'beneficiary',
       entityId: 9,
+      details: {
+        year: 2024,
+        values: {
+          directChildrenAdolescents: 10,
+          indirectChildrenAdolescents: 5,
+          youth18To29: 3,
+          families: 2,
+          coordinatedInstitutions: 1,
+          communityLeaders: 4,
+          basicServiceStaff: 6,
+        },
+      },
     });
   });
 

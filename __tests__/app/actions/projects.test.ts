@@ -172,7 +172,24 @@ it('creates the project and beneficiaries with audit entries in one transaction'
     data: { authorId: 7, action: 'creation', entity: 'project', entityId: 10 },
   });
   expect(mocks.audit).toHaveBeenCalledWith({
-    data: { authorId: 7, action: 'creation', entity: 'beneficiary', entityId: 20 },
+    data: {
+      authorId: 7,
+      action: 'creation',
+      entity: 'beneficiary',
+      entityId: 20,
+      details: {
+        year: 2024,
+        values: {
+          directChildrenAdolescents: 42,
+          indirectChildrenAdolescents: 68,
+          youth18To29: 15,
+          families: 30,
+          coordinatedInstitutions: 6,
+          communityLeaders: 12,
+          basicServiceStaff: 8,
+        },
+      },
+    },
   });
 });
 

@@ -77,6 +77,12 @@ export async function createProject(
           action: 'creation',
           entity: 'beneficiary',
           entityId: beneficiary.id,
+          details: {
+            year: beneficiaryData.year,
+            values: Object.fromEntries(
+              BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
+            ),
+          },
         });
         return { projectId: project.id };
       },
