@@ -238,3 +238,35 @@ export async function updateProject(
   revalidateProject();
   redirect(`/dashboard/projects/${projectId}`);
 }
+
+export async function deleteProject(projectId: number): Promise<{ error?: string }> {
+  const user = await requireUser();
+  if (!parseId(projectId)) return { error: 'El proyecto no es válido.' };
+  try {
+    const error = await prisma.$transaction(async (tx) => {
+      const project = await tx.project.findFirst({
+        where: { id: projectId, deletedAt: null },
+        select: { id: true, leadCoordinatorId: true },
+      });
+      if (!project) return 'El proyecto no existe o ya fue eliminado.';
+      if (!canEditProject(user, project)) return 'No tenés permiso para eliminar este proyecto.';
+      await tx.project.update({
+        where: { id: projectId },
+        data: { deletedAt: new Date(), deletedBy: user.id },
+      });
+      await logAudit(tx, {
+        authorId: user.id,
+        action: 'deletion',
+        entity: 'project',
+        entityId: projectId,
+      });
+      return null;
+    });
+    if (error) return { error };
+  } catch (error) {
+    console.error('Failed to delete project', error);
+    return { error: 'No se pudo eliminar el proyecto. Intentá de nuevo.' };
+  }
+  revalidateProject();
+  redirect('/dashboard/projects');
+}

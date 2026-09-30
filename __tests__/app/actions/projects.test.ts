@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createProject, updateProject } from '@/app/actions/projects';
+import { createProject, deleteProject, updateProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
 import {
   projectFormSchema,
@@ -649,5 +649,85 @@ describe('project review regressions', () => {
       updateProject(10, {}, formData({ coverPhoto: 'https://invalid.test/photo.png' }))
     ).rejects.toThrow('Redirect:');
     expect(mocks.updateProject.mock.calls[0][0].data).not.toHaveProperty('coverPhoto');
+  });
+});
+
+describe('deleteProject', () => {
+  beforeEach(() => {
+    mocks.findDuplicateProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2 });
+  });
+
+  it('marks the project as deleted by the user and audits it in one transaction', async () => {
+    await expect(deleteProject(10)).rejects.toThrow('Redirect: /dashboard/projects');
+    expect(TX.project.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 10, deletedAt: null } })
+    );
+    expect(mocks.updateProject).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: { deletedAt: expect.any(Date), deletedBy: 7 },
+    });
+    expect(mocks.audit).toHaveBeenCalledWith({
+      data: { authorId: 7, action: 'deletion', entity: 'project', entityId: 10 },
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalled();
+  });
+
+  it('allows the lead coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 2,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    await expect(deleteProject(10)).rejects.toThrow('Redirect: /dashboard/projects');
+    expect(mocks.updateProject).toHaveBeenCalled();
+  });
+
+  it('rejects an unrelated coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 3,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    expect(await deleteProject(10)).toEqual({
+      error: 'No tenés permiso para eliminar este proyecto.',
+    });
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it('reports a missing or already deleted project', async () => {
+    mocks.findDuplicateProject.mockResolvedValue(null);
+    expect(await deleteProject(10)).toEqual({
+      error: 'El proyecto no existe o ya fue eliminado.',
+    });
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid id before accessing the database', async () => {
+    expect(await deleteProject(0)).toEqual({ error: 'El proyecto no es válido.' });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('redirects unauthenticated users before accessing the database', async () => {
+    mocks.auth.mockResolvedValue(null);
+    await expect(deleteProject(10)).rejects.toThrow('Redirect: /login');
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('returns an error without redirecting or revalidating when the transaction fails', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.audit.mockRejectedValue(new Error('Audit unavailable'));
+    try {
+      expect(await deleteProject(10)).toEqual({
+        error: 'No se pudo eliminar el proyecto. Intentá de nuevo.',
+      });
+      expect(mocks.redirect).not.toHaveBeenCalled();
+      expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

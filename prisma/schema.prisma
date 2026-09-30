@@ -78,6 +78,7 @@ model User {
   createdUsers         User[]               @relation("UserCreatedBy")
   ledProjects          Project[]            @relation("ProjectLeadCoordinator")
   createdProjects      Project[]            @relation("ProjectCreatedBy")
+  deletedProjects      Project[]            @relation("ProjectDeletedBy")
   projectCoordinators  ProjectCoordinator[]
   projectBeneficiaries ProjectBeneficiary[]
   metricsUpdated       Metric[]
@@ -118,11 +119,14 @@ model Project {
   createdAt            DateTime      @default(now())
   createdBy            Int?
   updatedAt            DateTime?     @updatedAt
+  deletedAt            DateTime?
+  deletedBy            Int?
   topicId              Int?
 
   leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
   department      Department @relation(fields: [departmentId], references: [id])
   creator         User?      @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+  deleter         User?      @relation("ProjectDeletedBy", fields: [deletedBy], references: [id])
   topic           Topic?     @relation(fields: [topicId], references: [id], onDelete: Restrict)
 
   projectCoordinators  ProjectCoordinator[]
