@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-const { authMock, getDashboardOverviewMock, redirectMock } = vi.hoisted(() => ({
+const { authMock, getDashboardOverviewMock, getMetricYearsMock, redirectMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
   getDashboardOverviewMock: vi.fn(),
+  getMetricYearsMock: vi.fn(),
   redirectMock: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
@@ -12,20 +13,32 @@ const { authMock, getDashboardOverviewMock, redirectMock } = vi.hoisted(() => ({
 vi.mock('@/auth', () => ({ auth: authMock }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 vi.mock('@/lib/dashboard/queries', () => ({ getDashboardOverview: getDashboardOverviewMock }));
+vi.mock('@/lib/metrics/queries', () => ({ getMetricYears: getMetricYearsMock }));
+vi.mock('@/components/metrics/metrics-year-select', () => ({
+  MetricsYearSelect: ({ year, years }: { year: number; years: number[] }) => (
+    <p data-testid="year-select">{`${year} de ${years.join(',')}`}</p>
+  ),
+}));
 
 import DashboardPage from '@/app/(protected)/dashboard/page';
+
+function renderPage(year?: string | string[]) {
+  return DashboardPage({ searchParams: Promise.resolve(year === undefined ? {} : { year }) });
+}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-09-29T12:00:00.000Z'));
   authMock.mockReset();
   getDashboardOverviewMock.mockReset();
+  getMetricYearsMock.mockReset();
   redirectMock.mockClear();
+  getMetricYearsMock.mockResolvedValue([2026, 2025, 2024]);
   getDashboardOverviewMock.mockResolvedValue({
     heroKpi: { value: 110, label: 'niños alcanzados', delta: '+10.0% vs. año anterior' },
     secondaryKpis: [
       { value: 30, label: 'familias', delta: '−25.0% vs. año anterior' },
-      { value: 45, label: 'funcionarios', delta: '0.0% vs. año anterior' },
+      { value: 45, label: 'funcionarios', delta: 'Sin cambios vs. año anterior' },
       { value: 4, label: 'proyectos', delta: '−1 respecto a 2025' },
     ],
     projects: [
@@ -42,14 +55,14 @@ afterEach(() => {
 test('redirects to login without a session', async () => {
   authMock.mockResolvedValue(null);
 
-  await expect(DashboardPage()).rejects.toThrow('NEXT_REDIRECT:/login');
+  await expect(renderPage()).rejects.toThrow('NEXT_REDIRECT:/login');
   expect(getDashboardOverviewMock).not.toHaveBeenCalled();
 });
 
 test('redirects users whose role is not allowed', async () => {
   authMock.mockResolvedValue({ user: { id: '1', role: 'viewer' } });
 
-  await expect(DashboardPage()).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects');
+  await expect(renderPage()).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects');
   expect(getDashboardOverviewMock).not.toHaveBeenCalled();
 });
 
@@ -58,8 +71,9 @@ test.each(['admin', 'coordinator'])(
   async (role) => {
     authMock.mockResolvedValue({ user: { id: '1', role } });
 
-    render(await DashboardPage());
+    render(await renderPage());
 
+    expect(getMetricYearsMock).toHaveBeenCalledWith(2026);
     expect(getDashboardOverviewMock).toHaveBeenCalledWith(2026);
     expect(redirectMock).not.toHaveBeenCalled();
     expect(screen.getByText('niños alcanzados')).toBeDefined();
@@ -69,9 +83,31 @@ test.each(['admin', 'coordinator'])(
   }
 );
 
+test('shows the overview for a selected year with data', async () => {
+  authMock.mockResolvedValue({ user: { id: '1', role: 'coordinator' } });
+
+  render(await renderPage('2024'));
+
+  expect(getDashboardOverviewMock).toHaveBeenCalledWith(2024);
+  expect(screen.getByTestId('year-select').textContent).toBe('2024 de 2026,2025,2024');
+  expect(screen.getByText('Total 2024')).toBeDefined();
+});
+
+test.each([['1990'], ['2027'], ['abc'], ['2024.5'], [['2024', '2025']]])(
+  'falls back to the current year for the invalid year %j',
+  async (year) => {
+    authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
+
+    render(await renderPage(year));
+
+    expect(getDashboardOverviewMock).toHaveBeenCalledWith(2026);
+    expect(screen.getByTestId('year-select').textContent).toBe('2026 de 2026,2025,2024');
+  }
+);
+
 test('shows the metrics shortcut only to admins', async () => {
   authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
-  const { unmount } = render(await DashboardPage());
+  const { unmount } = render(await renderPage());
 
   expect(screen.getByText('Cargar métricas').closest('a')?.getAttribute('href')).toBe(
     '/management/metrics'
@@ -79,7 +115,7 @@ test('shows the metrics shortcut only to admins', async () => {
   unmount();
 
   authMock.mockResolvedValue({ user: { id: '2', role: 'coordinator' } });
-  render(await DashboardPage());
+  render(await renderPage());
 
   expect(screen.queryByText('Cargar métricas')).toBeNull();
 });
@@ -87,7 +123,7 @@ test('shows the metrics shortcut only to admins', async () => {
 test('disables the actions that are not available yet', async () => {
   authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
 
-  render(await DashboardPage());
+  render(await renderPage());
 
   expect(screen.getByRole('button', { name: 'Exportar reporte' }).hasAttribute('disabled')).toBe(
     true
