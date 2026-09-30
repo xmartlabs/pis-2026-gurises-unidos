@@ -2,10 +2,13 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
 
-const { routerPushMock } = vi.hoisted(() => ({ routerPushMock: vi.fn() }));
+const { routerPushMock, routerRefreshMock } = vi.hoisted(() => ({
+  routerPushMock: vi.fn(),
+  routerRefreshMock: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: routerPushMock }),
+  useRouter: () => ({ push: routerPushMock, refresh: routerRefreshMock }),
 }));
 
 it('submits prefilled values and the recorded year, preserves edits on failure, and allows retry', async () => {
@@ -202,4 +205,30 @@ it('submits the end year of a closed project', async () => {
     fireEvent.submit(container.querySelector('form')!);
   });
   expect(submitAction.mock.calls[0][1].get('endYear')).toBe('2022');
+});
+
+it('refreshes the topic list after a selected topic becomes invalid', async () => {
+  const submitAction = vi.fn().mockResolvedValue({
+    errors: { topicId: ['Elegí una temática válida'] },
+  });
+  const { container } = render(
+    <ProjectForm
+      currentYear={2026}
+      topics={[{ id: 1, name: 'Education' }]}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        topicId: '1',
+      }}
+      submitAction={submitAction}
+    />
+  );
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+
+  expect(routerRefreshMock).toHaveBeenCalledOnce();
 });
