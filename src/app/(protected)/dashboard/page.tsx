@@ -32,7 +32,7 @@ export default async function DashboardPage({
   return (
     <div className="bg-surface-page flex flex-1 flex-col gap-4 p-4 lg:px-6 lg:py-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <DashboardQuickActions canManageMetrics={session.user.role === 'admin'} />
+        <DashboardQuickActions />
         <MetricsYearSelect year={year} years={years} />
       </div>
 

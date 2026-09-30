@@ -105,30 +105,19 @@ test.each([['1990'], ['2027'], ['abc'], ['2024.5'], [['2024', '2025']]])(
   }
 );
 
-test('shows the metrics shortcut only to admins', async () => {
-  authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
-  const { unmount } = render(await renderPage());
+test.each(['admin', 'coordinator'])(
+  'disables the actions that are not available yet as %s',
+  async (role) => {
+    authMock.mockResolvedValue({ user: { id: '1', role } });
 
-  expect(screen.getByText('Cargar métricas').closest('a')?.getAttribute('href')).toBe(
-    '/management/metrics'
-  );
-  unmount();
+    render(await renderPage());
 
-  authMock.mockResolvedValue({ user: { id: '2', role: 'coordinator' } });
-  render(await renderPage());
-
-  expect(screen.queryByText('Cargar métricas')).toBeNull();
-});
-
-test('disables the actions that are not available yet', async () => {
-  authMock.mockResolvedValue({ user: { id: '1', role: 'admin' } });
-
-  render(await renderPage());
-
-  expect(screen.getByRole('button', { name: 'Exportar reporte' }).hasAttribute('disabled')).toBe(
-    true
-  );
-  expect(screen.getByRole('button', { name: 'Publicar dashboard' }).hasAttribute('disabled')).toBe(
-    true
-  );
-});
+    for (const name of ['Exportar reporte', 'Publicar dashboard']) {
+      expect(screen.getByRole('button', { name }).hasAttribute('disabled')).toBe(true);
+    }
+    expect(screen.queryByText('Cargar métricas')).toBeNull();
+    expect(screen.getByText('Nuevo proyecto').closest('a')?.getAttribute('href')).toBe(
+      '/dashboard/projects/new'
+    );
+  }
+);
