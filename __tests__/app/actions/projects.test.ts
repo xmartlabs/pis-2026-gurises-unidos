@@ -633,16 +633,19 @@ describe('project review regressions', () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it.each(['', 'none', undefined])('rejects an empty topic (%s) in create and edit', async (topicId) => {
-    for (const action of [
-      () => createProject({}, formData({ topicId })),
-      () => updateProject(10, {}, formData({ topicId })),
-    ]) {
-      const result = await action();
-      expect(result.errors?.topicId).toBeDefined();
+  it.each(['', 'none', undefined])(
+    'rejects an empty topic (%s) in create and edit',
+    async (topicId) => {
+      for (const action of [
+        () => createProject({}, formData({ topicId })),
+        () => updateProject(10, {}, formData({ topicId })),
+      ]) {
+        const result = await action();
+        expect(result.errors?.topicId).toBeDefined();
+      }
+      expect(mocks.transaction).not.toHaveBeenCalled();
     }
-    expect(mocks.transaction).not.toHaveBeenCalled();
-  });
+  );
 
   it('preserves an unchanged topic without requiring it to be active or auditing', async () => {
     unchangedRecords();
