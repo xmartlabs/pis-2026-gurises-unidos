@@ -131,8 +131,6 @@ model Project {
 
   projectCoordinators  ProjectCoordinator[]
   projectBeneficiaries ProjectBeneficiary[]
-
-  @@unique([name, startYear])
 }
 
 model ProjectCoordinator {

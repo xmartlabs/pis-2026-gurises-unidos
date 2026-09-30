@@ -122,6 +122,7 @@ describe.each([
     expect(mocks.findDuplicateProject.mock.calls[0][0].where).toMatchObject({
       name: { equals: 'Updated project', mode: 'insensitive' },
       startYear: 2019,
+      deletedAt: null,
     });
     expect(mocks.createProject).not.toHaveBeenCalled();
     expect(mocks.updateProject).not.toHaveBeenCalled();

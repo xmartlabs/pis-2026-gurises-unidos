@@ -74,6 +74,7 @@ async function validateUniqueName(
     where: {
       name: { equals: name, mode: 'insensitive' },
       startYear,
+      deletedAt: null,
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
     select: { id: true },

@@ -152,11 +152,13 @@ async function main() {
       };
 
       for (const projectData of projectFixtures) {
-        const project = await tx.project.upsert({
-          where: { name_startYear: { name: projectData.name, startYear: projectData.startYear } },
-          update: projectData,
-          create: projectData,
+        const existing = await tx.project.findFirst({
+          where: { name: projectData.name, startYear: projectData.startYear, deletedAt: null },
+          select: { id: true },
         });
+        const project = existing
+          ? await tx.project.update({ where: { id: existing.id }, data: projectData })
+          : await tx.project.create({ data: projectData });
 
         const beneficiaryYear = projectData.endYear ?? 2025;
 
