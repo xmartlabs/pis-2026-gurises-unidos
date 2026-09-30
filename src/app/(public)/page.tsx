@@ -79,6 +79,6 @@ export default function Home() {
 }
 */
 
-export default function Home(){
-  return redirect('/login')
+export default function Home() {
+  return redirect('/login');
 }
