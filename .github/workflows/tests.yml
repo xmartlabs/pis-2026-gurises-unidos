@@ -16,18 +16,16 @@ jobs:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      - id: setup
+        run: npm ci && npx prisma generate
 
       - run: npm run format:check
 
       - run: npm run lint
-        if: ${{ !cancelled() }}
-
-      - run: npx prisma generate
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
 
       - run: npm run typecheck
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
 
   test:
     name: vitest
