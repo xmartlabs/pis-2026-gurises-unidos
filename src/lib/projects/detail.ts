@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import type { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
@@ -23,10 +22,6 @@ const BENEFICIARY_SELECT = {
 
 export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown) {
   const user = await requireUser();
-
-  if (user.role !== 'admin' && user.role !== 'coordinator') {
-    redirect('/login');
-  }
 
   const currentYear = new Date().getFullYear();
   const parsed = parseProjectDetailInput(rawProjectId, rawYear, currentYear);
@@ -97,7 +92,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     ...new Set([currentYear, ...project.projectBeneficiaries.map((record) => record.year)]),
   ].sort((a, b) => b - a);
 
-  const [current, previous, national] = await Promise.all([
+  const [current, previous, national, activeProjectCount] = await Promise.all([
     prisma.projectBeneficiary.findUnique({
       where: {
         projectId_year: {
@@ -122,10 +117,8 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
         directChildrenAdolescents: true,
         indirectChildrenAdolescents: true,
       },
-      _count: {
-        _all: true,
-      },
     }),
+    prisma.project.count({ where: { status: 'active' } }),
   ]);
 
   const childrenReached = compareMetric(getChildrenReached(current), getChildrenReached(previous));
@@ -171,8 +164,8 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
           percentage: calculatePercentage(childrenReached.value, nationalChildrenReached),
         },
         activeProjects: {
-          projectCount: hasData ? 1 : 0,
-          totalCount: national._count._all,
+          projectCount: project.status === 'active' ? 1 : 0,
+          totalCount: activeProjectCount,
         },
         territories: {
           count: 1,

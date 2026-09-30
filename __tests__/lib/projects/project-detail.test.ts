@@ -85,6 +85,7 @@ beforeEach(() => {
 
   prismaMock.user.findUnique.mockResolvedValue({ ...USER });
   prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT });
+  prismaMock.project.count.mockResolvedValue(10);
 
   prismaMock.projectBeneficiary.findUnique.mockImplementation(async ({ where }) => {
     const year = where.projectId_year.year;
@@ -100,7 +101,6 @@ beforeEach(() => {
       directChildrenAdolescents: 800,
       indirectChildrenAdolescents: 200,
     },
-    _count: { _all: 10 },
   });
 });
 
@@ -168,6 +168,75 @@ describe('getProjectDetail', () => {
     expect(result.data.distribution).toContainEqual({
       key: 'directChildrenAdolescents',
       value: 100,
+    });
+  });
+
+  it.each(['paused', 'closed'])(
+    'does not count a %s project with beneficiary data as active',
+    async (status) => {
+      prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT, status });
+
+      expect(await getProjectDetail('12', '2026')).toMatchObject({
+        status: 'success',
+        data: {
+          hasData: true,
+          institutionalContribution: {
+            activeProjects: { projectCount: 0, totalCount: 10 },
+          },
+        },
+      });
+    }
+  );
+
+  it('counts an active project without beneficiary records', async () => {
+    prismaMock.project.findUnique.mockResolvedValue({
+      ...PROJECT,
+      projectBeneficiaries: [],
+    });
+    prismaMock.projectBeneficiary.findUnique.mockResolvedValue(null);
+
+    expect(await getProjectDetail('12')).toMatchObject({
+      status: 'success',
+      data: {
+        hasData: false,
+        hasHistoricalData: false,
+        institutionalContribution: {
+          activeProjects: { projectCount: 1, totalCount: 10 },
+        },
+      },
+    });
+  });
+
+  it('keeps current active project counts when the selected year changes', async () => {
+    for (const year of ['2024', '2025', '2026']) {
+      expect(await getProjectDetail('12', year)).toMatchObject({
+        status: 'success',
+        data: {
+          institutionalContribution: {
+            activeProjects: { projectCount: 1, totalCount: 10 },
+          },
+        },
+      });
+    }
+
+    expect(prismaMock.project.count.mock.calls).toEqual([
+      [{ where: { status: 'active' } }],
+      [{ where: { status: 'active' } }],
+      [{ where: { status: 'active' } }],
+    ]);
+  });
+
+  it('returns zero active projects when all projects are inactive', async () => {
+    prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT, status: 'closed' });
+    prismaMock.project.count.mockResolvedValue(0);
+
+    expect(await getProjectDetail('12', '2026')).toMatchObject({
+      status: 'success',
+      data: {
+        institutionalContribution: {
+          activeProjects: { projectCount: 0, totalCount: 0 },
+        },
+      },
     });
   });
 
@@ -243,7 +312,7 @@ describe('getProjectDetail', () => {
           annualGrowth: null,
         },
         institutionalContribution: {
-          activeProjects: { projectCount: 0 },
+          activeProjects: { projectCount: 1, totalCount: 10 },
         },
       },
     });
@@ -280,7 +349,6 @@ describe('getProjectDetail', () => {
         directChildrenAdolescents: 0,
         indirectChildrenAdolescents: 0,
       },
-      _count: { _all: 1 },
     });
 
     expect(await getProjectDetail('12', '2026')).toMatchObject({
@@ -310,7 +378,6 @@ describe('getProjectDetail', () => {
         directChildrenAdolescents: null,
         indirectChildrenAdolescents: null,
       },
-      _count: { _all: 0 },
     });
 
     expect(await getProjectDetail('12', '2024')).toMatchObject({
@@ -322,7 +389,7 @@ describe('getProjectDetail', () => {
             nationalValue: 0,
             percentage: null,
           },
-          activeProjects: { projectCount: 0, totalCount: 0 },
+          activeProjects: { projectCount: 1, totalCount: 10 },
         },
       },
     });
