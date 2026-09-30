@@ -10,9 +10,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatNumber } from '@/lib/format';
-import { INTENSITY_LABEL } from '@/lib/project-display';
-import { PROJECT_STATUS_META } from '@/lib/projects/constants';
-import type { DashboardProjectRow } from '@/lib/dashboard/mock-data';
+import { INTENSITY_LABEL, STATUS_LABEL } from '@/lib/project-display';
+import { STATUS_BADGE_VARIANT } from '@/lib/projects/constants';
+import type { DashboardProjectRow } from '@/lib/dashboard/queries';
 
 type ProjectsOverviewTableProps = {
   projects: DashboardProjectRow[];
@@ -23,82 +23,92 @@ type ProjectsOverviewTableProps = {
 export function ProjectsOverviewTable({ projects, total, year }: ProjectsOverviewTableProps) {
   return (
     <div className="bg-card border-border overflow-hidden rounded-[14px] border">
-      <div className="flex flex-col gap-3 p-4 lg:hidden">
-        {projects.map((project) => {
-          const statusMeta = PROJECT_STATUS_META[project.status];
-          return (
-            <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="block">
-              <Card className="gap-3 py-4 hover:shadow-sm/10">
-                <CardContent className="flex items-center justify-between px-4">
-                  <p className="text-foreground font-medium">{project.name}</p>
-                  <Badge variant={statusMeta.badgeVariant}>{statusMeta.label}</Badge>
-                </CardContent>
-                <CardContent className="flex flex-col gap-1.5 px-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">Intensidad</span>
-                    <span className="text-foreground text-sm">
-                      {INTENSITY_LABEL[project.intensity]}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">Beneficiarios {year}</span>
-                    <span className="text-foreground text-base font-semibold">
-                      {formatNumber(project.beneficiaries)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      <div className="hidden lg:block">
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow className="bg-muted hover:bg-muted">
-              <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-xs font-medium">
-                Proyecto
-              </TableHead>
-              <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-xs font-medium">
-                Estado
-              </TableHead>
-              <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-xs font-medium">
-                Intensidad
-              </TableHead>
-              <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-right text-xs font-medium">
-                Beneficiarios
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      {projects.length === 0 ? (
+        <p className="text-muted-foreground px-4 py-10 text-center text-sm">
+          No hay proyectos con beneficiarios registrados en {year}.
+        </p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-3 p-4 lg:hidden">
             {projects.map((project) => {
-              const statusMeta = PROJECT_STATUS_META[project.status];
               return (
-                <TableRow key={project.id} className="relative cursor-pointer">
-                  <TableCell className="text-foreground h-[46px] px-4 py-3 font-medium">
-                    <Link
-                      href={`/dashboard/projects/${project.id}`}
-                      className="after:absolute after:inset-0"
-                    >
-                      {project.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="px-4 py-3">
-                    <Badge variant={statusMeta.badgeVariant}>{statusMeta.label}</Badge>
-                  </TableCell>
-                  <TableCell className="text-foreground px-4 py-3">
-                    {INTENSITY_LABEL[project.intensity]}
-                  </TableCell>
-                  <TableCell className="text-foreground px-4 py-3 text-right font-medium">
-                    {formatNumber(project.beneficiaries)}
-                  </TableCell>
-                </TableRow>
+                <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="block">
+                  <Card className="gap-3 py-4 hover:shadow-sm/10">
+                    <CardContent className="flex items-center justify-between gap-3 px-4">
+                      <p className="text-foreground min-w-0 truncate font-medium">{project.name}</p>
+                      <Badge className="shrink-0" variant={STATUS_BADGE_VARIANT[project.status]}>
+                        {STATUS_LABEL[project.status]}
+                      </Badge>
+                    </CardContent>
+                    <CardContent className="flex flex-col gap-1.5 px-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-sm">Intensidad</span>
+                        <span className="text-foreground text-sm">
+                          {INTENSITY_LABEL[project.intensity]}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-sm">Beneficiarios {year}</span>
+                        <span className="text-foreground text-base font-semibold">
+                          {formatNumber(project.beneficiaries)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
-          </TableBody>
-        </Table>
-      </div>
+          </div>
+
+          <div className="hidden lg:block">
+            <Table className="table-fixed">
+              <TableHeader>
+                <TableRow className="bg-muted hover:bg-muted">
+                  <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-xs font-medium">
+                    Proyecto
+                  </TableHead>
+                  <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-xs font-medium">
+                    Estado
+                  </TableHead>
+                  <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-xs font-medium">
+                    Intensidad
+                  </TableHead>
+                  <TableHead className="text-muted-foreground h-auto px-4 py-2.5 text-right text-xs font-medium">
+                    Beneficiarios
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {projects.map((project) => {
+                  return (
+                    <TableRow key={project.id} className="relative cursor-pointer">
+                      <TableCell className="text-foreground h-[46px] px-4 py-3 font-medium break-words whitespace-normal">
+                        <Link
+                          href={`/dashboard/projects/${project.id}`}
+                          className="after:absolute after:inset-0"
+                        >
+                          {project.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge variant={STATUS_BADGE_VARIANT[project.status]}>
+                          {STATUS_LABEL[project.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-foreground px-4 py-3">
+                        {INTENSITY_LABEL[project.intensity]}
+                      </TableCell>
+                      <TableCell className="text-foreground px-4 py-3 text-right font-medium">
+                        {formatNumber(project.beneficiaries)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
 
       <div className="border-border bg-surface-page flex flex-col gap-1 border-t px-4 py-3">
         <div className="flex items-center justify-between">
@@ -106,7 +116,7 @@ export function ProjectsOverviewTable({ projects, total, year }: ProjectsOvervie
           <span className="text-foreground text-sm font-semibold">{formatNumber(total)}</span>
         </div>
         <p className="text-muted-foreground text-xs">
-          Proyectos activos durante el período {year}
+          Proyectos con beneficiarios registrados en {year}
         </p>
       </div>
     </div>

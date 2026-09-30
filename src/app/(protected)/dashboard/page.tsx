@@ -1,29 +1,31 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import type { UserRole } from '@/generated/prisma/enums';
 import { DashboardQuickActions } from '@/components/dashboard/quick-actions';
 import { HeroKpiCard } from '@/components/dashboard/hero-kpi-card';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { ProjectsOverviewTable } from '@/components/dashboard/projects-overview-table';
-import {
-  DASHBOARD_PROJECTS,
-  DASHBOARD_PROJECTS_TOTAL,
-  DASHBOARD_YEAR,
-  HERO_KPI,
-  SECONDARY_KPIS,
-} from '@/lib/dashboard/mock-data';
+import { getCurrentYear } from '@/lib/dashboard/current-year';
+import { getDashboardOverview } from '@/lib/dashboard/queries';
+
+const ALLOWED_ROLES: UserRole[] = ['admin', 'coordinator'];
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect('/login');
+  if (!ALLOWED_ROLES.includes(session.user.role)) redirect('/dashboard/projects');
+
+  const year = getCurrentYear();
+  const { heroKpi, secondaryKpis, projects, projectsTotal } = await getDashboardOverview(year);
 
   return (
     <div className="bg-surface-page flex flex-1 flex-col gap-4 p-4 lg:px-6 lg:py-5">
-      <DashboardQuickActions />
+      <DashboardQuickActions canManageMetrics={session.user.role === 'admin'} />
 
-      <HeroKpiCard kpi={HERO_KPI} />
+      <HeroKpiCard kpi={heroKpi} />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        {SECONDARY_KPIS.map((kpi, index) => (
+        {secondaryKpis.map((kpi, index) => (
           <KpiCard
             key={kpi.label}
             kpi={kpi}
@@ -32,11 +34,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <ProjectsOverviewTable
-        projects={DASHBOARD_PROJECTS}
-        total={DASHBOARD_PROJECTS_TOTAL}
-        year={DASHBOARD_YEAR}
-      />
+      <ProjectsOverviewTable projects={projects} total={projectsTotal} year={year} />
     </div>
   );
 }
