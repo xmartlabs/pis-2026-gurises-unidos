@@ -26,9 +26,10 @@ export function MetricsForm({
   function saveChanges() {
     startTransition(async () => {
       try {
-        const result = await saveMetricSettings(
-          metrics.map(({ key, showPublicly }) => ({ key, showPublicly }))
-        );
+        const result = await saveMetricSettings({
+          year: Number(year),
+          metrics: metrics.map(({ key, showPublicly }) => ({ key, showPublicly })),
+        });
         if (!result.success) {
           notify.error({ title: result.message });
           return;

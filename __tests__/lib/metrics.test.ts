@@ -71,6 +71,7 @@ describe('getMetricSettings', () => {
     const settings = await getMetricSettings();
     expect(settings.filter((metric) => metric.showPublicly).map((metric) => metric.key)).toEqual([
       'children_reached',
+      'teachers',
       'active_projects',
     ]);
     expect(settings).toHaveLength(6);

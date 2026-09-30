@@ -12,6 +12,14 @@ export async function getMetricSettings() {
   }));
 }
 
+export async function getReferenceYear(currentYear = new Date().getFullYear()) {
+  const settings = await prisma.publicSettings.findUnique({
+    where: { id: 1 },
+    select: { referenceYear: true },
+  });
+  return settings?.referenceYear ?? currentYear - 1;
+}
+
 export type MetricSetting = Awaited<ReturnType<typeof getMetricSettings>>[number];
 
 export async function getMetricYears(currentYear: number) {

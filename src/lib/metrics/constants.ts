@@ -34,7 +34,7 @@ export const METRIC_DEFINITIONS: {
     key: 'departments',
     name: 'Departamentos',
     description: 'Departamentos con presencia de la organización.',
-    showPublicly: true,
+    showPublicly: false,
   },
   {
     key: 'active_projects',
