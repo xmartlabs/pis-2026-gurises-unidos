@@ -22,6 +22,7 @@ import {
 import { ChevronsUpDown, LogOut, UserRound } from 'lucide-react';
 import type { Session } from 'next-auth';
 import { getInitials } from '@/lib/utils';
+import { getAvatarColorClassName } from '@/lib/users/avatar';
 
 interface Props {
   user: Session['user'];
@@ -30,8 +31,12 @@ interface Props {
 function SidebarUser({ user }: Props) {
   return (
     <>
-      <Avatar className="rounded-md after:rounded-sm">
-        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+      <Avatar className="rounded-md after:rounded-md">
+        <AvatarFallback
+          className={`rounded-md ${getAvatarColorClassName(user.avatarColorIndex)}`}
+        >
+          {getInitials(user.name)}
+        </AvatarFallback>
       </Avatar>
       <span className="grid min-w-0 flex-1 text-left leading-tight">
         <span className="truncate leading-5 font-medium">{user.name ?? 'Usuario'}</span>

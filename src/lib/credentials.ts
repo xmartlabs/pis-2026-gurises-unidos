@@ -2,6 +2,7 @@ import type { User } from '@/generated/prisma/client';
 import bcrypt from 'bcryptjs';
 import prisma from './prisma';
 import { normalizeDocumentId } from './utils';
+import { getAvatarColorIndex } from './users/avatar';
 
 const DUMMY_PASSWORD_HASH = '$2b$10$qYzMcJ.E4lnDm6ffrfnKjuksp7QvpqWK1L476sVjmNEqsJyQMuz.O';
 
@@ -30,6 +31,7 @@ export function toAuthUser(user: User) {
     email: user.email,
     name: `${user.firstName} ${user.lastName}`,
     role: user.role,
+    avatarColorIndex: getAvatarColorIndex(user.documentId),
   };
 }
 

@@ -6,6 +6,10 @@ import { requireUser } from '@/lib/auth/require-user';
 import { canEditProject } from '@/lib/projects/permissions';
 import { mapProjectDbError } from '@/lib/projects/map-project-db-error';
 import { revalidateProject } from '@/lib/projects/revalidate-project';
+import {
+  getRandomProjectPlaceholder,
+  isProjectPlaceholder,
+} from '@/lib/projects/project-placeholders';
 import { parseId } from '@/lib/validation/ids';
 import { logAudit } from '@/lib/audit-log';
 import type { ProjectFormState } from '@/lib/validation/project';
@@ -16,12 +20,14 @@ import {
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
+import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 
 async function validateRelations(
   tx: Prisma.TransactionClient,
   coordinatorId: number,
-  topicIds: number[],
-  currentCoordinatorId?: number
+  topicId: number | null,
+  currentCoordinatorId?: number,
+  currentTopicId?: number | null
 ): Promise<ProjectFormState | null> {
   const coordinator = await tx.user.findFirst({
     where: {
@@ -33,9 +39,37 @@ async function validateRelations(
     select: { id: true },
   });
   if (!coordinator) return { errors: { leadCoordinatorId: ['Elegí un coordinador válido'] } };
-  const count = await tx.topic.count({ where: { id: { in: topicIds } } });
-  if (count !== topicIds.length) return { errors: { topicIds: ['Elegí temáticas válidas'] } };
+  if (topicId !== null) {
+    const topic = await tx.topic.findFirst({
+      where: {
+        id: topicId,
+        ...(topicId === currentTopicId ? {} : { isActive: true }),
+      },
+      select: { id: true },
+    });
+
+    if (!topic) {
+      return { errors: { topicId: ['Elegí una temática válida'] } };
+    }
+  }
   return null;
+}
+
+async function validateUniqueName(
+  tx: Prisma.TransactionClient,
+  name: string,
+  startYear: number,
+  excludeId?: number
+): Promise<ProjectFormState | null> {
+  const duplicate = await tx.project.findFirst({
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      startYear,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    select: { id: true },
+  });
+  return duplicate ? { errors: { name: [DUPLICATE_PROJECT_MESSAGE] } } : null;
 }
 
 function changedFields<T extends object>(data: T, previous: T) {
@@ -49,18 +83,28 @@ export async function createProject(
   const user = await requireUser();
   const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
-  const { projectData, beneficiaryData, topicIds } = splitProjectFormData(parsed.data);
+  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
+  const submittedPlaceholder = formData.get('projectPlaceholder');
+  const coverPhoto = isProjectPlaceholder(submittedPlaceholder)
+    ? submittedPlaceholder
+    : getRandomProjectPlaceholder();
   let projectId: number;
   try {
     const result = await prisma.$transaction(
       async (tx): Promise<{ error: ProjectFormState } | { projectId: number }> => {
-        const error = await validateRelations(tx, projectData.leadCoordinatorId, topicIds);
+        const error = await validateRelations(
+          tx,
+          projectData.leadCoordinatorId,
+          projectData.topicId
+        );
         if (error) return { error };
+        const nameError = await validateUniqueName(tx, projectData.name, projectData.startYear);
+        if (nameError) return { error: nameError };
         const project = await tx.project.create({
           data: {
             ...projectData,
+            coverPhoto,
             createdBy: user.id,
-            projectTopics: { create: topicIds.map((topicId) => ({ topicId })) },
           },
         });
         await logAudit(tx, {
@@ -109,13 +153,12 @@ export async function updateProject(
   if (!parseId(projectId)) return { formError: 'El proyecto no es válido.' };
   const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
-  const { projectData, beneficiaryData, topicIds } = splitProjectFormData(parsed.data);
+  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
   try {
     const error = await prisma.$transaction(
       async (tx): Promise<ProjectFormState | null> => {
         const previous = await tx.project.findUnique({
           where: { id: projectId },
-          include: { projectTopics: true },
         });
         if (!previous) return { formError: 'El proyecto no existe o fue eliminado.' };
         if (!canEditProject(user, previous))
@@ -123,36 +166,30 @@ export async function updateProject(
         const relationError = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
-          topicIds,
-          previous.leadCoordinatorId
+          projectData.topicId,
+          previous.leadCoordinatorId,
+          previous.topicId
         );
         if (relationError) return relationError;
+        const nameError = await validateUniqueName(
+          tx,
+          projectData.name,
+          projectData.startYear,
+          projectId
+        );
+        if (nameError) return nameError;
         const fields = changedFields(projectData, previous);
-        const previousTopics = previous.projectTopics
-          .map(({ topicId }) => topicId)
-          .sort((a, b) => a - b);
-        const topicsChanged = JSON.stringify(previousTopics) !== JSON.stringify(topicIds);
-        if (fields.length || topicsChanged) {
+        if (fields.length) {
           await tx.project.update({
             where: { id: projectId },
-            data: {
-              ...projectData,
-              ...(topicsChanged
-                ? {
-                    projectTopics: {
-                      deleteMany: {},
-                      create: topicIds.map((topicId) => ({ topicId })),
-                    },
-                  }
-                : {}),
-            },
+            data: projectData,
           });
           await logAudit(tx, {
             authorId: user.id,
             action: 'update',
             entity: 'project',
             entityId: projectId,
-            details: { changedFields: [...fields, ...(topicsChanged ? ['topicIds'] : [])] },
+            details: { changedFields: fields },
           });
         }
         const where = { projectId_year: { projectId, year: beneficiaryData.year } };

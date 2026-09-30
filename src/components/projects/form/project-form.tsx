@@ -149,6 +149,9 @@ export function ProjectForm({
         submissionRef.current = true;
       }}
     >
+      {!isEditing && values.coverPhotoUrl && (
+        <input type="hidden" name="projectPlaceholder" value={values.coverPhotoUrl} />
+      )}
       <div
         className={cn(
           'grid flex-1 content-start items-start',
@@ -174,7 +177,6 @@ export function ProjectForm({
 
           <BasicInfoSection
             variant={variant}
-            isEditing={isEditing}
             values={values}
             state={state}
             updateField={updateField}

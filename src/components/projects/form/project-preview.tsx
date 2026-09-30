@@ -32,7 +32,7 @@ export function ProjectPreview({
         <Card className="theme-public bg-card text-card-foreground w-full max-w-[377px] gap-0 overflow-hidden rounded-xl border-0 py-0 shadow-none ring-0">
           <div className="bg-project-cover relative aspect-video w-full overflow-hidden">
             {values.coverPhotoUrl && (
-              <Image src={values.coverPhotoUrl} alt="" fill unoptimized className="object-cover" />
+              <Image src={values.coverPhotoUrl} alt="" fill className="object-cover" />
             )}
           </div>
 
