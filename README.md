@@ -342,6 +342,21 @@ fixture compartido es el admin, en `prisma/fixtures.ts`.
 | Constantes          | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL`            |
 | Archivos            | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
 
+### Tipos y formato
+
+El workflow `Tests` corre `tsc` y `prettier --check` en cada PR. Para verificarlo antes de pushear:
+
+```bash
+npx next typegen && npx tsc --noEmit
+npx prettier --check .
+npx prettier --write .   # arregla el formato
+```
+
+**En Windows** con `core.autocrlf=true`, los archivos se bajan con CRLF y `prettier --check` falla
+en todos. Agregá `--end-of-line auto` para que ignore los finales de línea; git los vuelve a LF
+al commitear. Si `tsc` marca errores dentro de `.next/dev`, son tipos viejos de un `next dev`
+anterior: borrá esa carpeta.
+
 ## Ramas
 
 ```
