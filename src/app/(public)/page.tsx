@@ -6,6 +6,14 @@ import { formatNumber } from '@/lib/format';
 import { ANNUAL_REACH, PROJECTS, getProjectReach, getTotals } from '@/lib/projects';
 import { Redirect } from 'next';
 import { redirect } from 'next/navigation';
+import { getMetricSettings, getMetricValues } from '@/lib/metrics/queries';
+import { listProjects, type ProjectListItem } from '@/lib/projects/list';
+import {
+  BENEFICIARY_FIELDS,
+  sumBeneficiaries,
+  type BeneficiaryCounts,
+} from '@/lib/project-display';
+import { PROJECT_LIST_MAX_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
 
 const HEADLINE_KEYS = ['nna', 'families', 'teachers', 'institutions'];
 
@@ -104,36 +112,8 @@ const LEVELS = [
   },
 ];
 
-const STATS = [
-  { value: '+1.234', description: 'NNA alcanzados', increment: '+123% vs. 2024' },
-  { value: '+1.234', description: 'Familias acompañadas', increment: '+123% vs. 2024' },
-  { value: '+1.234', description: 'Docentes capacitados', increment: '+123% vs. 2024' },
-  { value: '+1.234', description: 'Proyectos activos', increment: '+123% vs. 2024' },
-];
-
-const FEATURED_PROJECTS = [
-  {
-    territory: 'Montevideo',
-    name: 'Playground',
-    description:
-      'Espacios lúdicos seguros para el desarrollo integral de niños y niñas en zonas vulnerables.',
-    reach: 1200,
-  },
-  {
-    territory: 'Canelones',
-    name: 'Apoyo Escolar',
-    description:
-      'Acompañamiento educativo para fortalecer el vínculo con la escuela y mejorar trayectorias.',
-    reach: 890,
-  },
-  {
-    territory: 'Montevideo',
-    name: 'Arte Joven',
-    description:
-      'Talleres de expresión artística que fortalecen identidad y habilidades socioemocionales.',
-    reach: 320,
-  },
-];
+const MAX_DEPARTMENT_BUBBLES = 4;
+const MAX_FEATURED_PROJECTS = 3;
 
 const PARTNERS = [
   'INAU',
@@ -149,16 +129,87 @@ const PARTNERS = [
   'UNFPA',
 ];
 
-const COVERED_DEPARTMENTS = ['Montevideo', 'Canelones', 'Salto', 'Rivera', '+ 8 más'];
+function formatIncrement(current: number, previous: number, previousYear: number) {
+  if (previous === 0) return null;
+  const change = Math.round(((current - previous) / previous) * 100);
+  return `${change > 0 ? '+' : ''}${change}% vs. ${previousYear}`;
+}
 
-export default function Home() {
+async function getYearProjects(year: number) {
+  const filters = parseProjectFilters({
+    beneficiaryYear: String(year),
+    pageSize: String(PROJECT_LIST_MAX_PAGE_SIZE),
+  });
+  const firstPage = await listProjects(filters);
+  const otherPages = await Promise.all(
+    Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+      listProjects({ ...filters, page: index + 2 })
+    )
+  );
+  return [firstPage, ...otherPages].flatMap((page) => page.items);
+}
+
+function getFeaturedProjects(projects: ProjectListItem[]) {
+  return projects
+    .map((project) => ({
+      territory: project.department.name,
+      name: project.name,
+      description: project.publicDescription ?? '',
+      reach: project.beneficiaries.reduce((sum, record) => sum + record.total, 0),
+    }))
+    .sort((a, b) => b.reach - a.reach)
+    .slice(0, MAX_FEATURED_PROJECTS);
+}
+
+function getDepartmentBeneficiaries(projects: ProjectListItem[]) {
+  const totalsByDepartment = new Map<string, BeneficiaryCounts>();
+  for (const project of projects) {
+    const totals =
+      totalsByDepartment.get(project.department.name) ??
+      (Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, 0])) as BeneficiaryCounts);
+    for (const record of project.beneficiaries) {
+      for (const { key } of BENEFICIARY_FIELDS) totals[key] += record[key];
+    }
+    totalsByDepartment.set(project.department.name, totals);
+  }
+
+  return [...totalsByDepartment]
+    .map(([department, totals]) => ({ department, ...totals }))
+    .sort((a, b) => a.department.localeCompare(b.department));
+}
+
+export default async function Home() {
+  const year = new Date().getFullYear() - 1;
+  const [values, previousValues, settings, projects] = await Promise.all([
+    getMetricValues(year),
+    getMetricValues(year - 1),
+    getMetricSettings(),
+    getYearProjects(year),
+  ]);
+  const departmentBeneficiaries = getDepartmentBeneficiaries(projects);
+  const featuredProjects = getFeaturedProjects(projects);
+  const departmentBubbles = [...departmentBeneficiaries]
+    .sort((a, b) => sumBeneficiaries(b) - sumBeneficiaries(a))
+    .slice(0, MAX_DEPARTMENT_BUBBLES)
+    .map(({ department }) => department);
+  const hiddenDepartments = departmentBeneficiaries.length - MAX_DEPARTMENT_BUBBLES;
+  if (hiddenDepartments > 0) departmentBubbles.push(`+ ${hiddenDepartments} más`);
+  const stats = settings
+    .filter((metric) => metric.showPublicly && metric.key !== 'departments')
+    .map((metric) => ({
+      key: metric.key,
+      value: formatNumber(values[metric.key]),
+      description: metric.name,
+      increment: formatIncrement(values[metric.key], previousValues[metric.key], year - 1),
+    }));
+
   return (
     <>
       <section className="w-full">
         <div className="mx-auto flex min-h-115.5 w-full max-w-360 flex-col gap-9 px-4 pt-13 pb-12 sm:px-6 lg:px-16">
           <div className="flex w-full max-w-124 flex-col gap-3 lg:h-48.5">
             <span className="bg-card text-primary flex h-6.5 w-42.5 items-center justify-center rounded-[20px] px-3 py-1.25 text-xs leading-4 font-medium tracking-normal">
-              Informe de impacto · 2026
+              Informe de impacto · {year}
             </span>
             <h2 className="text-foreground w-full max-w-122 text-3xl leading-9 font-bold tracking-normal lg:h-24 lg:text-5xl lg:leading-12">
               Transformando vidas en Uruguay
@@ -168,21 +219,23 @@ export default function Home() {
               territorio uruguayo.
             </p>
           </div>
-          <div className="lg:bg-card grid w-full grid-cols-2 gap-3 lg:h-33 lg:max-w-328 lg:grid-cols-4 lg:gap-0 lg:rounded-xl">
-            {STATS.map((stat, index) => (
+          <div className="lg:bg-card grid w-full grid-cols-2 gap-3 lg:min-h-33 lg:max-w-328 lg:grid-cols-4 lg:gap-0 lg:rounded-xl">
+            {stats.map((stat) => (
               <div
-                key={index}
-                className="bg-card flex min-h-33 flex-col gap-1 rounded-xl px-4 py-6 lg:h-33 lg:max-w-[327.25px] lg:bg-transparent lg:px-8"
+                key={stat.key}
+                className="bg-card flex min-h-33 flex-col gap-1 rounded-xl px-4 py-6 lg:min-h-33 lg:max-w-[327.25px] lg:bg-transparent lg:px-8"
               >
-                <span className="text-primary w-full text-4xl leading-10 font-black tracking-normal lg:h-10 lg:w-29.5">
+                <span className="text-primary w-full text-4xl leading-10 font-black tracking-normal">
                   {stat.value}
                 </span>
-                <span className="text-foreground w-full text-sm leading-5 font-normal tracking-normal lg:h-5 lg:w-37.5">
+                <span className="text-foreground w-full text-sm leading-5 font-normal tracking-normal">
                   {stat.description}
                 </span>
-                <span className="text-primary w-full text-xs leading-4 font-normal tracking-normal whitespace-nowrap lg:h-4 lg:w-20.75">
-                  {stat.increment}
-                </span>
+                {stat.increment && (
+                  <span className="text-primary w-full text-xs leading-4 font-normal tracking-normal">
+                    {stat.increment}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -195,11 +248,11 @@ export default function Home() {
               Nuestros proyectos
             </h2>
             <p className="text-muted-foreground text-sm leading-5 font-normal tracking-normal">
-              Distribuidos en 12 departamentos del Uruguay
+              Distribuidos en {values.departments} departamentos del Uruguay
             </p>
           </div>
           <div className="grid w-full max-w-328 grid-cols-1 gap-4 lg:grid-cols-3">
-            {FEATURED_PROJECTS.map((project) => (
+            {featuredProjects.map((project) => (
               <ProjectCard key={project.name} variant="public-dark" {...project} />
             ))}
           </div>
@@ -214,12 +267,12 @@ export default function Home() {
                   Presencia en todo Uruguay
                 </h2>
                 <p className="text-foreground text-sm leading-5 font-normal tracking-normal">
-                  Nuestros proyectos llegan a 12 departamentos, priorizando comunidades en situación
-                  de vulnerabilidad.
+                  Nuestros proyectos llegan a {values.departments} departamentos, priorizando
+                  comunidades en situación de vulnerabilidad.
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
-                {COVERED_DEPARTMENTS.map((department) => (
+                {departmentBubbles.map((department) => (
                   <span
                     key={department}
                     className="bg-card text-foreground flex h-6.5 items-center rounded-[14px] px-2.5 py-1.25 text-xs leading-4 font-normal tracking-normal"
@@ -233,7 +286,7 @@ export default function Home() {
               <p className="text-muted-foreground text-center text-sm leading-5 font-normal tracking-normal">
                 Mapa de Uruguay
                 <br />
-                12 departamentos cubiertos
+                {values.departments} departamentos cubiertos
               </p>
             </div>
           </div>

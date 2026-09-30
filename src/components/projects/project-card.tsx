@@ -85,9 +85,11 @@ function PublicProjectCard({
           </span>
         </div>
         <h3 className={`${styles.name} text-base leading-6 font-medium tracking-normal`}>{name}</h3>
-        <p className={`${styles.description} text-sm leading-5 font-normal tracking-normal`}>
-          {description}
-        </p>
+        {description && (
+          <p className={`${styles.description} text-sm leading-5 font-normal tracking-normal`}>
+            {description}
+          </p>
+        )}
         <div className="flex items-baseline gap-2">
           <span className={`${styles.reach} text-xl leading-7 font-bold tracking-normal`}>
             {formatNumber(reach)}
