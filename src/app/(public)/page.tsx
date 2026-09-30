@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { PaginationControls } from '@/components/pagination-controls';
 import { ProjectCard } from '@/components/projects/project-card';
 import { formatNumber } from '@/lib/format';
 import { ANNUAL_REACH, PROJECTS, getProjectReach, getTotals } from '@/lib/projects';
@@ -38,7 +39,7 @@ const LEVELS = [
 ];
 
 const MAX_DEPARTMENT_BUBBLES = 4;
-const MAX_FEATURED_PROJECTS = 3;
+const PROJECTS_PER_PAGE = 6;
 
 const PARTNERS = [
   'INAU',
@@ -86,18 +87,6 @@ async function getYearProjects(year: number) {
   return [firstPage, ...otherPages].flatMap((page) => page.items);
 }
 
-function getFeaturedProjects(projects: ProjectListItem[]) {
-  return projects
-    .map((project) => ({
-      territory: project.department.name,
-      name: project.name,
-      description: project.publicDescription ?? '',
-      reach: project.beneficiaries.reduce((sum, record) => sum + record.total, 0),
-    }))
-    .sort((a, b) => b.reach - a.reach)
-    .slice(0, MAX_FEATURED_PROJECTS);
-}
-
 function getDepartmentBeneficiaries(projects: ProjectListItem[]) {
   const totalsByDepartment = new Map<string, BeneficiaryCounts>();
   for (const project of projects) {
@@ -115,16 +104,27 @@ function getDepartmentBeneficiaries(projects: ProjectListItem[]) {
     .sort((a, b) => a.department.localeCompare(b.department));
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { page: rawPage } = await searchParams;
   const year = await getReferenceYear();
-  const [values, previousValues, settings, projects] = await Promise.all([
+  const [values, previousValues, settings, projects, projectsPage] = await Promise.all([
     getMetricValues(year),
     getMetricValues(year - 1),
     getMetricSettings(),
     getYearProjects(year),
+    listProjects(
+      parseProjectFilters({
+        beneficiaryYear: String(year),
+        pageSize: String(PROJECTS_PER_PAGE),
+        page: Array.isArray(rawPage) ? rawPage[0] : rawPage,
+      })
+    ),
   ]);
   const departmentBeneficiaries = getDepartmentBeneficiaries(projects);
-  const featuredProjects = getFeaturedProjects(projects);
   const departmentBubbles = [...departmentBeneficiaries]
     .sort((a, b) => sumBeneficiaries(b) - sumBeneficiaries(a))
     .slice(0, MAX_DEPARTMENT_BUBBLES)
@@ -180,7 +180,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      <section className="w-full">
+      <section id="projects" className="w-full scroll-mt-4">
         <div className="mx-auto flex min-h-71 w-full max-w-360 flex-col gap-4 px-4 pt-18 pb-18 sm:px-6 lg:px-14">
           <div className="flex w-full max-w-75.75 flex-col gap-1 lg:h-15">
             <h2 className="text-foreground text-2xl leading-8 font-bold tracking-normal sm:text-3xl sm:leading-9">
@@ -191,10 +191,23 @@ export default async function Home() {
             </p>
           </div>
           <div className="grid w-full max-w-328 grid-cols-1 gap-4 lg:grid-cols-3">
-            {featuredProjects.map((project) => (
-              <ProjectCard key={project.name} variant="public-dark" {...project} />
+            {projectsPage.items.map((project) => (
+              <ProjectCard
+                key={project.id}
+                variant="public-dark"
+                territory={project.department.name}
+                name={project.name}
+                description={project.publicDescription ?? ''}
+                reach={project.beneficiaries.reduce((sum, record) => sum + record.total, 0)}
+              />
             ))}
           </div>
+          <PaginationControls
+            currentPage={projectsPage.page}
+            totalPages={projectsPage.totalPages}
+            basePath="/"
+            hash="#projects"
+          />
         </div>
       </section>
       <section className="w-full">
