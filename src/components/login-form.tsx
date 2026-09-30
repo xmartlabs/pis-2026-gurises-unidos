@@ -28,7 +28,7 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      {sessionExpired && (
+      {sessionExpired && !state.formError && (
         <p
           role="status"
           className="border-border bg-muted text-foreground rounded-lg border px-4 py-3 text-sm"

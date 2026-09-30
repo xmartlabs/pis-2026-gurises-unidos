@@ -100,6 +100,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
         session.user.role = token.role;
         session.user.avatarColorIndex = token.avatarColorIndex;
+        session.user.remember = Boolean(token.remember);
       }
       return session;
     },

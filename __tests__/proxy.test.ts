@@ -31,6 +31,19 @@ describe('proxy', () => {
     expect(response.headers.get('x-middleware-next')).toBe('1');
   });
 
+  test('renews an expired cookie for authenticated requests', () => {
+    const now = Date.now();
+    const response = runProxy(
+      makeRequest('/dashboard/projects', {
+        authenticated: true,
+        expiration: String(now - 1),
+      })
+    );
+
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(Number(response.cookies.get(SESSION_EXPIRATION_COOKIE)?.value)).toBeGreaterThan(now);
+  });
+
   test('redirects first-time unauthenticated requests without an expiration reason', () => {
     const response = runProxy(makeRequest('/dashboard/projects'));
 

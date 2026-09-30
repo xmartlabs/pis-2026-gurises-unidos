@@ -245,12 +245,23 @@ describe('jwt', () => {
 });
 
 describe('session', () => {
-  test('copies id, role, and avatar color from the token onto session.user', () => {
+  test('copies id, role, avatar color, and remember from the token onto session.user', () => {
     const session = { user: { name: 'Ana Admin' }, expires: '2026-01-01T00:00:00.000Z' };
-    const token = { sub: '42', role: 'coordinator' as const, avatarColorIndex: 7 };
+    const token = {
+      sub: '42',
+      role: 'coordinator' as const,
+      avatarColorIndex: 7,
+      remember: true,
+    };
 
     expect(capturedConfig().callbacks?.session?.({ session, token } as never)).toEqual({
-      user: { name: 'Ana Admin', id: '42', role: 'coordinator', avatarColorIndex: 7 },
+      user: {
+        name: 'Ana Admin',
+        id: '42',
+        role: 'coordinator',
+        avatarColorIndex: 7,
+        remember: true,
+      },
       expires: '2026-01-01T00:00:00.000Z',
     });
   });

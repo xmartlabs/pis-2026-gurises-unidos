@@ -8,7 +8,7 @@ import { signIn, signOut } from '@/auth';
 import {
   getSessionExpirationTimestamp,
   SESSION_EXPIRATION_COOKIE,
-  SESSION_EXPIRATION_COOKIE_MAX_AGE,
+  SESSION_EXPIRATION_COOKIE_OPTIONS,
 } from '@/lib/auth/session-expiration';
 import { loginSchema, type LoginFormState } from '@/lib/validation/auth';
 
@@ -41,13 +41,11 @@ export async function login(
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_EXPIRATION_COOKIE, String(getSessionExpirationTimestamp(remember)), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: SESSION_EXPIRATION_COOKIE_MAX_AGE,
-  });
+  cookieStore.set(
+    SESSION_EXPIRATION_COOKIE,
+    String(getSessionExpirationTimestamp(remember)),
+    SESSION_EXPIRATION_COOKIE_OPTIONS
+  );
 
   redirect('/dashboard/projects');
 }

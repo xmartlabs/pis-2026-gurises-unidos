@@ -1,15 +1,27 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import {
+  getSessionExpirationTimestamp,
   hasSessionExpired,
   SESSION_EXPIRATION_COOKIE,
+  SESSION_EXPIRATION_COOKIE_OPTIONS,
   SESSION_EXPIRATION_REASON,
 } from '@/lib/auth/session-expiration';
 
 const PUBLIC_ROUTES = ['/', '/login'];
 
 export const proxy = auth((request) => {
-  if (request.auth || PUBLIC_ROUTES.includes(request.nextUrl.pathname)) {
+  if (request.auth) {
+    const response = NextResponse.next();
+    response.cookies.set(
+      SESSION_EXPIRATION_COOKIE,
+      String(getSessionExpirationTimestamp(Boolean(request.auth.user.remember))),
+      SESSION_EXPIRATION_COOKIE_OPTIONS
+    );
+    return response;
+  }
+
+  if (PUBLIC_ROUTES.includes(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
 

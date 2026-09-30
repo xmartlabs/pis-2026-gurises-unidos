@@ -5,7 +5,7 @@ import { login, logout } from '@/app/actions/auth';
 import { signIn, signOut } from '@/auth';
 import {
   SESSION_EXPIRATION_COOKIE,
-  SESSION_EXPIRATION_COOKIE_MAX_AGE,
+  SESSION_EXPIRATION_COOKIE_OPTIONS,
 } from '@/lib/auth/session-expiration';
 
 const cookieStore = vi.hoisted(() => ({
@@ -61,13 +61,11 @@ describe('login', () => {
       remember: 'false',
       redirect: false,
     });
-    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_EXPIRATION_COOKIE, expect.any(String), {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
-      path: '/',
-      maxAge: SESSION_EXPIRATION_COOKIE_MAX_AGE,
-    });
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      SESSION_EXPIRATION_COOKIE,
+      expect.any(String),
+      SESSION_EXPIRATION_COOKIE_OPTIONS
+    );
     expect(Number(cookieStore.set.mock.calls[0][1])).toBeGreaterThan(Date.now());
     expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
   });
@@ -87,7 +85,7 @@ describe('login', () => {
       SESSION_EXPIRATION_COOKIE,
       expect.any(String),
       expect.objectContaining({
-        maxAge: SESSION_EXPIRATION_COOKIE_MAX_AGE,
+        maxAge: SESSION_EXPIRATION_COOKIE_OPTIONS.maxAge,
       })
     );
   });
