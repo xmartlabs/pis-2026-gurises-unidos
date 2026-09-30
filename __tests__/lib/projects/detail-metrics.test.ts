@@ -8,15 +8,17 @@ import { parseProjectDetailInput } from '@/lib/validation/project-detail';
 
 describe('getChildrenReached', () => {
   it('adds direct and indirect children only', () => {
-    expect(getChildrenReached({
-      directChildrenAdolescents: 100,
-      indirectChildrenAdolescents: 20,
-      youth18To29: 30,
-      families: 40,
-      coordinatedInstitutions: 5,
-      communityLeaders: 6,
-      basicServiceStaff: 7,
-    })).toBe(120);
+    expect(
+      getChildrenReached({
+        directChildrenAdolescents: 100,
+        indirectChildrenAdolescents: 20,
+        youth18To29: 30,
+        families: 40,
+        coordinatedInstitutions: 5,
+        communityLeaders: 6,
+        basicServiceStaff: 7,
+      })
+    ).toBe(120);
   });
 
   it('preserves missing records', () => {
@@ -122,15 +124,12 @@ describe('parseProjectDetailInput', () => {
     });
   });
 
-  it.each(['0', '-1', 'abc', '1.5', '2147483648'])(
-    'rejects invalid project ID %s',
-    (id) => {
-      expect(parseProjectDetailInput(id, '2025', 2026)).toEqual({
-        success: false,
-        field: 'projectId',
-      });
-    }
-  );
+  it.each(['0', '-1', 'abc', '1.5', '2147483648'])('rejects invalid project ID %s', (id) => {
+    expect(parseProjectDetailInput(id, '2025', 2026)).toEqual({
+      success: false,
+      field: 'projectId',
+    });
+  });
 
   it.each([
     { year: '1988' },

@@ -21,10 +21,7 @@ const BENEFICIARY_SELECT = {
   basicServiceStaff: true,
 } satisfies Prisma.ProjectBeneficiarySelect;
 
-export async function getProjectDetail(
-  rawProjectId: unknown,
-  rawYear?: unknown
-) {
+export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown) {
   const user = await requireUser();
 
   if (user.role !== 'admin' && user.role !== 'coordinator') {
@@ -93,15 +90,11 @@ export async function getProjectDetail(
     return { status: 'notFound' as const };
   }
 
-  const selectedYear =
-    year ?? project.projectBeneficiaries[0]?.year ?? currentYear;
+  const selectedYear = year ?? project.projectBeneficiaries[0]?.year ?? currentYear;
   const comparisonYear = selectedYear - 1;
 
   const availableYears = [
-    ...new Set([
-      currentYear,
-      ...project.projectBeneficiaries.map((record) => record.year),
-    ]),
+    ...new Set([currentYear, ...project.projectBeneficiaries.map((record) => record.year)]),
   ].sort((a, b) => b - a);
 
   const [current, previous, national] = await Promise.all([
@@ -135,15 +128,9 @@ export async function getProjectDetail(
     }),
   ]);
 
-  const childrenReached = compareMetric(
-    getChildrenReached(current),
-    getChildrenReached(previous)
-  );
+  const childrenReached = compareMetric(getChildrenReached(current), getChildrenReached(previous));
 
-  const families = compareMetric(
-    current?.families ?? null,
-    previous?.families ?? null
-  );
+  const families = compareMetric(current?.families ?? null, previous?.families ?? null);
 
   const institutions = compareMetric(
     current?.coordinatedInstitutions ?? null,
@@ -181,10 +168,7 @@ export async function getProjectDetail(
         nationalReach: {
           projectValue: childrenReached.value,
           nationalValue: nationalChildrenReached,
-          percentage: calculatePercentage(
-            childrenReached.value,
-            nationalChildrenReached
-          ),
+          percentage: calculatePercentage(childrenReached.value, nationalChildrenReached),
         },
         activeProjects: {
           projectCount: hasData ? 1 : 0,
@@ -207,7 +191,4 @@ export async function getProjectDetail(
 
 export type ProjectDetailResult = Awaited<ReturnType<typeof getProjectDetail>>;
 
-export type ProjectDetail = Extract<
-  ProjectDetailResult,
-  { status: 'success' }
->['data'];
+export type ProjectDetail = Extract<ProjectDetailResult, { status: 'success' }>['data'];

@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { prismaMock } from '../../mocks/prisma';
 import type { BeneficiaryCounts } from '@/lib/project-display';
 import { getProjectDetail } from '@/lib/projects/detail';
@@ -13,8 +6,6 @@ import { getProjectDetail } from '@/lib/projects/detail';
 const { authMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
 }));
-
-vi.mock('server-only', () => ({}));
 
 vi.mock('@/auth', () => ({
   auth: authMock,
@@ -58,9 +49,7 @@ const PROJECT = {
   projectBeneficiaries: [{ year: 2026 }, { year: 2025 }],
 };
 
-function createCounts(
-  overrides: Partial<BeneficiaryCounts> = {}
-): BeneficiaryCounts {
+function createCounts(overrides: Partial<BeneficiaryCounts> = {}): BeneficiaryCounts {
   return {
     directChildrenAdolescents: 0,
     indirectChildrenAdolescents: 0,
@@ -97,16 +86,14 @@ beforeEach(() => {
   prismaMock.user.findUnique.mockResolvedValue({ ...USER });
   prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT });
 
-  prismaMock.projectBeneficiary.findUnique.mockImplementation(
-    async ({ where }) => {
-      const year = where.projectId_year.year;
+  prismaMock.projectBeneficiary.findUnique.mockImplementation(async ({ where }) => {
+    const year = where.projectId_year.year;
 
-      if (year === 2026) return CURRENT;
-      if (year === 2025) return PREVIOUS;
+    if (year === 2026) return CURRENT;
+    if (year === 2025) return PREVIOUS;
 
-      return null;
-    }
-  );
+    return null;
+  });
 
   prismaMock.projectBeneficiary.aggregate.mockResolvedValue({
     _sum: {
@@ -220,16 +207,14 @@ describe('getProjectDetail', () => {
       projectBeneficiaries: [{ year: 2026 }, { year: 2024 }],
     });
 
-    prismaMock.projectBeneficiary.findUnique.mockImplementation(
-      async ({ where }) => {
-        const year = where.projectId_year.year;
+    prismaMock.projectBeneficiary.findUnique.mockImplementation(async ({ where }) => {
+      const year = where.projectId_year.year;
 
-        if (year === 2026) return CURRENT;
-        if (year === 2024) return PREVIOUS;
+      if (year === 2026) return CURRENT;
+      if (year === 2024) return PREVIOUS;
 
-        return null;
-      }
-    );
+      return null;
+    });
 
     expect(await getProjectDetail('12', '2026')).toMatchObject({
       status: 'success',
@@ -369,15 +354,12 @@ describe('getProjectDetail', () => {
     expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
   });
 
-  it.each(['disabled', 'pendingInvitation'])(
-    'rejects a user with status %s',
-    async (status) => {
-      prismaMock.user.findUnique.mockResolvedValue({ ...USER, status });
+  it.each(['disabled', 'pendingInvitation'])('rejects a user with status %s', async (status) => {
+    prismaMock.user.findUnique.mockResolvedValue({ ...USER, status });
 
-      await expect(getProjectDetail('12')).rejects.toThrow('Redirect: /login');
-      expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
-    }
-  );
+    await expect(getProjectDetail('12')).rejects.toThrow('Redirect: /login');
+    expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
+  });
 
   it('rejects a deleted user', async () => {
     prismaMock.user.findUnique.mockResolvedValue({

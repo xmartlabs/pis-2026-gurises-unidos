@@ -10,9 +10,7 @@ export type MetricComparison = {
   trend: MetricTrend | null;
 };
 
-export function getChildrenReached(
-  record: BeneficiaryCounts | null
-): number | null {
+export function getChildrenReached(record: BeneficiaryCounts | null): number | null {
   if (record === null) {
     return null;
   }
@@ -47,11 +45,7 @@ export function compareMetric(
 
   const absoluteChange = value - previousValue;
   const trend: MetricTrend =
-    absoluteChange > 0
-      ? 'increased'
-      : absoluteChange < 0
-        ? 'decreased'
-        : 'stable';
+    absoluteChange > 0 ? 'increased' : absoluteChange < 0 ? 'decreased' : 'stable';
 
   return {
     value,
