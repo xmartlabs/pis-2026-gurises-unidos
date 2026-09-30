@@ -6,12 +6,15 @@ const mocks = vi.hoisted(() => ({
   reactivateTopic: vi.fn(),
   updateTopic: vi.fn(),
   countProjects: vi.fn(),
+  transaction: vi.fn(),
+  queryRaw: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
 vi.mock('@/lib/auth/require-user', () => ({ requireUser: mocks.requireUser }));
 vi.mock('@/lib/prisma', () => ({
   default: {
+    $transaction: mocks.transaction,
     topic: {
       create: mocks.createTopic,
       update: mocks.updateTopic,
@@ -33,6 +36,14 @@ beforeEach(() => {
   mocks.createTopic.mockResolvedValue({ id: 1 });
   mocks.reactivateTopic.mockResolvedValue({ count: 0 });
   mocks.updateTopic.mockResolvedValue({ id: 1 });
+  mocks.queryRaw.mockResolvedValue([]);
+  mocks.transaction.mockImplementation(async (callback) =>
+    callback({
+      $queryRaw: mocks.queryRaw,
+      project: { count: mocks.countProjects },
+      topic: { update: mocks.updateTopic },
+    })
+  );
 });
 
 describe('createTopic', () => {

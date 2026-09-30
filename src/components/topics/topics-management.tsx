@@ -3,10 +3,10 @@
 import { useActionState, useState } from 'react';
 import { createTopic, deleteTopic, type TopicActionState } from '@/app/actions/topics';
 import { topicSchema } from '@/lib/validation/topic';
-import { Input } from './ui/input';
-import { Card, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Separator } from './ui/separator';
+import { Input } from '../ui/input';
+import { Card, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from './ui/alert-dialog';
+} from '../ui/alert-dialog';
 
 type TopicsManagementProps = {
   topics: Topic[];
@@ -36,7 +36,17 @@ const initialState: TopicActionState = {};
 export function TopicsManagement({ topics }: TopicsManagementProps) {
   const [name, setName] = useState('');
   const [clientError, setClientError] = useState<string>();
-  const [state, formAction, pending] = useActionState(createTopic, initialState);
+  const [state, formAction, pending] = useActionState(
+    async (previousState: TopicActionState, formData: FormData) => {
+      const result = await createTopic(previousState, formData);
+      if (result.success) {
+        setName('');
+        setClientError(undefined);
+      }
+      return result;
+    },
+    initialState
+  );
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
@@ -87,9 +97,9 @@ export function TopicsManagement({ topics }: TopicsManagementProps) {
 
         {state.formError && <p className="text-destructive text-xs">{state.formError}</p>}
       </div>
-      <Separator className="w-full max-w-178 bg-[#EFF2F4]" />
-      <p className="font-sans text-xs leading-4 font-normal text-[#a1a1aa]">
-        {topics.length} temáticas
+      <Separator className="w-full max-w-178" />
+      <p className="text-muted-foreground font-sans text-xs leading-4 font-normal">
+        {topics.length === 1 ? '1 temática' : `${topics.length} temáticas`}
       </p>
       <ul className="w-full">
         {topics.map((topic) => (
@@ -109,10 +119,10 @@ function TopicRow({ topic }: { topic: Topic }) {
   return (
     <li className="border-b border-[#eff2f4] py-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm leading-5 font-medium text-[#333333]">{topic.name}</span>
+        <span className="text-foreground text-sm leading-5 font-medium">{topic.name}</span>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs leading-4 font-normal text-[#a1a1a1]">
+          <span className="text-muted-foreground text-xs leading-4 font-normal">
             {topic._count.projects === 1 ? '1 proyecto' : `${topic._count.projects} proyectos`}
           </span>
 

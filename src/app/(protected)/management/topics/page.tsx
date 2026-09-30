@@ -1,17 +1,12 @@
-import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { TopicsManagement } from '@/components/topics-management';
+import { TopicsManagement } from '@/components/topics/topics-management';
 import { ErrorScreen } from '@/components/error-screen';
 import { getTopics } from '@/lib/topics';
 
 export default async function TopicsPage() {
   const session = await auth();
 
-  if (!session?.user) {
-    redirect('/login');
-  }
-
-  if (session.user.role !== 'admin') {
+  if (session?.user.role !== 'admin') {
     return <ErrorScreen code={403} />;
   }
 
