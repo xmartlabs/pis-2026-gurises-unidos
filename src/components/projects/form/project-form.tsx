@@ -121,6 +121,10 @@ export function ProjectForm({
   }
 
   useEffect(() => {
+    if (state.errors?.topicId) router.refresh();
+  }, [router, state.errors?.topicId]);
+
+  useEffect(() => {
     if (state.formError) {
       notify.error({ title: state.formError });
       return;
