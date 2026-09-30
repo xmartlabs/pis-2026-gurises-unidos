@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   createProject: vi.fn(),
   updateProject: vi.fn(),
+  softDeleteProject: vi.fn(),
   createBeneficiary: vi.fn(),
   findBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
@@ -38,6 +39,7 @@ const TX = {
   project: {
     create: mocks.createProject,
     update: mocks.updateProject,
+    updateMany: mocks.softDeleteProject,
     findFirst: vi.fn((args: { where: object }) =>
       'name' in args.where ? mocks.findDuplicateProject(args) : mocks.findProject(args)
     ),
@@ -664,6 +666,7 @@ describe('project review regressions', () => {
 describe('deleteProject', () => {
   beforeEach(() => {
     mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2 });
+    mocks.softDeleteProject.mockResolvedValue({ count: 1 });
   });
 
   it('marks the project as deleted by the user and audits it in one transaction', async () => {
@@ -671,8 +674,8 @@ describe('deleteProject', () => {
     expect(mocks.findProject).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 10, deletedAt: null } })
     );
-    expect(mocks.updateProject).toHaveBeenCalledWith({
-      where: { id: 10 },
+    expect(mocks.softDeleteProject).toHaveBeenCalledWith({
+      where: { id: 10, deletedAt: null },
       data: { deletedAt: expect.any(Date), deletedBy: 7 },
     });
     expect(mocks.audit).toHaveBeenCalledWith({
@@ -690,7 +693,7 @@ describe('deleteProject', () => {
       deletedAt: null,
     });
     expect(await deleteProject(10)).toEqual({});
-    expect(mocks.updateProject).toHaveBeenCalled();
+    expect(mocks.softDeleteProject).toHaveBeenCalled();
   });
 
   it('rejects an unrelated coordinator', async () => {
@@ -703,7 +706,7 @@ describe('deleteProject', () => {
     expect(await deleteProject(10)).toEqual({
       error: 'No tenés permiso para eliminar este proyecto.',
     });
-    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.softDeleteProject).not.toHaveBeenCalled();
     expect(mocks.audit).not.toHaveBeenCalled();
   });
 
@@ -712,8 +715,17 @@ describe('deleteProject', () => {
     expect(await deleteProject(10)).toEqual({
       error: 'El proyecto no existe o ya fue eliminado.',
     });
-    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.softDeleteProject).not.toHaveBeenCalled();
     expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('does not audit when a concurrent request already deleted the project', async () => {
+    mocks.softDeleteProject.mockResolvedValue({ count: 0 });
+    expect(await deleteProject(10)).toEqual({
+      error: 'El proyecto no existe o ya fue eliminado.',
+    });
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid id before accessing the database', async () => {

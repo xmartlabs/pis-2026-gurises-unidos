@@ -251,10 +251,11 @@ export async function deleteProject(projectId: number): Promise<{ error?: string
       });
       if (!project) return 'El proyecto no existe o ya fue eliminado.';
       if (!canEditProject(user, project)) return 'No tenés permiso para eliminar este proyecto.';
-      await tx.project.update({
-        where: { id: projectId },
+      const { count } = await tx.project.updateMany({
+        where: { id: projectId, deletedAt: null },
         data: { deletedAt: new Date(), deletedBy: user.id },
       });
+      if (count === 0) return 'El proyecto no existe o ya fue eliminado.';
       await logAudit(tx, {
         authorId: user.id,
         action: 'deletion',
