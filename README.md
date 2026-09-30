@@ -343,12 +343,13 @@ fixture compartido es el admin, en `prisma/fixtures.ts`.
 | Constantes          | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL`            |
 | Archivos            | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
 
-### Tipos y formato
+### Lint, tipos y formato
 
-El workflow `Tests` corre el job `typecheck and format` en cada PR. Para verificarlo antes de
+El workflow `Tests` corre el job `static checks` en cada PR. Para verificarlo antes de
 pushear:
 
 ```bash
+npm run lint
 npm run typecheck
 npm run format:check
 npm run format   # arregla el formato

@@ -6,7 +6,7 @@ on:
 
 jobs:
   static:
-    name: typecheck and format
+    name: static checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,10 +21,13 @@ jobs:
       - run: npm run format:check
 
       - run: npm run lint
+        if: ${{ !cancelled() }}
 
       - run: npx prisma generate
+        if: ${{ !cancelled() }}
 
       - run: npm run typecheck
+        if: ${{ !cancelled() }}
 
   test:
     name: vitest
