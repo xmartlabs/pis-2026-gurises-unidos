@@ -41,14 +41,14 @@ const PUBLIC_VARIANT_STYLES = {
     reachLabel: 'text-muted-foreground',
   },
   'public-light': {
-    card: 'bg-white border-status-success',
+    card: 'bg-card border-status-success',
     image: 'bg-(image:--project-cover)',
     dot: 'bg-status-success',
-    territory: 'text-neutral-500',
-    name: 'text-neutral-950',
-    description: 'text-neutral-500',
-    reach: 'text-neutral-950',
-    reachLabel: 'text-neutral-500',
+    territory: 'text-muted-foreground',
+    name: 'text-foreground',
+    description: 'text-muted-foreground',
+    reach: 'text-foreground',
+    reachLabel: 'text-muted-foreground',
   },
 };
 
