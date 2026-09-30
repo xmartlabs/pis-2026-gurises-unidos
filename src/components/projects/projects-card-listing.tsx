@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useTransition } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -24,22 +24,30 @@ type YearFilterValue = number | typeof ALL_YEARS;
 type ProjectsCardListProps = {
   projects: ProjectListItem[];
   total: number;
+  years: number[];
+  beneficiaryYear: number | undefined;
 };
 
-export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
-  const projectYears = Array.from(
-    new Set(projects.flatMap((p) => p.beneficiaries.map((b) => b.year)))
-  ).sort((a, b) => b - a);
+export function ProjectsCardList({
+  projects,
+  total,
+  years,
+  beneficiaryYear,
+}: ProjectsCardListProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const year: YearFilterValue = beneficiaryYear ?? ALL_YEARS;
   const yearOptions: { value: YearFilterValue; label: string }[] = [
     { value: ALL_YEARS, label: 'Todos' },
-    ...projectYears.map((y) => ({ value: y, label: String(y) })),
+    ...years.map((y) => ({ value: y, label: String(y) })),
   ];
 
-  const searchParams = useSearchParams();
   const current =
     STATUS_FILTERS.find((f) => f.value === searchParams.get('status')) ?? STATUS_FILTERS[0];
   const status = current.value;
-  const [year, setYear] = useState<YearFilterValue>(ALL_YEARS);
 
   function selectStatus(value: StatusFilterValue) {
     const params = new URLSearchParams(searchParams.toString());
@@ -49,18 +57,20 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
     window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
   }
 
-  const filtered = projects.filter(
-    (p) =>
-      (status === 'all' || p.status === status) &&
-      (year === ALL_YEARS || p.beneficiaries.some((b) => b.year === year))
-  );
+  function selectYear(value: YearFilterValue) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === ALL_YEARS) params.delete('beneficiaryYear');
+    else params.set('beneficiaryYear', String(value));
+    const query = params.toString();
+    startTransition(() =>
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    );
+  }
+
+  const filtered = projects.filter((p) => status === 'all' || p.status === status);
 
   const cards = filtered.flatMap((project) => {
-    const shownBeneficiaries =
-      year === ALL_YEARS
-        ? project.beneficiaries
-        : project.beneficiaries.filter((b) => b.year === year);
-    const cardBeneficiaries = shownBeneficiaries.length > 0 ? shownBeneficiaries : [null];
+    const cardBeneficiaries = project.beneficiaries.length > 0 ? project.beneficiaries : [null];
     return cardBeneficiaries.map((yearBeneficiaries) => ({ project, yearBeneficiaries }));
   });
 
@@ -77,6 +87,29 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
     </Button>
   );
 
+  const yearSelect = (
+    <Select<YearFilterValue>
+      items={yearOptions}
+      value={year}
+      onValueChange={(value) => value !== null && selectYear(value)}
+      disabled={isPending}
+    >
+      <SelectTrigger
+        aria-label="Filtrar por año"
+        className="bg-background h-9! w-22.5 rounded-md px-3 py-2 shadow-xs/10"
+      >
+        <SelectValue className="text-primary text-sm leading-5 tracking-normal" />
+      </SelectTrigger>
+      <SelectContent alignItemWithTrigger={false}>
+        {yearOptions.map((y) => (
+          <SelectItem key={y.value} value={y.value}>
+            {y.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <div className="bg-primary-foreground flex h-full w-auto flex-col gap-5 pt-5 pr-4 pb-4 pl-4 lg:px-8 lg:py-7">
       <div className="flex flex-row items-start justify-between gap-3 lg:items-center">
@@ -89,24 +122,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
           </h1>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="bg-background block lg:hidden">
-            <Select<YearFilterValue>
-              items={yearOptions}
-              value={year}
-              onValueChange={(value) => value !== null && setYear(value)}
-            >
-              <SelectTrigger className="h-9! w-22.5 rounded-md px-3 py-2 shadow-xs/10">
-                <SelectValue className="text-primary text-sm leading-5 tracking-normal" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                {yearOptions.map((y) => (
-                  <SelectItem key={y.value} value={y.value}>
-                    {y.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="block lg:hidden">{yearSelect}</div>
           {newProjectButton}
         </div>
       </div>
@@ -134,26 +150,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
             {filteredCountLabel}
           </p>
         </div>
-        <div className="hidden flex-row items-center gap-1.5 lg:flex">
-          <div className="hidden lg:flex">
-            <Select<YearFilterValue>
-              items={yearOptions}
-              value={year}
-              onValueChange={(value) => value !== null && setYear(value)}
-            >
-              <SelectTrigger className="bg-background h-9! w-22.5 rounded-md px-3 py-2 shadow-xs/10">
-                <SelectValue className="text-primary text-sm leading-5 tracking-normal" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                {yearOptions.map((y) => (
-                  <SelectItem key={y.value} value={y.value}>
-                    {y.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <div className="hidden flex-row items-center gap-1.5 lg:flex">{yearSelect}</div>
       </div>
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
         {filteredCountLabel}
@@ -170,7 +167,13 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
           No hay proyectos con estas características.
         </p>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4">
+        <div
+          aria-busy={isPending}
+          className={cn(
+            'grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4 transition-opacity',
+            isPending && 'opacity-60'
+          )}
+        >
           {cards.map(({ project: p, yearBeneficiaries }) => (
             <ProjectCard
               key={`${p.id}-${yearBeneficiaries?.year ?? 'none'}`}

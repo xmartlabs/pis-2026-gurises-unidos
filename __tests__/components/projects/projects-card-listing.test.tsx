@@ -7,6 +7,8 @@ const searchParams = vi.hoisted(() => ({ current: new URLSearchParams() }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParams.current,
+  usePathname: () => '/dashboard/projects',
+  useRouter: () => ({ replace: vi.fn() }),
 }));
 
 function buildProject(
@@ -35,6 +37,17 @@ const PROJECTS = [
   buildProject(3, 'Closed project', 'closed'),
 ];
 
+function renderList() {
+  render(
+    <ProjectsCardList
+      projects={PROJECTS}
+      total={PROJECTS.length}
+      years={[]}
+      beneficiaryYear={undefined}
+    />
+  );
+}
+
 beforeEach(() => {
   searchParams.current = new URLSearchParams();
 });
@@ -42,7 +55,7 @@ beforeEach(() => {
 test('restores the status filter from the URL', () => {
   searchParams.current = new URLSearchParams('status=paused');
 
-  render(<ProjectsCardList projects={PROJECTS} total={PROJECTS.length} />);
+  renderList();
 
   expect(screen.getByRole('tab', { name: 'Pausados' }).getAttribute('aria-selected')).toBe('true');
   expect(screen.getByText('Paused project')).toBeTruthy();
@@ -53,7 +66,7 @@ test('restores the status filter from the URL', () => {
 test('stores the selected status filter in the URL', () => {
   const replaceState = vi.spyOn(window.history, 'replaceState');
 
-  render(<ProjectsCardList projects={PROJECTS} total={PROJECTS.length} />);
+  renderList();
   fireEvent.click(screen.getByRole('tab', { name: 'Cerrados' }));
 
   expect(replaceState).toHaveBeenCalledWith(null, '', '?status=closed');
