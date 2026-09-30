@@ -2,18 +2,17 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PaginationControls } from '@/components/pagination-controls';
 import { ProjectCard } from '@/components/projects/project-card';
-import { formatNumber } from '@/lib/format';
+import { formatIncrement, formatNumber } from '@/lib/format';
 import { ANNUAL_REACH, PROJECTS, getProjectReach, getTotals } from '@/lib/projects';
 import { Redirect } from 'next';
 import { redirect } from 'next/navigation';
 import { getMetricSettings, getMetricValues, getReferenceYear } from '@/lib/metrics/queries';
-import { listProjects, type ProjectListItem } from '@/lib/projects/list';
-import {
-  BENEFICIARY_FIELDS,
-  sumBeneficiaries,
-  type BeneficiaryCounts,
-} from '@/lib/project-display';
-import { PROJECT_LIST_MAX_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
+import { getStatsColumnsClass } from '@/lib/metrics/stats-layout';
+import { listProjects } from '@/lib/projects/list';
+import { getYearProjects } from '@/lib/projects/year-projects';
+import { getDepartmentBeneficiaries } from '@/lib/projects/department-beneficiaries';
+import { sumBeneficiaries } from '@/lib/project-display';
+import { parseProjectFilters } from '@/lib/validation/project-filters';
 
 const LEVELS = [
   {
@@ -54,55 +53,6 @@ const PARTNERS = [
   'OSF',
   'UNFPA',
 ];
-
-const STATS_COLUMNS_CLASSES: Record<number, string> = {
-  1: 'lg:grid-cols-1',
-  2: 'lg:grid-cols-2',
-  3: 'lg:grid-cols-3',
-  4: 'lg:grid-cols-4',
-};
-
-function getStatsColumnsClass(count: number) {
-  if (count <= 4) return STATS_COLUMNS_CLASSES[Math.max(count, 1)];
-  return count === 5 || count % 3 === 0 ? STATS_COLUMNS_CLASSES[3] : STATS_COLUMNS_CLASSES[4];
-}
-
-function formatIncrement(current: number, previous: number, previousYear: number) {
-  if (previous === 0) return null;
-  const change = Math.round(((current - previous) / previous) * 100);
-  return `${change > 0 ? '+' : ''}${change}% vs. ${previousYear}`;
-}
-
-async function getYearProjects(year: number) {
-  const filters = parseProjectFilters({
-    beneficiaryYear: String(year),
-    pageSize: String(PROJECT_LIST_MAX_PAGE_SIZE),
-  });
-  const firstPage = await listProjects(filters);
-  const otherPages = await Promise.all(
-    Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
-      listProjects({ ...filters, page: index + 2 })
-    )
-  );
-  return [firstPage, ...otherPages].flatMap((page) => page.items);
-}
-
-function getDepartmentBeneficiaries(projects: ProjectListItem[]) {
-  const totalsByDepartment = new Map<string, BeneficiaryCounts>();
-  for (const project of projects) {
-    const totals =
-      totalsByDepartment.get(project.department.name) ??
-      (Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, 0])) as BeneficiaryCounts);
-    for (const record of project.beneficiaries) {
-      for (const { key } of BENEFICIARY_FIELDS) totals[key] += record[key];
-    }
-    totalsByDepartment.set(project.department.name, totals);
-  }
-
-  return [...totalsByDepartment]
-    .map(([department, totals]) => ({ department, ...totals }))
-    .sort((a, b) => a.department.localeCompare(b.department));
-}
 
 export default async function Home({
   searchParams,
