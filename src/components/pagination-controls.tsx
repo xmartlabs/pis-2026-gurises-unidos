@@ -8,6 +8,24 @@ type PaginationControlsProps = {
   hash?: string;
 };
 
+const BUTTON_CLASSES =
+  'bg-card text-foreground hover:bg-card/80 h-9.5 rounded-full px-3 text-sm font-normal sm:px-4';
+
+function PageButton({ href, children }: { href: string | null; children: React.ReactNode }) {
+  if (href === null) {
+    return (
+      <Button className={BUTTON_CLASSES} disabled>
+        {children}
+      </Button>
+    );
+  }
+  return (
+    <Button className={BUTTON_CLASSES} nativeButton={false} render={<Link href={href} />}>
+      {children}
+    </Button>
+  );
+}
+
 export function PaginationControls({
   currentPage,
   totalPages,
@@ -19,26 +37,17 @@ export function PaginationControls({
   const getHref = (page: number) => `${basePath}?page=${page}${hash}`;
 
   return (
-    <nav aria-label="Paginación" className="flex w-full items-center justify-center gap-3 pt-4">
-      <Button
-        className="bg-card text-foreground hover:bg-card/80 h-9.5 rounded-full px-4 text-sm font-normal"
-        disabled={currentPage === 1}
-        nativeButton={false}
-        render={<Link href={getHref(currentPage - 1)} />}
-      >
-        Anterior
-      </Button>
-      <span className="text-muted-foreground text-sm">
+    <nav
+      aria-label="Paginación"
+      className="flex w-full items-center justify-center gap-2 pt-4 sm:gap-3"
+    >
+      <PageButton href={currentPage > 1 ? getHref(currentPage - 1) : null}>Anterior</PageButton>
+      <span className="text-muted-foreground text-xs whitespace-nowrap sm:text-sm">
         Página {currentPage} de {totalPages}
       </span>
-      <Button
-        className="bg-card text-foreground hover:bg-card/80 h-9.5 rounded-full px-4 text-sm font-normal"
-        disabled={currentPage === totalPages}
-        nativeButton={false}
-        render={<Link href={getHref(currentPage + 1)} />}
-      >
+      <PageButton href={currentPage < totalPages ? getHref(currentPage + 1) : null}>
         Siguiente
-      </Button>
+      </PageButton>
     </nav>
   );
 }
