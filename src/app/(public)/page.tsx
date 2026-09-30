@@ -54,6 +54,18 @@ const PARTNERS = [
   'UNFPA',
 ];
 
+const STATS_COLUMNS_CLASSES: Record<number, string> = {
+  1: 'lg:grid-cols-1',
+  2: 'lg:grid-cols-2',
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+};
+
+function getStatsColumnsClass(count: number) {
+  if (count <= 4) return STATS_COLUMNS_CLASSES[Math.max(count, 1)];
+  return count === 5 || count % 3 === 0 ? STATS_COLUMNS_CLASSES[3] : STATS_COLUMNS_CLASSES[4];
+}
+
 function formatIncrement(current: number, previous: number, previousYear: number) {
   if (previous === 0) return null;
   const change = Math.round(((current - previous) / previous) * 100);
@@ -144,11 +156,13 @@ export default async function Home() {
               territorio uruguayo.
             </p>
           </div>
-          <div className="lg:bg-card grid w-full grid-cols-2 gap-3 lg:min-h-33 lg:max-w-328 lg:grid-cols-4 lg:gap-0 lg:rounded-xl">
+          <div
+            className={`lg:bg-card grid w-full grid-cols-2 gap-3 lg:max-w-328 lg:gap-0 lg:rounded-xl ${getStatsColumnsClass(stats.length)}`}
+          >
             {stats.map((stat) => (
               <div
                 key={stat.key}
-                className="bg-card flex min-h-33 flex-col gap-1 rounded-xl px-4 py-6 lg:min-h-33 lg:max-w-[327.25px] lg:bg-transparent lg:px-8"
+                className="bg-card flex min-h-33 flex-col gap-1 rounded-xl px-4 py-6 max-lg:last:odd:col-span-2 lg:bg-transparent lg:px-8"
               >
                 <span className="text-primary w-full text-4xl leading-10 font-black tracking-normal">
                   {stat.value}
