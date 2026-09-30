@@ -154,7 +154,7 @@ const COVERED_DEPARTMENTS = ['Montevideo', 'Canelones', 'Salto', 'Rivera', '+ 8 
 export default function Home() {
   return (
     <>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex min-h-115.5 w-full max-w-360 flex-col gap-9 px-4 pt-13 pb-12 sm:px-6 lg:px-16">
           <div className="flex w-full max-w-124 flex-col gap-3 lg:h-48.5">
             <span className="bg-card text-primary flex h-6.5 w-42.5 items-center justify-center rounded-[20px] px-3 py-1.25 text-xs leading-4 font-medium tracking-normal">
@@ -188,10 +188,10 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex min-h-71 w-full max-w-360 flex-col gap-4 px-4 pt-18 pb-18 sm:px-6 lg:px-14">
           <div className="flex w-full max-w-75.75 flex-col gap-1 lg:h-15">
-            <h2 className="text-foreground text-3xl leading-9 font-bold tracking-normal">
+            <h2 className="text-foreground text-2xl leading-8 font-bold tracking-normal sm:text-3xl sm:leading-9">
               Nuestros proyectos
             </h2>
             <p className="text-muted-foreground text-sm leading-5 font-normal tracking-normal">
@@ -205,12 +205,12 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex w-full max-w-360 flex-col gap-7 px-4 pt-12 pb-12 sm:px-6 lg:px-16">
           <div className="flex w-full flex-col items-center gap-8 lg:flex-row lg:gap-16">
             <div className="flex w-full max-w-105 flex-col gap-3.5 text-center lg:text-left">
               <div className="flex flex-col gap-1">
-                <h2 className="text-foreground text-3xl leading-9 font-bold tracking-normal">
+                <h2 className="text-foreground text-2xl leading-8 font-bold tracking-normal sm:text-3xl sm:leading-9">
                   Presencia en todo Uruguay
                 </h2>
                 <p className="text-foreground text-sm leading-5 font-normal tracking-normal">
@@ -239,7 +239,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex min-h-77 w-full max-w-360 flex-col gap-7 px-4 pt-12 pb-14 sm:px-6 lg:px-14">
           <div className="flex min-h-14 w-full max-w-93.75 flex-col gap-1">
             <h2 className="text-foreground text-2xl leading-8 font-bold tracking-normal">
@@ -263,18 +263,18 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex min-h-70 w-full max-w-360 flex-col gap-12 px-4 pt-10 pb-10 sm:px-6 lg:px-16">
           <h2 className="text-foreground text-primary text-center text-xs leading-4 font-bold tracking-normal">
             NUESTRA MISIÓN
           </h2>
-          <p className="text-foreground text-center text-3xl leading-9 font-normal tracking-normal">
+          <p className="text-foreground text-center text-xl leading-7 font-normal tracking-normal sm:text-3xl sm:leading-9">
             Hace 35 años defendemos los derechos de la niñez y la adolescencia en Uruguay,
             transformando realidades junto a las comunidades.
           </p>
         </div>
       </section>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex min-h-53.5 w-full max-w-360 flex-col gap-5 px-4 pt-12 pb-14 sm:px-6 lg:px-14">
           <div className="flex w-full max-w-126.5 flex-col gap-1">
             <h2 className="text-foreground text-xl leading-7 font-bold tracking-normal">
@@ -296,9 +296,9 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="bg-background w-full">
+      <section className="w-full">
         <div className="mx-auto flex min-h-78 w-full max-w-360 flex-col gap-4 px-4 pt-18 pb-20 sm:px-6 lg:px-14">
-          <h2 className="text-foreground text-center text-3xl leading-9 font-bold tracking-normal">
+          <h2 className="text-foreground text-center text-2xl leading-8 font-bold tracking-normal sm:text-3xl sm:leading-9">
             Sé parte de esta transformación
           </h2>
           <p className="text-muted-foreground text-center leading-6 font-normal tracking-normal">
