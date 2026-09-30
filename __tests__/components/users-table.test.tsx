@@ -3,9 +3,13 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { UsersTable } from '@/components/users/users-table';
 import type { User } from '@/lib/users/format';
 
-const { deleteUserMock } = vi.hoisted(() => ({ deleteUserMock: vi.fn() }));
+const { deleteUserMock, notifySuccessMock } = vi.hoisted(() => ({
+  deleteUserMock: vi.fn(),
+  notifySuccessMock: vi.fn(),
+}));
 
 vi.mock('@/app/actions/users', () => ({ deleteUser: deleteUserMock }));
+vi.mock('@/lib/notify', () => ({ notify: { success: notifySuccessMock } }));
 
 const USER: User = {
   id: 42,
@@ -30,6 +34,7 @@ function openDeleteDialog() {
 
 beforeEach(() => {
   deleteUserMock.mockReset();
+  notifySuccessMock.mockReset();
 });
 
 test('links the edit action to the selected user', () => {
@@ -57,10 +62,15 @@ test('asks for confirmation before deleting a user', async () => {
 
   expect(await screen.findByRole('alertdialog')).toBeTruthy();
   expect(screen.getByText('¿Eliminar a Ana García?')).toBeTruthy();
+  expect(
+    screen.getByText(
+      'Va a perder el acceso al sistema. Los proyectos que tiene asignados se mantienen.'
+    )
+  ).toBeTruthy();
   expect(deleteUserMock).not.toHaveBeenCalled();
 });
 
-test('deletes the user and closes the dialog on confirm', async () => {
+test('deletes the user, confirms with a toast and closes the dialog', async () => {
   deleteUserMock.mockResolvedValue({ success: true });
   render(<UsersTable users={[USER]} currentUserId={CURRENT_USER_ID} />);
 
@@ -69,6 +79,7 @@ test('deletes the user and closes the dialog on confirm', async () => {
 
   expect(deleteUserMock).toHaveBeenCalledWith(42);
   await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+  expect(notifySuccessMock).toHaveBeenCalledWith({ title: 'Se eliminó a Ana García' });
 });
 
 test('keeps the dialog open and shows the error when deletion fails', async () => {
@@ -84,4 +95,5 @@ test('keeps the dialog open and shows the error when deletion fails', async () =
     'No se puede dar de baja al último administrador activo.'
   );
   expect(screen.getByRole('alertdialog')).toBeTruthy();
+  expect(notifySuccessMock).not.toHaveBeenCalled();
 });

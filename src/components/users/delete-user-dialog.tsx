@@ -7,10 +7,12 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { notify } from '@/lib/notify';
 import { fullName, type User } from '@/lib/users/format';
 
 type DeleteUserDialogProps = {
@@ -38,6 +40,7 @@ export function DeleteUserDialog({ user, open, onOpenChange }: DeleteUserDialogP
         return;
       }
 
+      notify.success({ title: `Se eliminó a ${fullName(user)}` });
       onOpenChange(false);
     });
   }
@@ -47,6 +50,9 @@ export function DeleteUserDialog({ user, open, onOpenChange }: DeleteUserDialogP
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogTitle>¿Eliminar a {fullName(user)}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Va a perder el acceso al sistema. Los proyectos que tiene asignados se mantienen.
+          </AlertDialogDescription>
         </AlertDialogHeader>
 
         {error && (
