@@ -66,7 +66,7 @@ describe('createTopic', () => {
 
 describe('deleteTopic', () => {
   test('deactivates a topic only when it has no associated projects', async () => {
-    await expect(deleteTopic(4, EMPTY_STATE, new FormData())).resolves.toEqual({ success: true });
+    await expect(deleteTopic(4)).resolves.toEqual({ success: true });
 
     expect(mocks.countProjects).toHaveBeenCalledWith({ where: { topicId: 4 } });
     expect(mocks.updateTopic).toHaveBeenCalledWith({
@@ -79,7 +79,7 @@ describe('deleteTopic', () => {
   test('does not deactivate a topic associated with projects', async () => {
     mocks.countProjects.mockResolvedValue(1);
 
-    await expect(deleteTopic(4, EMPTY_STATE, new FormData())).resolves.toEqual({
+    await expect(deleteTopic(4)).resolves.toEqual({
       formError: 'No se puede eliminar una temática asociada a proyectos.',
     });
 
@@ -90,7 +90,7 @@ describe('deleteTopic', () => {
   test('rejects deletion by a non-administrator', async () => {
     mocks.requireUser.mockResolvedValue({ id: 2, role: 'coordinator' });
 
-    await expect(deleteTopic(4, EMPTY_STATE, new FormData())).resolves.toEqual({
+    await expect(deleteTopic(4)).resolves.toEqual({
       formError: 'No tenés permisos para realizar esta acción.',
     });
 

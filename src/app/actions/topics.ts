@@ -62,10 +62,7 @@ export async function createTopic(
       },
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return {
         formError: 'Ya existe una temática con ese nombre.',
         values: { name },
@@ -83,11 +80,7 @@ export async function createTopic(
   return { success: true };
 }
 
-export async function deleteTopic(
-  topicId: number,
-  _previousState: TopicActionState,
-  _formData: FormData
-): Promise<TopicActionState> {
+export async function deleteTopic(topicId: number): Promise<TopicActionState> {
   const user = await requireUser();
 
   if (user.role !== 'admin') {

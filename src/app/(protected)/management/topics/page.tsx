@@ -6,7 +6,7 @@ import { getTopics } from '@/lib/topics';
 
 export default async function TopicsPage() {
   const session = await auth();
-    
+
   if (!session?.user) {
     redirect('/login');
   }
