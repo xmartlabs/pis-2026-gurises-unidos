@@ -38,8 +38,9 @@ const TX = {
   project: {
     create: mocks.createProject,
     update: mocks.updateProject,
-    findUnique: mocks.findProject,
-    findFirst: mocks.findDuplicateProject,
+    findFirst: vi.fn((args: { where: object }) =>
+      'name' in args.where ? mocks.findDuplicateProject(args) : mocks.findProject(args)
+    ),
   },
   user: { findFirst: mocks.findCoordinator },
   topic: { findFirst: mocks.findTopic },
@@ -516,6 +517,13 @@ describe('project review regressions', () => {
     expect(mocks.updateProject).not.toHaveBeenCalled();
   });
 
+  it('only looks up projects that were not deleted', async () => {
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
+    expect(mocks.findProject).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 10, deletedAt: null } })
+    );
+  });
+
   it('preserves the current coordinator without requiring its previous role', async () => {
     await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
     expect(mocks.findCoordinator).toHaveBeenCalledWith({ where: { id: 2 }, select: { id: true } });
@@ -654,12 +662,12 @@ describe('project review regressions', () => {
 
 describe('deleteProject', () => {
   beforeEach(() => {
-    mocks.findDuplicateProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2 });
+    mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2 });
   });
 
   it('marks the project as deleted by the user and audits it in one transaction', async () => {
     await expect(deleteProject(10)).rejects.toThrow('Redirect: /dashboard/projects');
-    expect(TX.project.findFirst).toHaveBeenCalledWith(
+    expect(mocks.findProject).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 10, deletedAt: null } })
     );
     expect(mocks.updateProject).toHaveBeenCalledWith({
@@ -698,7 +706,7 @@ describe('deleteProject', () => {
   });
 
   it('reports a missing or already deleted project', async () => {
-    mocks.findDuplicateProject.mockResolvedValue(null);
+    mocks.findProject.mockResolvedValue(null);
     expect(await deleteProject(10)).toEqual({
       error: 'El proyecto no existe o ya fue eliminado.',
     });

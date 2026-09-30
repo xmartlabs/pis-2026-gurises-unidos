@@ -167,8 +167,8 @@ export async function updateProject(
   try {
     const error = await prisma.$transaction(
       async (tx): Promise<ProjectFormState | null> => {
-        const previous = await tx.project.findUnique({
-          where: { id: projectId },
+        const previous = await tx.project.findFirst({
+          where: { id: projectId, deletedAt: null },
         });
         if (!previous) return { formError: 'El proyecto no existe o fue eliminado.' };
         if (!canEditProject(user, previous))

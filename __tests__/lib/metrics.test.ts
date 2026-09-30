@@ -39,10 +39,10 @@ describe('getMetricValues', () => {
       active_projects: 3,
     });
     expect(prisma.projectBeneficiary.aggregate).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { year } })
+      expect.objectContaining({ where: { year, project: { deletedAt: null } } })
     );
     expect(prisma.projectBeneficiary.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { year } })
+      expect.objectContaining({ where: { year, project: { deletedAt: null } } })
     );
   });
 

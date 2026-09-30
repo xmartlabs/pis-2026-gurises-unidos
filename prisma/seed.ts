@@ -117,6 +117,8 @@ async function main() {
         coverPhoto: PROJECT_PLACEHOLDERS[0],
         internalNotes: null,
         createdBy: admin.id,
+        deletedAt: null,
+        deletedBy: null,
       };
 
       const projectFixtures: ProjectFixture[] = [

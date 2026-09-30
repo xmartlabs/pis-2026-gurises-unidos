@@ -19,8 +19,8 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
     include: { projectBeneficiaries: { orderBy: { year: 'desc' } } },
   });
 
