@@ -15,7 +15,8 @@ npm run dev      # http://localhost:3000
 La app queda corriendo en **http://localhost:3000** (`dev`, `start` y Docker usan el mismo puerto).
 
 Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`,
-`npm test` (Vitest), `npm run test:watch`, `npm run test:e2e` (Playwright).
+`npm test` (Vitest), `npm run test:watch`, `npm run test:e2e` (Playwright), `npm run typecheck`,
+`npm run format`.
 
 ### Con Docker
 
@@ -344,18 +345,17 @@ fixture compartido es el admin, en `prisma/fixtures.ts`.
 
 ### Tipos y formato
 
-El workflow `Tests` corre `tsc` y `prettier --check` en cada PR. Para verificarlo antes de pushear:
+El workflow `Tests` corre el job `typecheck and format` en cada PR. Para verificarlo antes de
+pushear:
 
 ```bash
-npx next typegen && npx tsc --noEmit
-npx prettier --check .
-npx prettier --write .   # arregla el formato
+npm run typecheck
+npm run format:check
+npm run format   # arregla el formato
 ```
 
-**En Windows** con `core.autocrlf=true`, los archivos se bajan con CRLF y `prettier --check` falla
-en todos. Agregá `--end-of-line auto` para que ignore los finales de línea; git los vuelve a LF
-al commitear. Si `tsc` marca errores dentro de `.next/dev`, son tipos viejos de un `next dev`
-anterior: borrá esa carpeta.
+Si `typecheck` marca errores dentro de `.next/dev`, son tipos viejos de un `next dev` anterior:
+borrá esa carpeta.
 
 ## Ramas
 
