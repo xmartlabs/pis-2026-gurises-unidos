@@ -112,7 +112,6 @@ export function MetricsForm({
               disabled={isPending}
               onClick={saveChanges}
               className="h-9 w-fit flex-col gap-2.5 rounded-lg px-4 py-2 shadow-[0_1px_2px_0_rgb(0_0_0/10%)]"
-              aria-describedby="metrics-save-status"
             >
               {isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>

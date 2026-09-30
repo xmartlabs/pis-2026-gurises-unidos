@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useActionState, useEffect, type SubmitEvent } from 'react';
+import { startTransition, useActionState, useEffect, useState, type SubmitEvent } from 'react';
 import { FormProvider, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { UserRole, UserStatus } from '@/generated/prisma/enums';
@@ -32,6 +32,15 @@ type Profile = ProfileFormValues & {
 };
 
 export function ProfileForm({ profile }: { profile: Profile }) {
+  // Use a key to reset the form when the cancel button is clicked
+  const [formKey, setFormKey] = useState(0);
+
+  return (
+    <ProfileFormFields key={formKey} profile={profile} onCancel={() => setFormKey((k) => k + 1)} />
+  );
+}
+
+function ProfileFormFields({ profile, onCancel }: { profile: Profile; onCancel: () => void }) {
   const [state, formAction, pending] = useActionState(updateProfile, INITIAL_STATE);
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema) as Resolver<ProfileFormValues>,
@@ -173,7 +182,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           </div>
         </div>
 
-        <FormActions onCancel={() => reset()} submitLabel="Guardar cambios" pending={pending} />
+        <FormActions onCancel={onCancel} submitLabel="Guardar cambios" pending={pending} />
       </form>
     </FormProvider>
   );

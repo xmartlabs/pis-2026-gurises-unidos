@@ -121,8 +121,14 @@ export function ProjectForm({
   }
 
   useEffect(() => {
-    if (!state.formError) return;
-    notify.error({ title: state.formError });
+    if (state.formError) {
+      notify.error({ title: state.formError });
+      return;
+    }
+    const firstFieldError = Object.values(state.errors ?? {}).flat()[0] ?? null;
+    if (firstFieldError) {
+      notify.error({ title: firstFieldError });
+    }
   }, [state]);
 
   return (

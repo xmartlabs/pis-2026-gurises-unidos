@@ -39,7 +39,7 @@ export function TextInputField({
     fieldError && 'message' in fieldError && typeof fieldError.message === 'string'
       ? fieldError.message
       : undefined;
-  const errorMessage = messages?.[0] ?? schemaMessage;
+  const errorMessage = schemaMessage ?? messages?.[0];
 
   return (
     <Field className={cn('min-w-0 gap-1.5', className)} data-invalid={Boolean(errorMessage)}>

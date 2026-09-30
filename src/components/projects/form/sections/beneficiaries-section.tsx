@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useCallback, useEffect, useRef } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
@@ -17,23 +17,36 @@ export function BeneficiariesSection({
   const { getValues, setValue } = useFormContext<ProjectFormValues>();
   const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
 
+  const startYear = useWatch({ name: 'startYear' });
+  const year = useWatch({ name: 'year' });
+
   // TODO: Implement multiple years support on the backend
   // right now we only support one year
-  function selectYear(year: string) {
-    const current = getValues();
-    beneficiaryDrafts.current[current.year] = Object.fromEntries(
-      BENEFICIARY_FIELDS.map(({ key }) => [key, current[key]])
-    );
-    const record = beneficiaryRecords.find((item) => String(item.year) === year);
-    const counts = Object.fromEntries(
-      BENEFICIARY_FIELDS.map(({ key }) => [key, String(record?.[key] ?? 0)])
-    );
-    const nextCounts = { ...counts, ...beneficiaryDrafts.current[year] };
-    for (const { key } of BENEFICIARY_FIELDS) {
-      setValue(key, String(nextCounts[key] ?? '0'), { shouldValidate: true });
+  const selectYear = useCallback(
+    (beneficiaryYear: string) => {
+      const current = getValues();
+      beneficiaryDrafts.current[current.year] = Object.fromEntries(
+        BENEFICIARY_FIELDS.map(({ key }) => [key, current[key]])
+      );
+      const record = beneficiaryRecords.find((item) => String(item.year) === beneficiaryYear);
+      const counts = Object.fromEntries(
+        BENEFICIARY_FIELDS.map(({ key }) => [key, String(record?.[key] ?? 0)])
+      );
+      const nextCounts = { ...counts, ...beneficiaryDrafts.current[beneficiaryYear] };
+      for (const { key } of BENEFICIARY_FIELDS) {
+        setValue(key, String(nextCounts[key] ?? '0'), { shouldValidate: true });
+      }
+      setValue('year', beneficiaryYear);
+    },
+    [getValues, setValue, beneficiaryRecords]
+  );
+
+  useEffect(() => {
+    if (!startYear || !year) return;
+    if (Number(year) < Number(startYear)) {
+      selectYear(startYear);
     }
-    setValue('year', year);
-  }
+  }, [startYear, year, selectYear]);
 
   return (
     <FormSection
