@@ -19,6 +19,7 @@ import {
   splitProjectFormData,
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
+import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 
 async function validateRelations(
@@ -120,6 +121,12 @@ export async function createProject(
           action: 'creation',
           entity: 'beneficiary',
           entityId: beneficiary.id,
+          details: {
+            year: beneficiaryData.year,
+            values: Object.fromEntries(
+              BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
+            ),
+          },
         });
         return { projectId: project.id };
       },
@@ -187,10 +194,12 @@ export async function updateProject(
         }
         const where = { projectId_year: { projectId, year: beneficiaryData.year } };
         const existing = await tx.projectBeneficiary.findUnique({ where });
-        const beneficiaryFields = existing
-          ? changedFields(beneficiaryData, existing)
-          : Object.keys(beneficiaryData);
-        if (!existing || beneficiaryFields.length) {
+        const changes = BENEFICIARY_FIELDS.map(({ key }) => ({
+          field: key,
+          from: existing?.[key] ?? 0,
+          to: beneficiaryData[key],
+        })).filter(({ from, to }) => from !== to);
+        if (!existing || changes.length) {
           const beneficiary = await tx.projectBeneficiary.upsert({
             where,
             create: { ...beneficiaryData, projectId, authorId: user.id },
@@ -201,7 +210,7 @@ export async function updateProject(
             action: existing ? 'update' : 'creation',
             entity: 'beneficiary',
             entityId: beneficiary.id,
-            details: { year: beneficiaryData.year, changedFields: beneficiaryFields },
+            details: { year: beneficiaryData.year, changes },
           });
         }
         return null;

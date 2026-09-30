@@ -15,7 +15,8 @@ npm run dev      # http://localhost:3000
 La app queda corriendo en **http://localhost:3000** (`dev`, `start` y Docker usan el mismo puerto).
 
 Otros scripts: `npm run build`, `npm start` (sirve el build en el mismo puerto), `npm run lint`,
-`npm test` (Vitest), `npm run test:watch`, `npm run test:e2e` (Playwright).
+`npm test` (Vitest), `npm run test:watch`, `npm run test:e2e` (Playwright), `npm run typecheck`,
+`npm run format`.
 
 ### Con Docker
 
@@ -341,6 +342,21 @@ fixture compartido es el admin, en `prisma/fixtures.ts`.
 | Variables           | `camelCase`  | `userId`, `pendingItems`                 |
 | Constantes          | `MAYUSCULAS` | `MAX_RETRIES`, `API_BASE_URL`            |
 | Archivos            | `kebab-case` | `project-carousel.tsx`, `area-chart.tsx` |
+
+### Lint, tipos y formato
+
+El workflow `Tests` corre el job `static checks` en cada PR. Para verificarlo antes de
+pushear:
+
+```bash
+npm run lint
+npm run typecheck
+npm run format:check
+npm run format   # arregla el formato
+```
+
+Si `typecheck` marca errores dentro de `.next/dev`, son tipos viejos de un `next dev` anterior:
+borrá esa carpeta.
 
 ## Ramas
 

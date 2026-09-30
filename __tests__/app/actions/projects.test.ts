@@ -229,7 +229,24 @@ it('creates the project and beneficiaries with audit entries in one transaction'
     data: { authorId: 7, action: 'creation', entity: 'project', entityId: 10 },
   });
   expect(mocks.audit).toHaveBeenCalledWith({
-    data: { authorId: 7, action: 'creation', entity: 'beneficiary', entityId: 20 },
+    data: {
+      authorId: 7,
+      action: 'creation',
+      entity: 'beneficiary',
+      entityId: 20,
+      details: {
+        year: 2024,
+        values: {
+          directChildrenAdolescents: 42,
+          indirectChildrenAdolescents: 68,
+          youth18To29: 15,
+          families: 30,
+          coordinatedInstitutions: 6,
+          communityLeaders: 12,
+          basicServiceStaff: 8,
+        },
+      },
+    },
   });
 });
 
@@ -317,7 +334,7 @@ describe('updateProject persistence', () => {
           action: exists ? 'update' : 'creation',
           entity: 'beneficiary',
           entityId: 20,
-          details: { year: 2024, changedFields: expect.any(Array) },
+          details: { year: 2024, changes: expect.any(Array) },
         },
       });
       expect(mocks.revalidatePath.mock.calls).toEqual([['/dashboard/projects', 'layout']]);
@@ -381,6 +398,7 @@ describe('updateProject persistence', () => {
 
   it('defaults omitted counts to zero and the beneficiary year to the current year', async () => {
     const year = new Date().getFullYear();
+    mocks.findBeneficiary.mockResolvedValue(null);
     await expect(
       updateProject(
         10,
@@ -525,7 +543,7 @@ describe('project review regressions', () => {
     expect(mocks.audit).not.toHaveBeenCalled();
   });
 
-  it('audits only beneficiary changes with the year and changed fields', async () => {
+  it('audits only beneficiary changes with the year and previous and new values', async () => {
     unchangedRecords();
     await expect(updateProject(10, {}, formData({ families: '31' }))).rejects.toThrow('Redirect:');
     expect(mocks.updateProject).not.toHaveBeenCalled();
@@ -535,7 +553,7 @@ describe('project review regressions', () => {
         action: 'update',
         entity: 'beneficiary',
         entityId: 20,
-        details: { year: 2024, changedFields: ['families'] },
+        details: { year: 2024, changes: [{ field: 'families', from: 30, to: 31 }] },
       },
     });
   });

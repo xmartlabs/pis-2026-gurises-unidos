@@ -32,9 +32,7 @@ function SidebarUser({ user }: Props) {
   return (
     <>
       <Avatar className="rounded-md after:rounded-md">
-        <AvatarFallback
-          className={`rounded-md ${getAvatarColorClassName(user.avatarColorIndex)}`}
-        >
+        <AvatarFallback className={`rounded-md ${getAvatarColorClassName(user.avatarColorIndex)}`}>
           {getInitials(user.name)}
         </AvatarFallback>
       </Avatar>
