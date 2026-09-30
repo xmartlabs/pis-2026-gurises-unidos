@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useActionState, useState, type SubmitEvent } from 'react';
+import { startTransition, useActionState, useEffect, useState, type SubmitEvent } from 'react';
 import { FormProvider, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { login } from '@/app/actions/auth';
@@ -23,9 +23,12 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
     resolver: zodResolver(loginSchema) as Resolver<LoginFormValues>,
     defaultValues: { documentId: '', password: '' },
   });
-  const { handleSubmit } = form;
+  const { handleSubmit, setError, clearErrors } = form;
 
-  const showCredentialsError = state.formError;
+  useEffect(() => {
+    if (!state.formError) return;
+    setError('password', { type: 'server', message: 'Credenciales incorrectas' });
+  }, [state, setError]);
 
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,6 +60,7 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             type="text"
             autoComplete="username"
             placeholder="Ej. 4.123.456-7"
+            onChange={() => clearErrors('password')}
           />
           <TextInputField
             id="password"
@@ -64,7 +68,7 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             label="Contraseña"
             type={showPassword ? 'text' : 'password'}
             placeholder="Tu contraseña"
-            messages={showCredentialsError ? ['Credenciales incorrectas'] : undefined}
+            onChange={() => clearErrors('password')}
             trailingAction={
               <button
                 onClick={() => setShowPassword(!showPassword)}

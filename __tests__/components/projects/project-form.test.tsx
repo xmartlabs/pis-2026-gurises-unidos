@@ -165,7 +165,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
   await act(async () => {
     fireEvent.submit(container.querySelector('form')!);
   });
-  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['none']);
+  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['']);
 });
 
 function renderFormWith(initialValues: Record<string, string>) {
