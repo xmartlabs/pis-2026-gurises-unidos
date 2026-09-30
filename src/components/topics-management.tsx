@@ -1,16 +1,23 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import {
-  createTopic,
-  deleteTopic,
-  type TopicActionState,
-} from '@/app/actions/topics';
+import { createTopic, deleteTopic, type TopicActionState } from '@/app/actions/topics';
 import { topicSchema } from '@/lib/validation/topic';
 import { Input } from './ui/input';
 import { Card, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog';
 
 type TopicsManagementProps = {
   topics: Topic[];
@@ -27,10 +34,10 @@ type Topic = {
 const initialState: TopicActionState = {};
 
 export function TopicsManagement({ topics }: TopicsManagementProps) {
-  const [state, formAction, pending] = useActionState(createTopic, initialState);
   const [clientError, setClientError] = useState<string>();
+  const [state, formAction, pending] = useActionState(createTopic, initialState);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
     const result = topicSchema.safeParse({
       name: formData.get('name'),
@@ -64,7 +71,7 @@ export function TopicsManagement({ topics }: TopicsManagementProps) {
             defaultValue={state.values?.name}
             placeholder="Nueva temática..."
             required
-            maxLength={100}
+            maxLength={30}
             className="border-border placeholder:text-muted-foreground h-9 min-w-0 flex-1 rounded-md border bg-white px-3 py-1 font-sans text-base leading-6 font-normal tracking-normal shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]"
           />
           <Button type="submit" disabled={pending} className="h-9 rounded-lg px-4 py-2 shadow">
@@ -73,15 +80,13 @@ export function TopicsManagement({ topics }: TopicsManagementProps) {
         </form>
 
         {(clientError ?? state.errors?.name?.[0]) && (
-          <p className="text-destructive text-xs">
-            {clientError ?? state.errors?.name?.[0]}
-          </p>
+          <p className="text-destructive text-xs">{clientError ?? state.errors?.name?.[0]}</p>
         )}
 
         {state.formError && <p className="text-destructive text-xs">{state.formError}</p>}
       </div>
       <Separator className="w-full max-w-178 bg-[#EFF2F4]" />
-      <p className="font-sans text-xs leading-4 font-normal tracking-normal text-[#a1a1aa]">
+      <p className="font-sans text-xs leading-4 font-normal text-[#a1a1aa]">
         {topics.length} temáticas
       </p>
       <ul className="w-full">
@@ -99,12 +104,6 @@ function TopicRow({ topic }: { topic: Topic }) {
     initialState
   );
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    if (!window.confirm(`¿Querés eliminar la temática "${topic.name}"?`)) {
-      event.preventDefault();
-    }
-  }
-
   return (
     <li className="border-b border-[#eff2f4] py-3">
       <div className="flex items-center justify-between">
@@ -112,22 +111,55 @@ function TopicRow({ topic }: { topic: Topic }) {
 
         <div className="flex items-center gap-3">
           <span className="text-xs leading-4 font-normal text-[#a1a1a1]">
-            {topic._count.projects === 1
-              ? '1 proyecto'
-              : `${topic._count.projects} proyectos`}
+            {topic._count.projects === 1 ? '1 proyecto' : `${topic._count.projects} proyectos`}
           </span>
 
-          <form action={formAction} onSubmit={handleSubmit}>
-            <Button type="submit" variant="ghost" disabled={pending}>
-              Eliminar
-            </Button>
-          </form>
+          {topic._count.projects > 0 ? (
+            <AlertDialog>
+              <AlertDialogTrigger render={<Button variant="ghost">Eliminar</Button>} />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>No se puede eliminar la temática</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    No se puede eliminar una temática con proyectos asociados.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Entendido</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <form id={`delete-topic-${topic.id}`} action={formAction}>
+              <AlertDialog>
+                <AlertDialogTrigger render={<Button variant="ghost" disabled={pending} />}>
+                  Eliminar
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar temática?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción dejará de mostrar “{topic.name}” como temática disponible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  {state.formError && <p className="text-destructive text-sm">{state.formError}</p>}
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      type="submit"
+                      form={`delete-topic-${topic.id}`}
+                      variant="destructive"
+                      disabled={pending}
+                    >
+                      Eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </form>
+          )}
         </div>
       </div>
-
-      {state.formError && (
-        <p className="text-destructive mt-1 text-right text-xs">{state.formError}</p>
-      )}
     </li>
   );
 }

@@ -45,6 +45,16 @@ export async function createTopic(
   }
 
   try {
+    const reactivated = await prisma.topic.updateMany({
+      where: { name: parsed.data.name, isActive: false },
+      data: { isActive: true },
+    });
+
+    if (reactivated.count > 0) {
+      revalidateTopics();
+      return { success: true };
+    }
+
     await prisma.topic.create({
       data: {
         name: parsed.data.name,
@@ -92,19 +102,19 @@ export async function deleteTopic(
     };
   }
 
-  const projectCount = await prisma.project.count({
-    where: {
-      topicId,
-    },
-  });
-
-  if (projectCount > 0) {
-    return {
-      formError: 'No se puede eliminar una temática asociada a proyectos.',
-    };
-  }
-
   try {
+    const projectCount = await prisma.project.count({
+      where: {
+        topicId,
+      },
+    });
+
+    if (projectCount > 0) {
+      return {
+        formError: 'No se puede eliminar una temática asociada a proyectos.',
+      };
+    }
+
     await prisma.topic.update({
       where: {
         id: topicId,
