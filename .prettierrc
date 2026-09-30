@@ -7,8 +7,6 @@
   "printWidth": 100,
   "bracketSpacing": true,
   "jsxSingleQuote": false,
-  "jsxBracketSameLine": false,
   "semi": true,
-  "plugins": ["prettier-plugin-tailwindcss"],
-  "importOrder": ["^react$", "^next", "<THIRD_PARTY_MODULES>", "^@/components/(.*)$", "^@/utils/(.*)$", "^[./]"]
+  "plugins": ["prettier-plugin-tailwindcss"]
 }

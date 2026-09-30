@@ -65,14 +65,11 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     }),
     prisma.topic.findMany({
       where: {
-        OR: [
-          { isActive: true },
-          ...(project.topicId !== null ? [{ id: project.topicId }] : []),
-        ],
+        OR: [{ isActive: true }, ...(project.topicId !== null ? [{ id: project.topicId }] : [])],
       },
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
-    })  
+    }),
   ]);
 
   const submitAction = updateProject.bind(null, project.id);

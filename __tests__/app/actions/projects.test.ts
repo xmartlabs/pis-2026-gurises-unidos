@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   findBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
   audit: vi.fn(),
+  queryRaw: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn(),
 }));
@@ -33,6 +34,7 @@ vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
 
 const TX = {
+  $queryRaw: mocks.queryRaw,
   project: {
     create: mocks.createProject,
     update: mocks.updateProject,
@@ -94,6 +96,7 @@ beforeEach(() => {
   mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: null });
   mocks.findTopic.mockResolvedValue({ id: 2 });
   mocks.findDuplicateProject.mockResolvedValue(null);
+  mocks.queryRaw.mockResolvedValue([]);
   mocks.redirect.mockImplementation((path: string) => {
     throw new Error(`Redirect: ${path}`);
   });

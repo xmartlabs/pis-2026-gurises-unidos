@@ -15,3 +15,7 @@ yarn.lock
 public/**/*.svg
 public/**/*.png
 public/**/*.jpg
+
+CHANGELOG.md
+.release-please-manifest.json
+AGENTS.md
