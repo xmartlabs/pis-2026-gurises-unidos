@@ -34,6 +34,7 @@ type Topic = {
 const initialState: TopicActionState = {};
 
 export function TopicsManagement({ topics }: TopicsManagementProps) {
+  const [name, setName] = useState('');
   const [clientError, setClientError] = useState<string>();
   const [state, formAction, pending] = useActionState(createTopic, initialState);
 
@@ -68,7 +69,8 @@ export function TopicsManagement({ topics }: TopicsManagementProps) {
         >
           <Input
             name="name"
-            defaultValue={state.values?.name}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
             placeholder="Nueva temática..."
             required
             maxLength={30}
