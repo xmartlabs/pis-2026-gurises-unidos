@@ -44,12 +44,21 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     }),
     prisma.department.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
     prisma.auditLog.findMany({
-      where: { entity: 'project', entityId: project.id },
+      where: {
+        OR: [
+          { entity: 'project', entityId: project.id },
+          {
+            entity: 'beneficiary',
+            entityId: { in: project.projectBeneficiaries.map((b) => b.id) },
+          },
+        ],
+      },
       orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-      take: 10,
       select: {
         id: true,
         action: true,
+        entity: true,
+        details: true,
         occurredAt: true,
         author: { select: { firstName: true, lastName: true } },
       },

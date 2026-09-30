@@ -197,7 +197,13 @@ describe('updateProject (integration)', () => {
         entity: 'beneficiary',
         action: 'update',
         entityId: projectBeneficiaries[0].id,
-        details: { year: BENEFICIARY_YEAR, changedFields: ['youth18To29', 'families'] },
+        details: {
+          year: BENEFICIARY_YEAR,
+          changes: [
+            { field: 'youth18To29', from: 3, to: 9 },
+            { field: 'families', from: 2, to: 7 },
+          ],
+        },
       }),
     ]);
   });
