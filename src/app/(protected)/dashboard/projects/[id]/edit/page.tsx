@@ -54,7 +54,6 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         ],
       },
       orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-      take: 10,
       select: {
         id: true,
         action: true,

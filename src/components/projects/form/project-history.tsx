@@ -71,36 +71,38 @@ export function ProjectHistory({ entries }: ProjectHistoryProps) {
       {described.length === 0 ? (
         <p className="text-muted-foreground text-sm">Todavía no hay modificaciones registradas.</p>
       ) : (
-        <ol className="ml-1 space-y-[18px] border-l-2 pl-[18px]">
-          {described.map(({ entry, label, changes }) => (
-            <li key={entry.id} className="relative text-sm leading-5">
-              <span className="bg-history-marker absolute top-1.5 -left-6 size-2.5 rounded-full" />
-              <time
-                dateTime={entry.occurredAt.toISOString()}
-                className="text-muted-foreground font-medium"
-              >
-                {entry.occurredAt.toLocaleDateString('es-UY', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  timeZone: 'America/Montevideo',
-                })}
-              </time>
-              <p className="mt-[3px]">
-                {entry.author.firstName} {entry.author.lastName} {label}
-              </p>
-              {changes.length > 0 && (
-                <ul className="text-muted-foreground mt-1 space-y-0.5">
-                  {changes.map((change) => (
-                    <li key={change.field}>
-                      {FIELD_LABELS[change.field] ?? change.field}: {change.from} → {change.to}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ol>
+        <div className="max-h-96 overflow-y-auto">
+          <ol className="ml-1 space-y-[18px] border-l-2 pl-[18px]">
+            {described.map(({ entry, label, changes }) => (
+              <li key={entry.id} className="relative text-sm leading-5">
+                <span className="bg-history-marker absolute top-1.5 -left-6 size-2.5 rounded-full" />
+                <time
+                  dateTime={entry.occurredAt.toISOString()}
+                  className="text-muted-foreground font-medium"
+                >
+                  {entry.occurredAt.toLocaleDateString('es-UY', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    timeZone: 'America/Montevideo',
+                  })}
+                </time>
+                <p className="mt-[3px]">
+                  {entry.author.firstName} {entry.author.lastName} {label}
+                </p>
+                {changes.length > 0 && (
+                  <ul className="text-muted-foreground mt-1 space-y-0.5">
+                    {changes.map((change) => (
+                      <li key={change.field}>
+                        {FIELD_LABELS[change.field] ?? change.field}: {change.from} → {change.to}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
     </FormSection>
   );
