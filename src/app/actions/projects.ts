@@ -268,5 +268,5 @@ export async function deleteProject(projectId: number): Promise<{ error?: string
     return { error: 'No se pudo eliminar el proyecto. Intentá de nuevo.' };
   }
   revalidateProject();
-  redirect('/dashboard/projects');
+  return {};
 }

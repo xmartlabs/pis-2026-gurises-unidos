@@ -666,7 +666,7 @@ describe('deleteProject', () => {
   });
 
   it('marks the project as deleted by the user and audits it in one transaction', async () => {
-    await expect(deleteProject(10)).rejects.toThrow('Redirect: /dashboard/projects');
+    expect(await deleteProject(10)).toEqual({});
     expect(mocks.findProject).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 10, deletedAt: null } })
     );
@@ -678,6 +678,7 @@ describe('deleteProject', () => {
       data: { authorId: 7, action: 'deletion', entity: 'project', entityId: 10 },
     });
     expect(mocks.revalidatePath).toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
   it('allows the lead coordinator', async () => {
@@ -687,7 +688,7 @@ describe('deleteProject', () => {
       status: 'active',
       deletedAt: null,
     });
-    await expect(deleteProject(10)).rejects.toThrow('Redirect: /dashboard/projects');
+    expect(await deleteProject(10)).toEqual({});
     expect(mocks.updateProject).toHaveBeenCalled();
   });
 
