@@ -1,6 +1,5 @@
 'use client';
 
-import { cn } from 'cn';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
@@ -11,7 +10,6 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 type ImageUploadFieldProps = {
-  variant?: 'default' | 'detailed';
   id: string;
   label: string;
   value: File | null;
@@ -20,7 +18,6 @@ type ImageUploadFieldProps = {
 };
 
 export function ImageUploadField({
-  variant = 'default',
   id,
   label,
   value,
@@ -65,34 +62,15 @@ export function ImageUploadField({
         }}
       />
       <Label
-        style={{
-          backgroundImage:
-            variant !== 'detailed'
-              ? undefined
-              : imageUrl
-                ? `url(${JSON.stringify(imageUrl)})`
-                : undefined,
-        }}
         htmlFor={id}
-        className={cn(
-          'peer-focus-visible:ring-ring flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2',
-          variant === 'detailed'
-            ? 'text-secondary-foreground bg-project-cover bg-cover bg-center'
-            : 'border-input bg-muted text-muted-foreground hover:bg-accent border'
-        )}
+        className="peer-focus-visible:ring-ring border-input bg-muted text-muted-foreground hover:bg-accent flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg border px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2"
       >
-        <span
-          className={
-            variant === 'detailed' && imageUrl ? 'bg-background/85 rounded px-2 py-1' : undefined
-          }
-        >
-          {variant === 'default'
-            ? 'Clic para subir imagen (JPG, PNG, máx. 5MB)'
-            : value
-              ? `${value.name} · Cambiar imagen`
-              : imageUrl
-                ? 'Cambiar imagen'
-                : 'Clic para subir imagen (JPG, PNG, máx. 5MB)'}
+        <span>
+          {value
+            ? `${value.name} · Cambiar imagen`
+            : imageUrl
+              ? 'Cambiar imagen'
+              : 'Clic para subir imagen (JPG, PNG, máx. 5MB)'}
         </span>
       </Label>
       {value && (

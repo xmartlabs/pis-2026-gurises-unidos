@@ -13,7 +13,6 @@ vi.mock('@/components/ui/forms/select-field', () => ({
     id,
     name,
     label,
-    value,
     options,
     onValueChange,
   }: ComponentProps<typeof SelectField>) => (
@@ -22,8 +21,8 @@ vi.mock('@/components/ui/forms/select-field', () => ({
       <select
         id={id}
         name={name}
-        value={value}
-        onChange={(event) => onValueChange(event.currentTarget.value)}
+        defaultValue=""
+        onChange={(event) => onValueChange?.(event.currentTarget.value)}
       >
         <option value="">Seleccionar</option>
         {options.map((option) => (

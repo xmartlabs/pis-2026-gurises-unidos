@@ -25,6 +25,9 @@ test('hides the session expiration message after a failed login', async () => {
   vi.mocked(login).mockResolvedValueOnce({ formError: 'Invalid credentials' });
   render(<LoginForm sessionExpired />);
 
+  fireEvent.change(screen.getByLabelText('Cédula'), { target: { value: '77777777' } });
+  fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'password' } });
+
   await act(async () => {
     fireEvent.submit(screen.getByRole('button', { name: 'Ingresar' }).closest('form')!);
   });

@@ -1,6 +1,7 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
+import { notify } from '@/lib/notify';
 
 const { routerPushMock, routerRefreshMock } = vi.hoisted(() => ({
   routerPushMock: vi.fn(),
@@ -11,8 +12,19 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: routerPushMock, refresh: routerRefreshMock }),
 }));
 
+vi.mock('@/lib/notify', () => ({
+  notify: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    promise: vi.fn(),
+  },
+}));
+
 it('submits prefilled values and the recorded year, preserves edits on failure, and allows retry', async () => {
   routerPushMock.mockClear();
+  vi.mocked(notify.error).mockClear();
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
@@ -46,7 +58,9 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   await act(async () => {
     fireEvent.submit(container.querySelector('form')!);
   });
-  await screen.findByRole('alert');
+  await waitFor(() => {
+    expect(notify.error).toHaveBeenCalledWith({ title: 'No se pudo guardar' });
+  });
   expect(submitAction).toHaveBeenCalledTimes(1);
   const submitted = submitAction.mock.calls[0][1] as FormData;
   expect(submitted.get('name')).toBe('Edited project');
@@ -151,7 +165,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
   await act(async () => {
     fireEvent.submit(container.querySelector('form')!);
   });
-  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['none']);
+  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['']);
 });
 
 function renderFormWith(initialValues: Record<string, string>) {

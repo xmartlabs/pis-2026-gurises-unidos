@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 
 vi.mock('@/app/actions/profile', () => ({ updateProfile: vi.fn() }));
@@ -54,7 +54,7 @@ describe('ProfileForm', () => {
     expect(screen.getByText('03/01/2026')).toBeDefined();
   });
 
-  test('blocks submission and displays client validation errors', () => {
+  test('blocks submission and displays client validation errors', async () => {
     render(<ProfileForm profile={PROFILE} />);
     const firstNameInput = screen.getByRole('textbox', { name: 'Nombre' });
     const emailInput = screen.getByRole('textbox', { name: 'Correo electrónico' });
@@ -62,13 +62,17 @@ describe('ProfileForm', () => {
 
     fireEvent.change(firstNameInput, { target: { value: '' } });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    fireEvent.submit(submitButton.closest('form')!);
+    await act(async () => {
+      fireEvent.submit(submitButton.closest('form')!);
+    });
 
-    expect(screen.getByText('El nombre es obligatorio.')).toBeDefined();
-    expect(screen.getByText('Ingresá un correo electrónico válido.')).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText('El nombre es obligatorio.')).toBeDefined();
+      expect(screen.getByText('Ingresá un correo electrónico válido.')).toBeDefined();
+    });
   });
 
-  test('discards unsaved changes and validation errors', () => {
+  test('discards unsaved changes and validation errors', async () => {
     render(<ProfileForm profile={PROFILE} />);
     const firstNameInput = screen.getByRole('textbox', { name: 'Nombre' }) as HTMLInputElement;
     const lastNameInput = screen.getByRole('textbox', { name: 'Apellido' }) as HTMLInputElement;
@@ -79,7 +83,10 @@ describe('ProfileForm', () => {
     fireEvent.change(firstNameInput, { target: { value: '' } });
     fireEvent.change(lastNameInput, { target: { value: 'Pérez' } });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Guardar cambios' }).closest('form')!);
+    await act(async () => {
+      fireEvent.submit(screen.getByRole('button', { name: 'Guardar cambios' }).closest('form')!);
+    });
+    await screen.findByText('El nombre es obligatorio.');
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect((screen.getByRole('textbox', { name: 'Nombre' }) as HTMLInputElement).value).toBe('Ana');

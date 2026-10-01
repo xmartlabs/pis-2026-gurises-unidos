@@ -1,3 +1,6 @@
+'use client';
+
+import { useController, useFormContext } from 'react-hook-form';
 import { MapPin } from 'lucide-react';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
@@ -6,29 +9,19 @@ import { ZONE_OPTIONS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
 import { FormSection } from '@/components/ui/forms/form-section';
+import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
 
 export function TerritorySection({
-  variant,
   isEditing,
-  values,
-  state,
-  updateField,
   departmentOptions,
   coverageLabel,
-}: Pick<
-  SectionProps,
-  | 'variant'
-  | 'isEditing'
-  | 'values'
-  | 'state'
-  | 'updateField'
-  | 'departmentOptions'
-  | 'coverageLabel'
->) {
+}: Pick<SectionProps, 'isEditing' | 'departmentOptions' | 'coverageLabel'>) {
+  const { control } = useFormContext<ProjectFormValues>();
+  const zoneField = useController({ name: 'zone', control });
+
   return (
     <FormSection
-      variant={variant}
       title="Territorio"
       description="¿En qué zonas opera este proyecto?"
       descriptionSpacing={isEditing ? 'relaxed' : 'compact'}
@@ -38,22 +31,13 @@ export function TerritorySection({
           id="departmentId"
           name="departmentId"
           label="Departamento"
-          value={values.departmentId}
           placeholder="Seleccionar..."
           options={departmentOptions}
-          onValueChange={(value) => updateField('departmentId', value)}
-          messages={state.errors?.departmentId}
-          required
         />
         <TextInputField
-          variant={variant}
-          maxLength={100}
           id="localityNeighborhood"
           name="localityNeighborhood"
           label="Localidad / Barrio"
-          value={values.localityNeighborhood}
-          onValueChange={(value) => updateField('localityNeighborhood', value)}
-          messages={state.errors?.localityNeighborhood}
           placeholder="Ej: Malvín Norte"
         />
       </div>
@@ -64,9 +48,9 @@ export function TerritorySection({
         <RadioGroup
           name="zone"
           aria-labelledby="zone-label"
-          aria-invalid={Boolean(state.errors?.zone)}
-          value={values.zone}
-          onValueChange={(value) => updateField('zone', value)}
+          aria-invalid={Boolean(zoneField.fieldState.error)}
+          value={zoneField.field.value}
+          onValueChange={zoneField.field.onChange}
           className="flex flex-wrap gap-2"
         >
           {ZONE_OPTIONS.map((option) => (
@@ -83,7 +67,7 @@ export function TerritorySection({
             </Label>
           ))}
         </RadioGroup>
-        <FieldError className="text-xs leading-4">{state.errors?.zone?.[0]}</FieldError>
+        <FieldError className="text-xs leading-4">{zoneField.fieldState.error?.message}</FieldError>
       </Field>
       {isEditing && (
         <div className="bg-muted rounded-[10px] px-3.5 py-3">

@@ -63,7 +63,6 @@ export function ProjectHistory({ entries }: ProjectHistoryProps) {
   });
   return (
     <FormSection
-      variant="detailed"
       title="Historial"
       description="Últimas modificaciones"
       descriptionSpacing="relaxed"
