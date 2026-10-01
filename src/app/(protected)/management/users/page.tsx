@@ -79,7 +79,7 @@ export default async function UsersPage({
 
           <UsersListToolbar filters={filters} filteredCount={users.length} />
 
-          <UsersTable users={users} />
+          <UsersTable users={users} currentUserId={Number(session.user.id)} />
         </div>
       )}
     </div>
