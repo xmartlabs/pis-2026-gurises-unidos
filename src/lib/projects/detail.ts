@@ -1,7 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
-import { BENEFICIARY_FIELDS, FIRST_PROJECT_YEAR } from '@/lib/project-display';
+import { BENEFICIARY_FIELDS, FIRST_PROJECT_YEAR, sumBeneficiaries } from '@/lib/project-display';
 import {
   calculatePercentage,
   compareMetric,
@@ -43,6 +43,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
       status: true,
       intensity: true,
       startYear: true,
+      endYear: true,
       leadCoordinatorId: true,
       generalObjective: true,
       publicDescription: true,
@@ -129,6 +130,10 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     current?.coordinatedInstitutions ?? null,
     previous?.coordinatedInstitutions ?? null
   );
+  const annualGrowth = compareMetric(
+    current === null ? null : sumBeneficiaries(current),
+    previous === null ? null : sumBeneficiaries(previous)
+  ).percentageChange;
 
   const nationalChildrenReached =
     (national._sum.directChildrenAdolescents ?? 0) +
@@ -151,7 +156,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
         childrenReached,
         families,
         institutions,
-        annualGrowth: childrenReached.percentageChange,
+        annualGrowth,
       },
       distribution: BENEFICIARY_FIELDS.map(({ key }) => ({
         key,

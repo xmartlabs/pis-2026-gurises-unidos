@@ -10,6 +10,11 @@ import {
 
 const PUBLIC_ROUTES = ['/', '/login'];
 const PASSWORD_RESET_ROUTE = '/password-reset';
+const PUBLIC_PROJECT_ROUTE = /^\/projects\/[1-9]\d*$/;
+
+function isPublicRoute(pathname: string) {
+  return PUBLIC_ROUTES.includes(pathname) || PUBLIC_PROJECT_ROUTE.test(pathname);
+}
 
 export const proxy = auth((request) => {
   const { pathname } = request.nextUrl;
@@ -33,7 +38,7 @@ export const proxy = auth((request) => {
     return response;
   }
 
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 
