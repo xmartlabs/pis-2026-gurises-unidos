@@ -8,6 +8,7 @@ import { formatNumber } from '@/lib/format';
 import prisma from '@/lib/prisma';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { connection } from 'next/server';
+import { SESSION_EXPIRATION_REASON } from '@/lib/auth/session-expiration';
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
@@ -93,7 +94,7 @@ function RightColumn() {
   );
 }
 
-function LeftColumn() {
+function LeftColumn({ sessionExpired }: { sessionExpired: boolean }) {
   return (
     <div className="bg-background flex flex-col justify-between gap-6 pt-10 pr-6 pb-8 pl-6 lg:w-140 lg:min-w-140 lg:gap-0 lg:pt-14 lg:pr-18 lg:pb-10 lg:pl-18 2xl:min-w-[33%]">
       <div className="flex h-11 flex-row gap-2.5 lg:gap-3">
@@ -114,7 +115,7 @@ function LeftColumn() {
             Ingresá con tu cuenta para acceder al panel de gestión institucional.
           </p>
         </div>
-        <LoginForm />
+        <LoginForm sessionExpired={sessionExpired} />
       </div>
       <footer className="hidden flex-col gap-2 lg:flex">
         <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
@@ -128,10 +129,16 @@ function LeftColumn() {
   );
 }
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reason?: string | string[] }>;
+}) {
+  const { reason } = await searchParams;
+
   return (
     <div className="flex min-h-screen w-full flex-col font-sans lg:h-screen lg:flex-row">
-      <LeftColumn />
+      <LeftColumn sessionExpired={reason === SESSION_EXPIRATION_REASON} />
       <RightColumn />
       <footer className="bg-background flex flex-col gap-0.5 p-6 pt-5 lg:hidden">
         <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">

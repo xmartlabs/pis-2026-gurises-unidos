@@ -1,6 +1,14 @@
 const RESOURCE_SEGMENTS = new Set(['projects', 'users']);
 
-const STATIC_SEGMENTS = new Set(['dashboard', 'projects', 'users', 'management', 'new', 'edit']);
+const STATIC_SEGMENTS = new Set([
+  'dashboard',
+  'projects',
+  'users',
+  'management',
+  'topics',
+  'new',
+  'edit',
+]);
 
 export const BREADCRUMB_SEGMENT_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -8,6 +16,7 @@ export const BREADCRUMB_SEGMENT_LABELS: Record<string, string> = {
   management: 'Administración',
   projects: 'Proyectos',
   users: 'Usuarios',
+  topics: 'Temáticas',
   new: 'Nuevo',
   edit: 'Editar',
 };

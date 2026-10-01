@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -14,11 +15,7 @@ import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
 import { ProjectCard } from '@/components/projects/project-card';
 import type { ProjectListItem } from '@/lib/projects/list';
-import {
-  PROJECT_STATUS_META,
-  STATUS_FILTERS,
-  type StatusFilterValue,
-} from '@/lib/projects/constants';
+import { STATUS_FILTERS, type StatusFilterValue } from '@/lib/projects/constants';
 
 type ProjectsCardListProps = {
   projects: ProjectListItem[];
@@ -30,13 +27,21 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
     new Set(projects.flatMap((p) => p.beneficiaries.map((b) => b.year)))
   ).sort((a, b) => b - a);
 
-  const [status, setStatus] = useState<StatusFilterValue>('all');
+  const searchParams = useSearchParams();
+  const current =
+    STATUS_FILTERS.find((f) => f.value === searchParams.get('status')) ?? STATUS_FILTERS[0];
+  const status = current.value;
   const [year, setYear] = useState<number>(projectYears[0] ?? new Date().getFullYear());
-  const current = STATUS_FILTERS.find((f) => f.value === status)!;
 
-  const filtered = projects.filter(
-    (p) => status === 'all' || PROJECT_STATUS_META[p.status].displayStatus === status
-  );
+  function selectStatus(value: StatusFilterValue) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === 'all') params.delete('status');
+    else params.set('status', value);
+    const query = params.toString();
+    window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
+  }
+
+  const filtered = projects.filter((p) => status === 'all' || p.status === status);
 
   const filteredCountLabel = `${filtered.length} ${filtered.length === 1 ? 'proyecto' : 'proyectos'}`;
 
@@ -82,7 +87,7 @@ export function ProjectsCardList({ projects, total }: ProjectsCardListProps) {
       </div>
       <div className="flex flex-row justify-between">
         <div className="flex flex-row items-center gap-1.5">
-          <Tabs value={status} onValueChange={(value) => setStatus(value as StatusFilterValue)}>
+          <Tabs value={status} onValueChange={(value) => selectStatus(value as StatusFilterValue)}>
             <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
               <TabsList aria-label="Filtrar por estado">
                 {STATUS_FILTERS.map((f) => (

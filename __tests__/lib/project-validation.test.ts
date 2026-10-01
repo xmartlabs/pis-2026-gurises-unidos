@@ -65,3 +65,53 @@ it('accepts one topic or no topic and rejects invalid values', () => {
   for (const value of ['invalid', '0', ['1', '2']])
     expect(schema.safeParse(value).success).toBe(false);
 });
+it('parses an empty end year as null and bounds it to valid years', () => {
+  expect(projectSchema.shape.endYear.parse('')).toBeNull();
+  expect(projectSchema.shape.endYear.parse(undefined)).toBeNull();
+  expect(projectSchema.shape.endYear.parse('2020')).toBe(2020);
+  expect(projectSchema.shape.endYear.safeParse('1988').success).toBe(false);
+  expect(projectSchema.shape.endYear.safeParse(String(new Date().getFullYear() + 1)).success).toBe(
+    false
+  );
+});
+
+const BASE_PROJECT = {
+  name: 'Project',
+  status: 'closed',
+  intensity: 'high',
+  startYear: '2020',
+  endYear: '2022',
+  leadCoordinatorId: '1',
+  departmentId: '1',
+  zone: 'city',
+};
+
+it.each([
+  [
+    'ends before it starts',
+    { endYear: '2019' },
+    'El año de fin no puede ser anterior al año de inicio',
+  ],
+  [
+    'is closed without an end year',
+    { endYear: '' },
+    'El año de fin es obligatorio para proyectos cerrados',
+  ],
+  [
+    'has an end year without being closed',
+    { status: 'active' },
+    'Solo los proyectos cerrados tienen año de fin',
+  ],
+])('projectSchema rejects a project that %s', (_case, overrides, message) => {
+  const result = projectSchema.safeParse({ ...BASE_PROJECT, ...overrides });
+  expect(result.success).toBe(false);
+  expect(result.error?.flatten().fieldErrors.endYear).toEqual([message]);
+});
+
+it('projectSchema accepts an end year equal to or after the start year, or none while not closed', () => {
+  expect(projectSchema.safeParse(BASE_PROJECT).success).toBe(true);
+  expect(projectSchema.safeParse({ ...BASE_PROJECT, endYear: '2020' }).success).toBe(true);
+  expect(projectSchema.safeParse({ ...BASE_PROJECT, status: 'active', endYear: '' }).success).toBe(
+    true
+  );
+});

@@ -23,9 +23,8 @@ enum UserStatus {
 
 enum ProjectStatus {
   active
-  inProgress
-  completed
-  archived
+  paused
+  closed
 }
 
 enum Intensity {
@@ -107,6 +106,7 @@ model Project {
   status               ProjectStatus
   intensity            Intensity
   startYear            Int
+  endYear              Int?
   leadCoordinatorId    Int
   departmentId         Int
   localityNeighborhood String?       @db.VarChar(100)
@@ -127,6 +127,8 @@ model Project {
 
   projectCoordinators  ProjectCoordinator[]
   projectBeneficiaries ProjectBeneficiary[]
+
+  @@unique([name, startYear])
 }
 
 model ProjectCoordinator {

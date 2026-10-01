@@ -52,7 +52,7 @@ const PROJECT_BASE_NAMES = [
 
 const PROJECT_DEPARTMENTS = ['Montevideo', 'Canelones', 'Salto', 'Rivera', 'Maldonado'];
 
-const STATUSES = ['active', 'inProgress', 'completed', 'archived'] as const;
+const STATUSES = ['active', 'paused', 'closed'] as const;
 const INTENSITIES = ['high', 'medium', 'low'] as const;
 const ZONES = ['city', 'inland', 'border', 'rural'] as const;
 
@@ -147,11 +147,17 @@ async function main() {
         const name = `${base} - ${departmentName}`;
         const startYear = 2018 + (index % 8);
 
+        const status = STATUSES[index % STATUSES.length];
+
         const data = {
           name,
-          status: STATUSES[index % STATUSES.length],
+          status,
           intensity: INTENSITIES[index % INTENSITIES.length],
           startYear,
+          endYear:
+            status === 'closed'
+              ? Math.min(startYear + 1 + (index % 3), new Date().getFullYear())
+              : null,
           leadCoordinatorId: coordinatorIds[index % coordinatorIds.length],
           departmentId: departments.get(departmentName)!,
           topicId: topicIds[index % topicIds.length],
@@ -164,14 +170,11 @@ async function main() {
           createdBy: admin.id,
         };
 
-        const existing = await tx.project.findFirst({
-          where: { name, startYear },
-          orderBy: { id: 'asc' },
+        const project = await tx.project.upsert({
+          where: { name_startYear: { name, startYear } },
+          update: data,
+          create: data,
         });
-
-        const project = existing
-          ? await tx.project.update({ where: { id: existing.id }, data })
-          : await tx.project.create({ data });
 
         const yearCount = index % 7 === 0 ? 0 : 1 + (index % 4);
 

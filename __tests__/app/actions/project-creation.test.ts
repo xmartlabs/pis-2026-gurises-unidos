@@ -70,7 +70,7 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
     callback({
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       topic: { findUnique: vi.fn().mockResolvedValue(null) },
-      project: { create: projectCreate },
+      project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },
       projectBeneficiary: { create: beneficiaryCreate },
     })
   );
@@ -142,6 +142,7 @@ describe('createProject', () => {
         status: 'active',
         intensity: 'high',
         startYear: 2020,
+        endYear: null,
         leadCoordinatorId: 1,
         departmentId: 2,
         zone: 'city',
@@ -183,6 +184,18 @@ describe('createProject', () => {
       action: 'creation',
       entity: 'beneficiary',
       entityId: 9,
+      details: {
+        year: 2024,
+        values: {
+          directChildrenAdolescents: 10,
+          indirectChildrenAdolescents: 5,
+          youth18To29: 3,
+          families: 2,
+          coordinatedInstitutions: 1,
+          communityLeaders: 4,
+          basicServiceStaff: 6,
+        },
+      },
     });
   });
 

@@ -19,6 +19,17 @@ import {
   splitProjectFormData,
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
+import { BENEFICIARY_FIELDS } from '@/lib/project-display';
+import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
+
+async function lockTopics(tx: Prisma.TransactionClient, topicIds: (number | null)[]) {
+  const ids = [...new Set(topicIds.filter((id): id is number => id !== null))].sort(
+    (a, b) => a - b
+  );
+  for (const id of ids) {
+    await tx.$queryRaw`SELECT "id" FROM "Topic" WHERE "id" = ${id} FOR UPDATE`;
+  }
+}
 
 async function validateRelations(
   tx: Prisma.TransactionClient,
@@ -39,18 +50,35 @@ async function validateRelations(
   if (!coordinator) return { errors: { leadCoordinatorId: ['Elegí un coordinador válido'] } };
   if (topicId !== null) {
     const topic = await tx.topic.findFirst({
-    where: {
-      id: topicId,
-      ...(topicId === currentTopicId ? {} : { isActive: true }),
-    },
-    select: { id: true },
-  });
+      where: {
+        id: topicId,
+        ...(topicId === currentTopicId ? {} : { isActive: true }),
+      },
+      select: { id: true },
+    });
 
     if (!topic) {
       return { errors: { topicId: ['Elegí una temática válida'] } };
     }
   }
   return null;
+}
+
+async function validateUniqueName(
+  tx: Prisma.TransactionClient,
+  name: string,
+  startYear: number,
+  excludeId?: number
+): Promise<ProjectFormState | null> {
+  const duplicate = await tx.project.findFirst({
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      startYear,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    select: { id: true },
+  });
+  return duplicate ? { errors: { name: [DUPLICATE_PROJECT_MESSAGE] } } : null;
 }
 
 function changedFields<T extends object>(data: T, previous: T) {
@@ -73,12 +101,15 @@ export async function createProject(
   try {
     const result = await prisma.$transaction(
       async (tx): Promise<{ error: ProjectFormState } | { projectId: number }> => {
+        await lockTopics(tx, [projectData.topicId]);
         const error = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
           projectData.topicId
         );
         if (error) return { error };
+        const nameError = await validateUniqueName(tx, projectData.name, projectData.startYear);
+        if (nameError) return { error: nameError };
         const project = await tx.project.create({
           data: {
             ...projectData,
@@ -100,6 +131,12 @@ export async function createProject(
           action: 'creation',
           entity: 'beneficiary',
           entityId: beneficiary.id,
+          details: {
+            year: beneficiaryData.year,
+            values: Object.fromEntries(
+              BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
+            ),
+          },
         });
         return { projectId: project.id };
       },
@@ -136,6 +173,7 @@ export async function updateProject(
         if (!previous) return { formError: 'El proyecto no existe o fue eliminado.' };
         if (!canEditProject(user, previous))
           return { formError: 'No tenés permiso para editar este proyecto.' };
+        await lockTopics(tx, [previous.topicId, projectData.topicId]);
         const relationError = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
@@ -144,6 +182,13 @@ export async function updateProject(
           previous.topicId
         );
         if (relationError) return relationError;
+        const nameError = await validateUniqueName(
+          tx,
+          projectData.name,
+          projectData.startYear,
+          projectId
+        );
+        if (nameError) return nameError;
         const fields = changedFields(projectData, previous);
         if (fields.length) {
           await tx.project.update({
@@ -160,10 +205,12 @@ export async function updateProject(
         }
         const where = { projectId_year: { projectId, year: beneficiaryData.year } };
         const existing = await tx.projectBeneficiary.findUnique({ where });
-        const beneficiaryFields = existing
-          ? changedFields(beneficiaryData, existing)
-          : Object.keys(beneficiaryData);
-        if (!existing || beneficiaryFields.length) {
+        const changes = BENEFICIARY_FIELDS.map(({ key }) => ({
+          field: key,
+          from: existing?.[key] ?? 0,
+          to: beneficiaryData[key],
+        })).filter(({ from, to }) => from !== to);
+        if (!existing || changes.length) {
           const beneficiary = await tx.projectBeneficiary.upsert({
             where,
             create: { ...beneficiaryData, projectId, authorId: user.id },
@@ -174,7 +221,7 @@ export async function updateProject(
             action: existing ? 'update' : 'creation',
             entity: 'beneficiary',
             entityId: beneficiary.id,
-            details: { year: beneficiaryData.year, changedFields: beneficiaryFields },
+            details: { year: beneficiaryData.year, changes },
           });
         }
         return null;

@@ -1,11 +1,14 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
 
-const { routerPushMock } = vi.hoisted(() => ({ routerPushMock: vi.fn() }));
+const { routerPushMock, routerRefreshMock } = vi.hoisted(() => ({
+  routerPushMock: vi.fn(),
+  routerRefreshMock: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: routerPushMock }),
+  useRouter: () => ({ push: routerPushMock, refresh: routerRefreshMock }),
 }));
 
 it('submits prefilled values and the recorded year, preserves edits on failure, and allows retry', async () => {
@@ -20,7 +23,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Existing project',
-        status: 'inProgress',
+        status: 'paused',
         leadCoordinatorId: '2',
         departmentId: '3',
         startYear: '2020',
@@ -48,7 +51,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   const submitted = submitAction.mock.calls[0][1] as FormData;
   expect(submitted.get('name')).toBe('Edited project');
   expect(submitted.get('year')).toBe('2024');
-  expect(submitted.get('status')).toBe('inProgress');
+  expect(submitted.get('status')).toBe('paused');
   expect(submitted.get('families')).toBe('30');
   expect((screen.getByLabelText('Nombre del proyecto') as HTMLInputElement).value).toBe(
     'Edited project'
@@ -149,4 +152,83 @@ it('sends one selected topic and preserves it after a failed save', async () => 
     fireEvent.submit(container.querySelector('form')!);
   });
   expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['none']);
+});
+
+function renderFormWith(initialValues: Record<string, string>) {
+  return render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        ...initialValues,
+      }}
+      submitAction={vi.fn()}
+    />
+  );
+}
+
+it('disables the end year unless the project is closed', () => {
+  renderFormWith({ status: 'active' });
+  expect((screen.getByLabelText('Año de fin') as HTMLButtonElement).disabled).toBe(true);
+  cleanup();
+  renderFormWith({ status: 'closed', startYear: '2020', endYear: '2022' });
+  const endYear = screen.getByLabelText('Año de fin') as HTMLButtonElement;
+  expect(endYear.disabled).toBe(false);
+  expect(endYear.textContent).toContain('2022');
+});
+
+it('submits the end year of a closed project', async () => {
+  const submitAction = vi.fn().mockResolvedValue({});
+  const { container } = render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        status: 'closed',
+        startYear: '2020',
+        endYear: '2022',
+      }}
+      submitAction={submitAction}
+    />
+  );
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+  expect(submitAction.mock.calls[0][1].get('endYear')).toBe('2022');
+});
+
+it('refreshes the topic list after a selected topic becomes invalid', async () => {
+  const submitAction = vi.fn().mockResolvedValue({
+    errors: { topicId: ['Elegí una temática válida'] },
+  });
+  const { container } = render(
+    <ProjectForm
+      currentYear={2026}
+      topics={[{ id: 1, name: 'Education' }]}
+      coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
+      departments={[{ id: 3, name: 'Montevideo' }]}
+      initialValues={{
+        name: 'Project',
+        leadCoordinatorId: '2',
+        departmentId: '3',
+        topicId: '1',
+      }}
+      submitAction={submitAction}
+    />
+  );
+  await act(async () => {
+    fireEvent.submit(container.querySelector('form')!);
+  });
+
+  expect(routerRefreshMock).toHaveBeenCalledOnce();
 });

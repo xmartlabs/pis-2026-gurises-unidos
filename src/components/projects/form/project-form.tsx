@@ -94,6 +94,10 @@ export function ProjectForm({
   }));
   const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
 
+  useEffect(() => {
+    if (state.errors?.topicId) router.refresh();
+  }, [router, state.errors?.topicId]);
+
   function selectYear(year: string) {
     beneficiaryDrafts.current[values.year] = Object.fromEntries(
       BENEFICIARY_FIELDS.map(({ key }) => [key, values[key]])
@@ -177,7 +181,6 @@ export function ProjectForm({
 
           <BasicInfoSection
             variant={variant}
-            isEditing={isEditing}
             values={values}
             state={state}
             updateField={updateField}
