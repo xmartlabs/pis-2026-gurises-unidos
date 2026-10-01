@@ -19,6 +19,8 @@ const PROJECT = {
   createdAt: new Date('2024-01-01'),
   createdBy: 1,
   updatedAt: null,
+  deletedAt: null,
+  deletedBy: null,
   topicId: 1,
   projectBeneficiaries: [
     {

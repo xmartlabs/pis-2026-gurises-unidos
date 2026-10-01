@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createProject, updateProject } from '@/app/actions/projects';
+import { createProject, deleteProject, updateProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
 import {
   projectFormSchema,
@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   createProject: vi.fn(),
   updateProject: vi.fn(),
+  softDeleteProject: vi.fn(),
   createBeneficiary: vi.fn(),
   findBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
@@ -38,8 +39,10 @@ const TX = {
   project: {
     create: mocks.createProject,
     update: mocks.updateProject,
-    findUnique: mocks.findProject,
-    findFirst: mocks.findDuplicateProject,
+    updateMany: mocks.softDeleteProject,
+    findFirst: vi.fn((args: { where: object }) =>
+      'name' in args.where ? mocks.findDuplicateProject(args) : mocks.findProject(args)
+    ),
   },
   user: { findFirst: mocks.findCoordinator },
   topic: { findFirst: mocks.findTopic },
@@ -121,6 +124,7 @@ describe.each([
     expect(mocks.findDuplicateProject.mock.calls[0][0].where).toMatchObject({
       name: { equals: 'Updated project', mode: 'insensitive' },
       startYear: 2019,
+      deletedAt: null,
     });
     expect(mocks.createProject).not.toHaveBeenCalled();
     expect(mocks.updateProject).not.toHaveBeenCalled();
@@ -516,6 +520,13 @@ describe('project review regressions', () => {
     expect(mocks.updateProject).not.toHaveBeenCalled();
   });
 
+  it('only looks up projects that were not deleted', async () => {
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
+    expect(mocks.findProject).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 10, deletedAt: null } })
+    );
+  });
+
   it('preserves the current coordinator without requiring its previous role', async () => {
     await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
     expect(mocks.findCoordinator).toHaveBeenCalledWith({ where: { id: 2 }, select: { id: true } });
@@ -649,5 +660,96 @@ describe('project review regressions', () => {
       updateProject(10, {}, formData({ coverPhoto: 'https://invalid.test/photo.png' }))
     ).rejects.toThrow('Redirect:');
     expect(mocks.updateProject.mock.calls[0][0].data).not.toHaveProperty('coverPhoto');
+  });
+});
+
+describe('deleteProject', () => {
+  beforeEach(() => {
+    mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2 });
+    mocks.softDeleteProject.mockResolvedValue({ count: 1 });
+  });
+
+  it('marks the project as deleted by the user and audits it in one transaction', async () => {
+    expect(await deleteProject(10)).toEqual({});
+    expect(mocks.findProject).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 10, deletedAt: null } })
+    );
+    expect(mocks.softDeleteProject).toHaveBeenCalledWith({
+      where: { id: 10, deletedAt: null },
+      data: { deletedAt: expect.any(Date), deletedBy: 7 },
+    });
+    expect(mocks.audit).toHaveBeenCalledWith({
+      data: { authorId: 7, action: 'deletion', entity: 'project', entityId: 10 },
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('allows the lead coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 2,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    expect(await deleteProject(10)).toEqual({});
+    expect(mocks.softDeleteProject).toHaveBeenCalled();
+  });
+
+  it('rejects an unrelated coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 3,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    expect(await deleteProject(10)).toEqual({
+      error: 'No tenés permiso para eliminar este proyecto.',
+    });
+    expect(mocks.softDeleteProject).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it('reports a missing or already deleted project', async () => {
+    mocks.findProject.mockResolvedValue(null);
+    expect(await deleteProject(10)).toEqual({
+      error: 'El proyecto no existe o ya fue eliminado.',
+    });
+    expect(mocks.softDeleteProject).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('does not audit when a concurrent request already deleted the project', async () => {
+    mocks.softDeleteProject.mockResolvedValue({ count: 0 });
+    expect(await deleteProject(10)).toEqual({
+      error: 'El proyecto no existe o ya fue eliminado.',
+    });
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid id before accessing the database', async () => {
+    expect(await deleteProject(0)).toEqual({ error: 'El proyecto no es válido.' });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('redirects unauthenticated users before accessing the database', async () => {
+    mocks.auth.mockResolvedValue(null);
+    await expect(deleteProject(10)).rejects.toThrow('Redirect: /login');
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('returns an error without redirecting or revalidating when the transaction fails', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.audit.mockRejectedValue(new Error('Audit unavailable'));
+    try {
+      expect(await deleteProject(10)).toEqual({
+        error: 'No se pudo eliminar el proyecto. Intentá de nuevo.',
+      });
+      expect(mocks.redirect).not.toHaveBeenCalled();
+      expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

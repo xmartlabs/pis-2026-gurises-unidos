@@ -25,9 +25,11 @@ async function Stats() {
     prisma.project.count({
       where: {
         status: 'active',
+        deletedAt: null,
       },
     }),
     prisma.projectBeneficiary.aggregate({
+      where: { project: { deletedAt: null } },
       _sum: {
         directChildrenAdolescents: true,
         indirectChildrenAdolescents: true,
