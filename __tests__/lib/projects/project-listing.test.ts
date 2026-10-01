@@ -153,43 +153,47 @@ describe('AC2: filters', () => {
   test('by status', async () => {
     await listWith({ status: 'closed' });
 
-    expect(findManyArgs().where).toEqual({ status: 'closed' });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, status: 'closed' });
   });
 
   test('by lead coordinator', async () => {
     await listWith({ leadCoordinatorId: '4' });
 
-    expect(findManyArgs().where).toEqual({ leadCoordinatorId: 4 });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, leadCoordinatorId: 4 });
   });
 
   test('by start year range', async () => {
     await listWith({ startYearFrom: '2019', startYearTo: '2022' });
 
-    expect(findManyArgs().where).toEqual({ startYear: { gte: 2019, lte: 2022 } });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, startYear: { gte: 2019, lte: 2022 } });
   });
 
   test('by start year range with only one bound', async () => {
     await listWith({ startYearTo: '2020' });
 
-    expect(findManyArgs().where).toEqual({ startYear: { gte: undefined, lte: 2020 } });
+    expect(findManyArgs().where).toEqual({
+      deletedAt: null,
+      startYear: { gte: undefined, lte: 2020 },
+    });
   });
 
   test('by intensity', async () => {
     await listWith({ intensity: 'high' });
 
-    expect(findManyArgs().where).toEqual({ intensity: 'high' });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, intensity: 'high' });
   });
 
   test('by department', async () => {
     await listWith({ departmentId: '2' });
 
-    expect(findManyArgs().where).toEqual({ departmentId: 2 });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, departmentId: 2 });
   });
 
   test('by name, case-insensitive', async () => {
     await listWith({ search: 'CENTRO' });
 
     expect(findManyArgs().where).toEqual({
+      deletedAt: null,
       name: { contains: 'CENTRO', mode: 'insensitive' },
     });
   });
@@ -198,6 +202,7 @@ describe('AC2: filters', () => {
     await listWith({ status: 'active', leadCoordinatorId: '3', startYearFrom: '2015' });
 
     expect(findManyArgs().where).toEqual({
+      deletedAt: null,
       status: 'active',
       leadCoordinatorId: 3,
       startYear: { gte: 2015, lte: undefined },
@@ -208,7 +213,12 @@ describe('AC2: filters', () => {
     await listWith({ status: 'active', departmentId: '1', beneficiaryYear: '2025' });
 
     expect(prismaMock.project.count).toHaveBeenCalledWith({
-      where: { status: 'active', departmentId: 1, projectBeneficiaries: { some: { year: 2025 } } },
+      where: {
+        deletedAt: null,
+        status: 'active',
+        departmentId: 1,
+        projectBeneficiaries: { some: { year: 2025 } },
+      },
     });
   });
 
@@ -223,7 +233,7 @@ describe('AC2: filters', () => {
       beneficiaryYear: '3000',
     });
 
-    expect(findManyArgs().where).toEqual({});
+    expect(findManyArgs().where).toEqual({ deletedAt: null });
   });
 
   test('resets to the first page when the page is beyond the filtered results', async () => {
@@ -239,7 +249,10 @@ describe('AC2: filters', () => {
   test('by beneficiary year', async () => {
     await listWith({ beneficiaryYear: '2025' });
 
-    expect(findManyArgs().where).toEqual({ projectBeneficiaries: { some: { year: 2025 } } });
+    expect(findManyArgs().where).toEqual({
+      deletedAt: null,
+      projectBeneficiaries: { some: { year: 2025 } },
+    });
   });
 
   test('requests only the selected beneficiary year', async () => {
@@ -327,12 +340,13 @@ describe('listProjectFilterOptions', () => {
       years: [2025, 2024],
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { ledProjects: { some: {} } } })
+      expect.objectContaining({ where: { ledProjects: { some: { deletedAt: null } } } })
     );
     expect(prismaMock.department.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { projects: { some: {} } } })
+      expect.objectContaining({ where: { projects: { some: { deletedAt: null } } } })
     );
     expect(prismaMock.projectBeneficiary.findMany).toHaveBeenCalledWith({
+      where: { project: { deletedAt: null } },
       distinct: ['year'],
       select: { year: true },
       orderBy: { year: 'desc' },

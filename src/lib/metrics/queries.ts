@@ -16,6 +16,7 @@ export type MetricSetting = Awaited<ReturnType<typeof getMetricSettings>>[number
 
 export async function getMetricYears(currentYear: number) {
   const beneficiaries = await prisma.projectBeneficiary.findMany({
+    where: { project: { deletedAt: null } },
     select: { year: true },
     distinct: ['year'],
   });
@@ -28,7 +29,7 @@ export async function getMetricYears(currentYear: number) {
 export async function getMetricValues(year: number) {
   const [beneficiaries, projectRecords] = await Promise.all([
     prisma.projectBeneficiary.aggregate({
-      where: { year },
+      where: { year, project: { deletedAt: null } },
       _sum: {
         directChildrenAdolescents: true,
         indirectChildrenAdolescents: true,
@@ -38,7 +39,7 @@ export async function getMetricValues(year: number) {
       },
     }),
     prisma.projectBeneficiary.findMany({
-      where: { year },
+      where: { year, project: { deletedAt: null } },
       select: {
         projectId: true,
         project: { select: { departmentId: true } },

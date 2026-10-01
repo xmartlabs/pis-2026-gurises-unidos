@@ -8,6 +8,7 @@ import { updateProject } from '@/app/actions/projects';
 import { ProjectForm } from '@/components/projects/form/project-form';
 import { projectToFormValues } from '@/components/projects/form/project-to-form-values';
 import prisma from '@/lib/prisma';
+import { DeleteProjectSection } from '@/components/projects/delete-project-section';
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -19,8 +20,8 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
     include: { projectBeneficiaries: { orderBy: { year: 'desc' } } },
   });
 
@@ -108,6 +109,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
           submitAction={submitAction}
         >
           <ProjectHistory entries={history} />
+          <DeleteProjectSection projectId={project.id} />
         </ProjectForm>
       </div>
     </div>
