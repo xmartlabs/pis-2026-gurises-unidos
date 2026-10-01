@@ -84,7 +84,7 @@ beforeEach(() => {
   authMock.mockResolvedValue({ user: { id: '1' } });
 
   prismaMock.user.findUnique.mockResolvedValue({ ...USER });
-  prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT });
+  prismaMock.project.findFirst.mockResolvedValue({ ...PROJECT });
   prismaMock.project.count.mockResolvedValue(10);
 
   prismaMock.projectBeneficiary.findUnique.mockImplementation(async ({ where }) => {
@@ -159,7 +159,7 @@ describe('getProjectDetail', () => {
       },
     });
 
-    expect(prismaMock.project.findUnique).toHaveBeenCalledWith(
+    expect(prismaMock.project.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         select: expect.objectContaining({ coverPhoto: true }),
       })
@@ -174,7 +174,7 @@ describe('getProjectDetail', () => {
   it.each(['paused', 'closed'])(
     'does not count a %s project with beneficiary data as active',
     async (status) => {
-      prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT, status });
+      prismaMock.project.findFirst.mockResolvedValue({ ...PROJECT, status });
 
       expect(await getProjectDetail('12', '2026')).toMatchObject({
         status: 'success',
@@ -189,7 +189,7 @@ describe('getProjectDetail', () => {
   );
 
   it('counts an active project without beneficiary records', async () => {
-    prismaMock.project.findUnique.mockResolvedValue({
+    prismaMock.project.findFirst.mockResolvedValue({
       ...PROJECT,
       projectBeneficiaries: [],
     });
@@ -220,14 +220,14 @@ describe('getProjectDetail', () => {
     }
 
     expect(prismaMock.project.count.mock.calls).toEqual([
-      [{ where: { status: 'active' } }],
-      [{ where: { status: 'active' } }],
-      [{ where: { status: 'active' } }],
+      [{ where: { status: 'active', deletedAt: null } }],
+      [{ where: { status: 'active', deletedAt: null } }],
+      [{ where: { status: 'active', deletedAt: null } }],
     ]);
   });
 
   it('returns zero active projects when all projects are inactive', async () => {
-    prismaMock.project.findUnique.mockResolvedValue({ ...PROJECT, status: 'closed' });
+    prismaMock.project.findFirst.mockResolvedValue({ ...PROJECT, status: 'closed' });
     prismaMock.project.count.mockResolvedValue(0);
 
     expect(await getProjectDetail('12', '2026')).toMatchObject({
@@ -241,7 +241,7 @@ describe('getProjectDetail', () => {
   });
 
   it('uses the latest recorded year when omitted', async () => {
-    prismaMock.project.findUnique.mockResolvedValue({
+    prismaMock.project.findFirst.mockResolvedValue({
       ...PROJECT,
       projectBeneficiaries: [{ year: 2025 }],
     });
@@ -266,12 +266,12 @@ describe('getProjectDetail', () => {
     await getProjectDetail('12', '2025');
 
     expect(prismaMock.projectBeneficiary.aggregate).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { year: 2025 } })
+      expect.objectContaining({ where: { year: 2025, project: { deletedAt: null } } })
     );
   });
 
   it('does not replace the previous year with an older record', async () => {
-    prismaMock.project.findUnique.mockResolvedValue({
+    prismaMock.project.findFirst.mockResolvedValue({
       ...PROJECT,
       projectBeneficiaries: [{ year: 2026 }, { year: 2024 }],
     });
@@ -325,7 +325,7 @@ describe('getProjectDetail', () => {
   });
 
   it('uses the current year for a project without records', async () => {
-    prismaMock.project.findUnique.mockResolvedValue({
+    prismaMock.project.findFirst.mockResolvedValue({
       ...PROJECT,
       projectBeneficiaries: [],
     });
@@ -396,10 +396,22 @@ describe('getProjectDetail', () => {
   });
 
   it('returns notFound for a missing project', async () => {
-    prismaMock.project.findUnique.mockResolvedValue(null);
+    prismaMock.project.findFirst.mockResolvedValue(null);
 
     expect(await getProjectDetail('12')).toEqual({ status: 'notFound' });
     expect(prismaMock.projectBeneficiary.aggregate).not.toHaveBeenCalled();
+  });
+
+  it('returns notFound for a deleted project without querying metrics', async () => {
+    prismaMock.project.findFirst.mockResolvedValue(null);
+
+    expect(await getProjectDetail('12')).toEqual({ status: 'notFound' });
+    expect(prismaMock.project.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 12, deletedAt: null } })
+    );
+    expect(prismaMock.projectBeneficiary.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.projectBeneficiary.aggregate).not.toHaveBeenCalled();
+    expect(prismaMock.project.count).not.toHaveBeenCalled();
   });
 
   it('rejects invalid input before querying projects', async () => {
@@ -411,21 +423,21 @@ describe('getProjectDetail', () => {
       status: 'invalidInput',
       field: 'year',
     });
-    expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.project.findFirst).not.toHaveBeenCalled();
   });
 
   it('redirects unauthenticated users', async () => {
     authMock.mockResolvedValue(null);
 
     await expect(getProjectDetail('12')).rejects.toThrow('Redirect: /login');
-    expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.project.findFirst).not.toHaveBeenCalled();
   });
 
   it.each(['disabled', 'pendingInvitation'])('rejects a user with status %s', async (status) => {
     prismaMock.user.findUnique.mockResolvedValue({ ...USER, status });
 
     await expect(getProjectDetail('12')).rejects.toThrow('Redirect: /login');
-    expect(prismaMock.project.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.project.findFirst).not.toHaveBeenCalled();
   });
 
   it('rejects a deleted user', async () => {
@@ -459,7 +471,7 @@ describe('getProjectDetail', () => {
   it('selects only the coordinator fields needed by the view', async () => {
     await getProjectDetail('12');
 
-    expect(prismaMock.project.findUnique).toHaveBeenCalledWith(
+    expect(prismaMock.project.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         select: expect.objectContaining({
           leadCoordinator: {
@@ -471,7 +483,7 @@ describe('getProjectDetail', () => {
   });
 
   it('propagates unexpected database errors', async () => {
-    prismaMock.project.findUnique.mockRejectedValue(new Error('Database unavailable'));
+    prismaMock.project.findFirst.mockRejectedValue(new Error('Database unavailable'));
 
     await expect(getProjectDetail('12')).rejects.toThrow('Database unavailable');
   });

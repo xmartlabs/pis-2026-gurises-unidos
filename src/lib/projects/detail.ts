@@ -35,8 +35,8 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
 
   const { projectId, year } = parsed.data;
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
     select: {
       id: true,
       name: true,
@@ -112,13 +112,13 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
       select: BENEFICIARY_SELECT,
     }),
     prisma.projectBeneficiary.aggregate({
-      where: { year: selectedYear },
+      where: { year: selectedYear, project: { deletedAt: null } },
       _sum: {
         directChildrenAdolescents: true,
         indirectChildrenAdolescents: true,
       },
     }),
-    prisma.project.count({ where: { status: 'active' } }),
+    prisma.project.count({ where: { status: 'active', deletedAt: null } }),
   ]);
 
   const childrenReached = compareMetric(getChildrenReached(current), getChildrenReached(previous));
