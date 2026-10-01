@@ -22,6 +22,15 @@ import type { Prisma } from '@/generated/prisma/client';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 
+async function lockTopics(tx: Prisma.TransactionClient, topicIds: (number | null)[]) {
+  const ids = [...new Set(topicIds.filter((id): id is number => id !== null))].sort(
+    (a, b) => a - b
+  );
+  for (const id of ids) {
+    await tx.$queryRaw`SELECT "id" FROM "Topic" WHERE "id" = ${id} FOR UPDATE`;
+  }
+}
+
 async function validateRelations(
   tx: Prisma.TransactionClient,
   coordinatorId: number,
@@ -92,6 +101,7 @@ export async function createProject(
   try {
     const result = await prisma.$transaction(
       async (tx): Promise<{ error: ProjectFormState } | { projectId: number }> => {
+        await lockTopics(tx, [projectData.topicId]);
         const error = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
@@ -163,6 +173,7 @@ export async function updateProject(
         if (!previous) return { formError: 'El proyecto no existe o fue eliminado.' };
         if (!canEditProject(user, previous))
           return { formError: 'No tenés permiso para editar este proyecto.' };
+        await lockTopics(tx, [previous.topicId, projectData.topicId]);
         const relationError = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
