@@ -13,7 +13,7 @@ export function BasicInfoSection({
   coordinatorOptions,
   topics,
 }: Pick<SectionProps, 'yearOptions' | 'coordinatorOptions' | 'topics'>) {
-  const { setValue } = useFormContext<ProjectFormValues>();
+  const { clearErrors, setValue } = useFormContext<ProjectFormValues>();
   const status = useWatch<ProjectFormValues, 'status'>({ name: 'status' });
 
   return (
@@ -33,7 +33,10 @@ export function BasicInfoSection({
           label="Estado"
           options={STATUS_OPTIONS}
           onValueChange={(value) => {
-            if (value !== 'closed') setValue('endYear', '');
+            if (value !== 'closed') {
+              setValue('endYear', '');
+              clearErrors('endYear');
+            }
           }}
         />
         <SelectField

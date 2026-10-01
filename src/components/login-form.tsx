@@ -23,12 +23,18 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
     resolver: zodResolver(loginSchema) as Resolver<LoginFormValues>,
     defaultValues: { documentId: '', password: '' },
   });
-  const { handleSubmit, setError, clearErrors } = form;
+  const { handleSubmit, setError, clearErrors, getFieldState } = form;
 
   useEffect(() => {
     if (!state.formError) return;
     setError('password', { type: 'server', message: 'Credenciales incorrectas' });
   }, [state, setError]);
+
+  function clearServerPasswordError() {
+    if (getFieldState('password').error?.type === 'server') {
+      clearErrors('password');
+    }
+  }
 
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,7 +66,7 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             type="text"
             autoComplete="username"
             placeholder="Ej. 4.123.456-7"
-            onChange={() => clearErrors('password')}
+            onChange={clearServerPasswordError}
           />
           <TextInputField
             id="password"
@@ -68,7 +74,7 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             label="Contraseña"
             type={showPassword ? 'text' : 'password'}
             placeholder="Tu contraseña"
-            onChange={() => clearErrors('password')}
+            onChange={clearServerPasswordError}
             trailingAction={
               <button
                 onClick={() => setShowPassword(!showPassword)}

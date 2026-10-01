@@ -9,10 +9,11 @@ import { BasicInfoSection } from './sections/basic-info-section';
 import {
   startTransition,
   useActionState,
-  useMemo,
-  type SubmitEvent,
-  type ReactNode,
   useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+  type SubmitEvent,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormProvider, useForm, useWatch, type Resolver } from 'react-hook-form';
@@ -92,6 +93,7 @@ export function ProjectForm({
     mode: 'onChange',
   });
   const { control, handleSubmit } = form;
+  const submissionRef = useRef(false);
   const watchedValues = useWatch({ control });
   const values = {
     ...defaultValues,
@@ -109,15 +111,25 @@ export function ProjectForm({
     ({ value }) => Number(value) >= Number(values.startYear)
   );
 
+  useEffect(() => {
+    if (!pending) submissionRef.current = false;
+  }, [pending, state]);
+
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending) return;
+    if (submissionRef.current) return;
+    submissionRef.current = true;
     const formElement = event.currentTarget;
-    return handleSubmit(() => {
-      startTransition(() => {
-        formAction(new FormData(formElement));
-      });
-    })(event);
+    return handleSubmit(
+      () => {
+        startTransition(() => {
+          formAction(new FormData(formElement));
+        });
+      },
+      () => {
+        submissionRef.current = false;
+      }
+    )(event);
   }
 
   useEffect(() => {
