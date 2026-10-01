@@ -1,7 +1,7 @@
 import { listProjects } from '@/lib/projects/list';
 import { parseProjectFilters } from '@/lib/validation/project-filters';
 
-export const PUBLIC_PROJECTS_PAGE_SIZE = 6;
+export const PUBLIC_PROJECTS_PAGE_SIZE = 12;
 
 export type PublicProject = {
   id: number;

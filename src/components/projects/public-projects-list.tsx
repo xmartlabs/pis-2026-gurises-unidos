@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { loadPublicProjectsPage } from '@/app/actions/public-projects';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ProjectCard } from '@/components/projects/project-card';
 import type { PublicProject, PublicProjectsPage } from '@/lib/projects/public-projects';
 
@@ -58,10 +59,12 @@ export function PublicProjectsList({ initialPage }: PublicProjectsListProps) {
 
   return (
     <div className="relative w-full max-w-328">
-      <div
-        ref={containerRef}
-        onScroll={(event) => setShowScrollTop(event.currentTarget.scrollTop > SCROLL_TOP_THRESHOLD)}
-        className="max-h-[70vh] w-full overflow-y-auto overscroll-contain pr-1"
+      <ScrollArea
+        viewportRef={containerRef}
+        viewportClassName="max-h-[70vh] overscroll-contain pr-3.5"
+        onViewportScroll={(event) =>
+          setShowScrollTop(event.currentTarget.scrollTop > SCROLL_TOP_THRESHOLD)
+        }
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
@@ -89,7 +92,7 @@ export function PublicProjectsList({ initialPage }: PublicProjectsListProps) {
             </Button>
           </div>
         )}
-      </div>
+      </ScrollArea>
       {showScrollTop && (
         <Button
           size="icon-lg"
