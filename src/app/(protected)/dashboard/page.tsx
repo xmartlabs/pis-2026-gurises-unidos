@@ -6,9 +6,9 @@ import { HeroKpiCard } from '@/components/dashboard/hero-kpi-card';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { ProjectsOverviewTable } from '@/components/dashboard/projects-overview-table';
 import { MetricsYearSelect } from '@/components/metrics/metrics-year-select';
-import { getCurrentYear } from '@/lib/dashboard/current-year';
 import { getDashboardOverview } from '@/lib/dashboard/queries';
 import { getMetricYears } from '@/lib/metrics/queries';
+import { getCurrentYear, resolveYearParam } from '@/lib/metrics/year';
 
 const ALLOWED_ROLES: UserRole[] = ['admin', 'coordinator'];
 
@@ -23,10 +23,7 @@ export default async function DashboardPage({
 
   const currentYear = getCurrentYear();
   const years = await getMetricYears(currentYear);
-  const requestedYear = (await searchParams).year;
-  const parsedYear = typeof requestedYear === 'string' ? Number(requestedYear) : NaN;
-  const year =
-    Number.isInteger(parsedYear) && years.includes(parsedYear) ? parsedYear : currentYear;
+  const year = resolveYearParam((await searchParams).year, years, currentYear);
   const { heroKpi, secondaryKpis, projects, projectsTotal } = await getDashboardOverview(year);
 
   return (

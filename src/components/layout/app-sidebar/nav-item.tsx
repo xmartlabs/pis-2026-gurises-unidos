@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import { cn } from 'cn';
@@ -46,25 +46,26 @@ export function SidebarCollapsibleNavItem({ item, pathname }: SidebarNavItem) {
   const Icon = item.icon;
   const children = item.children ?? [];
   const [open, setOpen] = useState(() => children.some((c) => isItemActive(pathname, c)));
-  const { state, setOpen: setSidebarOpen, setOpenMobile } = useSidebar();
+  const { state, isMobile, setOpen: setSidebarOpen, setOpenMobile } = useSidebar();
 
-  function handleOpenChange(nextOpen: boolean) {
-    if (state === 'collapsed') {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (state === 'collapsed' && !isMobile) {
+      event.preventDefault();
       setSidebarOpen(true);
       setOpen(true);
       return;
     }
 
-    setOpen(nextOpen);
+    setOpenMobile(false);
   }
 
   return (
     <SidebarMenuItem>
-      <Collapsible open={open} onOpenChange={handleOpenChange}>
+      <Collapsible open={open} onOpenChange={setOpen}>
         <SidebarMenuButton
           tooltip={item.title}
           isActive={isItemActive(pathname, item) || children.some((c) => isItemActive(pathname, c))}
-          render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
+          render={<Link href={item.href} onClick={handleClick} />}
         >
           <Icon />
           <span>{item.title}</span>

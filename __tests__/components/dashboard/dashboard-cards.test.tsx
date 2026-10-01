@@ -3,13 +3,12 @@ import { expect, test } from 'vitest';
 import { HeroKpiCard } from '@/components/dashboard/hero-kpi-card';
 import { ProjectsOverviewTable } from '@/components/dashboard/projects-overview-table';
 
-test('prefixes the hero value with a plus sign only when it is positive', () => {
-  const { container, rerender } = render(
+test('shows the hero value as a plain total', () => {
+  const { container } = render(
     <HeroKpiCard kpi={{ value: 1200, label: 'alcanzados', delta: '' }} />
   );
-  expect(container.textContent).toContain('+1.200');
 
-  rerender(<HeroKpiCard kpi={{ value: 0, label: 'alcanzados', delta: '' }} />);
+  expect(container.textContent).toContain('1.200');
   expect(container.textContent).not.toContain('+');
 });
 

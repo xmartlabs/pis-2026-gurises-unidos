@@ -2,6 +2,7 @@ import { MetricsForm } from '@/components/metrics/metrics-form';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics/queries';
+import { getCurrentYear, resolveYearParam } from '@/lib/metrics/year';
 import { MetricsYearSelect } from '@/components/metrics/metrics-year-select';
 
 export default async function MetricsPage({
@@ -13,12 +14,9 @@ export default async function MetricsPage({
   if (!session?.user) redirect('/login');
   if (session.user.role !== 'admin') redirect('/dashboard/projects');
 
-  const currentYear = new Date().getFullYear();
+  const currentYear = getCurrentYear();
   const years = await getMetricYears(currentYear);
-  const requestedYear = (await searchParams).year;
-  const parsedYear = typeof requestedYear === 'string' ? Number(requestedYear) : NaN;
-  const isValidYear = Number.isInteger(parsedYear) && years.includes(parsedYear);
-  const year = isValidYear ? parsedYear : currentYear - 1;
+  const year = resolveYearParam((await searchParams).year, years, currentYear - 1);
   const [values, initialMetrics] = await Promise.all([getMetricValues(year), getMetricSettings()]);
 
   return (

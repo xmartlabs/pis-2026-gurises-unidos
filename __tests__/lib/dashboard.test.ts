@@ -78,6 +78,18 @@ describe('getDashboardOverview', () => {
     expect(secondaryKpis[2].delta).toBe('+2 respecto a 2025');
   });
 
+  it('reports no change when the percentage rounds to zero', async () => {
+    mockMetricsByYear({
+      2026: metricValues({ children_reached: 10001, families: 9999 }),
+      2025: metricValues({ children_reached: 10000, families: 10000 }),
+    });
+
+    const { heroKpi, secondaryKpis } = await getDashboardOverview(2026);
+
+    expect(heroKpi.delta).toBe('Sin cambios vs. año anterior');
+    expect(secondaryKpis[0].delta).toBe('Sin cambios vs. año anterior');
+  });
+
   it('reports no change when the project count matches the previous year', async () => {
     mockMetricsByYear({
       2026: metricValues({ active_projects: 3 }),

@@ -7,7 +7,6 @@ export function HeroKpiCard({ kpi }: { kpi: DashboardKpi }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-foreground text-3xl font-bold break-words sm:text-4xl">
-            {kpi.value > 0 && '+'}
             {formatNumber(kpi.value)}
           </p>
           <p className="text-muted-foreground text-sm">{kpi.label}</p>

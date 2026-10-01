@@ -18,9 +18,9 @@ export type DashboardProjectRow = {
 
 function formatPercentDelta(current: number, previous: number) {
   if (previous === 0) return 'Sin datos del año anterior';
-  const percent = ((current - previous) / previous) * 100;
+  const percent = Number((((current - previous) / previous) * 100).toFixed(1));
   if (percent === 0) return 'Sin cambios vs. año anterior';
-  const sign = percent > 0 ? '+' : percent < 0 ? '−' : '';
+  const sign = percent > 0 ? '+' : '−';
   return `${sign}${Math.abs(percent).toFixed(1)}% vs. año anterior`;
 }
 
