@@ -20,7 +20,7 @@ type InternalProjectCardProps = {
 };
 
 type PublicProjectCardProps = {
-  variant: 'public-dark' | 'public-light';
+  variant: 'public-dark';
   territory: string;
   name: string;
   description: string;
@@ -40,20 +40,10 @@ const PUBLIC_VARIANT_STYLES = {
     reach: 'text-primary',
     reachLabel: 'text-muted-foreground',
   },
-  'public-light': {
-    card: 'bg-card border-status-success',
-    image: 'bg-(image:--project-cover)',
-    dot: 'bg-status-success',
-    territory: 'text-muted-foreground',
-    name: 'text-foreground',
-    description: 'text-muted-foreground',
-    reach: 'text-foreground',
-    reachLabel: 'text-muted-foreground',
-  },
 };
 
 function isPublicProps(props: ProjectCardProps): props is PublicProjectCardProps {
-  return props.variant === 'public-dark' || props.variant === 'public-light';
+  return props.variant === 'public-dark';
 }
 
 export function ProjectCard(props: ProjectCardProps) {

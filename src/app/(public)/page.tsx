@@ -32,6 +32,7 @@ const LEVELS = [
 ];
 
 const MAX_DEPARTMENT_BUBBLES = 4;
+const FIRST_PROJECT_YEAR = 1989;
 
 const PARTNERS = [
   'INAU',
@@ -80,9 +81,9 @@ export default async function Home() {
             <span className="bg-card text-primary flex h-6.5 w-42.5 items-center justify-center rounded-[20px] px-3 py-1.25 text-xs leading-4 font-medium tracking-normal">
               Informe de impacto · {year}
             </span>
-            <h2 className="text-foreground w-full max-w-122 text-3xl leading-9 font-bold tracking-normal lg:h-24 lg:text-5xl lg:leading-12">
+            <h1 className="text-foreground w-full max-w-122 text-3xl leading-9 font-bold tracking-normal lg:h-24 lg:text-5xl lg:leading-12">
               Transformando vidas en Uruguay
-            </h2>
+            </h1>
             <p className="text-foreground w-full text-base leading-6 font-normal tracking-normal lg:h-12">
               Trabajamos con niños, niñas, adolescentes, familias y comunidades en todo el
               territorio uruguayo.
@@ -185,11 +186,11 @@ export default async function Home() {
       </section>
       <section className="w-full">
         <div className="mx-auto flex min-h-70 w-full max-w-360 flex-col gap-12 px-4 pt-10 pb-10 sm:px-6 lg:px-16">
-          <h2 className="text-foreground text-primary text-center text-xs leading-4 font-bold tracking-normal">
+          <h2 className="text-primary text-center text-xs leading-4 font-bold tracking-normal">
             NUESTRA MISIÓN
           </h2>
           <p className="text-foreground text-center text-xl leading-7 font-normal tracking-normal sm:text-3xl sm:leading-9">
-            Hace 35 años defendemos los derechos de la niñez y la adolescencia en Uruguay,
+            Hace {new Date().getFullYear() - FIRST_PROJECT_YEAR} años defendemos los derechos de la niñez y la adolescencia en Uruguay,
             transformando realidades junto a las comunidades.
           </p>
         </div>
