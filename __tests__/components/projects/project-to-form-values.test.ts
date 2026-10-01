@@ -66,7 +66,3 @@ it('maps all counts from the requested year without mutating the project', () =>
   });
   expect(PROJECT).toEqual(original);
 });
-
-it('maps a missing topic to an empty selection', () => {
-  expect(projectToFormValues({ ...PROJECT, topicId: null }, 2026).topicId).toBe('');
-});

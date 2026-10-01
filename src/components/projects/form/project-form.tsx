@@ -118,6 +118,16 @@ export function ProjectForm({
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submissionRef.current) return;
+
+    if (mode === 'create' && topics.length === 0) {
+      form.setError('topicId', {
+        type: 'manual',
+        message:
+          'No hay temáticas disponibles. Un administrador debe crear o activar una antes de crear proyectos.',
+      });
+      return;
+    }
+
     submissionRef.current = true;
     const formElement = event.currentTarget;
     return handleSubmit(

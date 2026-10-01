@@ -55,6 +55,7 @@ const TX = {
 };
 const VALID_DATA = {
   name: '  Updated project  ',
+  topicId: '1',
   status: 'paused',
   intensity: 'medium',
   startYear: '2019',
@@ -96,7 +97,7 @@ beforeEach(() => {
   mocks.auth.mockResolvedValue({ user: { id: '7', role: 'admin' } });
   mocks.findUser.mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null });
   mocks.findCoordinator.mockResolvedValue({ id: 2 });
-  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: null });
+  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: 1 });
   mocks.findTopic.mockResolvedValue({ id: 2 });
   mocks.findDuplicateProject.mockResolvedValue(null);
   mocks.queryRaw.mockResolvedValue([]);
@@ -294,7 +295,7 @@ describe('updateProject persistence', () => {
           endYear: null,
           leadCoordinatorId: 2,
           departmentId: 3,
-          topicId: null,
+          topicId: 1,
           zone: 'city',
           localityNeighborhood: 'Neighborhood',
           generalObjective: 'Objective',
@@ -471,7 +472,7 @@ function unchangedRecords() {
   const { projectData, beneficiaryData } = splitProjectFormData(
     projectFormSchema.parse(readProjectFormData(formData()))
   );
-  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: null });
+  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 1 });
   mocks.findBeneficiary.mockResolvedValue({ id: 20, ...beneficiaryData });
 }
 
@@ -632,25 +633,28 @@ describe('project review regressions', () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it('clears the topic when none is selected', async () => {
-    unchangedRecords();
-    const { projectData } = splitProjectFormData(
-      projectFormSchema.parse(readProjectFormData(formData()))
-    );
-    mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
-    await expect(updateProject(10, {}, formData({ topicId: 'none' }))).rejects.toThrow('Redirect:');
-    expect(mocks.updateProject).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ topicId: null }) })
-    );
-  });
+  it.each(['', 'none', undefined])(
+    'rejects an empty topic (%s) in create and edit',
+    async (topicId) => {
+      for (const action of [
+        () => createProject({}, formData({ topicId })),
+        () => updateProject(10, {}, formData({ topicId })),
+      ]) {
+        const result = await action();
+        expect(result.errors?.topicId).toBeDefined();
+      }
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    }
+  );
 
-  it('preserves an unchanged topic without audit', async () => {
+  it('preserves an unchanged topic without requiring it to be active or auditing', async () => {
     unchangedRecords();
     const { projectData } = splitProjectFormData(
       projectFormSchema.parse(readProjectFormData(formData()))
     );
     mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
     await expect(updateProject(10, {}, formData({ topicId: '2' }))).rejects.toThrow('Redirect:');
+    expect(mocks.findTopic).toHaveBeenCalledWith({ where: { id: 2 }, select: { id: true } });
     expect(mocks.updateProject).not.toHaveBeenCalled();
     expect(mocks.audit).not.toHaveBeenCalled();
   });

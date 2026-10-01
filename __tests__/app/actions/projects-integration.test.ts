@@ -67,6 +67,7 @@ beforeAll(async () => {
   const project = await database.project.create({
     data: {
       name: 'Original project',
+      topicId,
       status: 'active',
       intensity: 'high',
       startYear: 2024,

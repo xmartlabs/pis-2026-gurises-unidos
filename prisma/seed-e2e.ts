@@ -80,6 +80,8 @@ async function main() {
         await tx.department.create({ data: { name: E2E_SECONDARY_DEPARTMENT } });
         await tx.topic.createMany({ data: E2E_TOPICS.map((name) => ({ name })) });
 
+        const topic = await tx.topic.findUniqueOrThrow({ where: { name: E2E_TOPICS[0] } });
+
         const admin = await tx.user.create({ data: { ...E2E_ADMIN, passwordHash } });
         const coordinator = await tx.user.create({
           data: { ...E2E_COORDINATOR, passwordHash, createdBy: admin.id },
@@ -93,6 +95,7 @@ async function main() {
             ...E2E_ACTIVE_PROJECT,
             leadCoordinatorId: coordinator.id,
             departmentId: department.id,
+            topicId: topic.id,
             createdBy: admin.id,
           },
         });
@@ -102,6 +105,7 @@ async function main() {
             ...E2E_CLOSED_PROJECT,
             leadCoordinatorId: coordinator.id,
             departmentId: department.id,
+            topicId: topic.id,
             createdBy: admin.id,
           },
         });
