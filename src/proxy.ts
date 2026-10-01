@@ -1,14 +1,44 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import {
+  getSessionExpirationTimestamp,
+  hasSessionExpired,
+  SESSION_EXPIRATION_COOKIE,
+  SESSION_EXPIRATION_COOKIE_OPTIONS,
+  SESSION_EXPIRATION_REASON,
+} from '@/lib/auth/session-expiration';
 
 const PUBLIC_ROUTES = ['/', '/login'];
 
 export const proxy = auth((request) => {
-  if (request.auth || PUBLIC_ROUTES.includes(request.nextUrl.pathname)) {
+  if (request.auth) {
+    const response = NextResponse.next();
+    response.cookies.set(
+      SESSION_EXPIRATION_COOKIE,
+      String(getSessionExpirationTimestamp(Boolean(request.auth.user.remember))),
+      SESSION_EXPIRATION_COOKIE_OPTIONS
+    );
+    return response;
+  }
+
+  if (PUBLIC_ROUTES.includes(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
 
-  return NextResponse.redirect(new URL('/login', request.nextUrl));
+  const loginUrl = new URL('/login', request.nextUrl);
+  const expirationCookie = request.cookies.get(SESSION_EXPIRATION_COOKIE)?.value;
+
+  if (hasSessionExpired(expirationCookie)) {
+    loginUrl.searchParams.set('reason', SESSION_EXPIRATION_REASON);
+  }
+
+  const response = NextResponse.redirect(loginUrl);
+
+  if (expirationCookie) {
+    response.cookies.delete(SESSION_EXPIRATION_COOKIE);
+  }
+
+  return response;
 });
 
 export const config = {

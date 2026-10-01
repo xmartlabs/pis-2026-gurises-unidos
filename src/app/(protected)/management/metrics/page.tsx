@@ -1,7 +1,12 @@
 import { MetricsForm } from '@/components/metrics/metrics-form';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { getMetricSettings, getMetricValues, getMetricYears } from '@/lib/metrics/queries';
+import {
+  getMetricSettings,
+  getMetricValues,
+  getMetricYears,
+  getReferenceYear,
+} from '@/lib/metrics/queries';
 import { getCurrentYear, resolveYearParam } from '@/lib/metrics/year';
 import { MetricsYearSelect } from '@/components/metrics/metrics-year-select';
 
@@ -15,8 +20,11 @@ export default async function MetricsPage({
   if (session.user.role !== 'admin') redirect('/dashboard/projects');
 
   const currentYear = getCurrentYear();
-  const years = await getMetricYears(currentYear);
-  const year = resolveYearParam((await searchParams).year, years, currentYear - 1);
+  const [years, referenceYear] = await Promise.all([
+    getMetricYears(currentYear),
+    getReferenceYear(currentYear),
+  ]);
+  const year = resolveYearParam((await searchParams).year, years, referenceYear);
   const [values, initialMetrics] = await Promise.all([getMetricValues(year), getMetricSettings()]);
 
   return (
@@ -33,7 +41,10 @@ export default async function MetricsPage({
         </p>
       </header>
       <div className="mx-auto flex w-full max-w-[1185px] flex-1 flex-col gap-4 pt-1.5 pb-6">
-        <div className="px-6">
+        <div className="flex flex-col gap-2 px-6">
+          <p className="text-muted-foreground font-sans text-sm leading-5 font-normal tracking-normal">
+            Año mostrado actualmente en el sitio público: {referenceYear}
+          </p>
           <MetricsYearSelect year={year} years={years} />
         </div>
         <MetricsForm year={String(year)} values={values} initialMetrics={initialMetrics} />

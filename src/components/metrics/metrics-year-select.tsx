@@ -10,7 +10,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-export function MetricsYearSelect({ year, years }: { year: number; years: number[] }) {
+export function MetricsYearSelect({
+  year,
+  years,
+  label = 'Año a mostrar en sitio público',
+}: {
+  year: number;
+  years: number[];
+  label?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -28,7 +36,7 @@ export function MetricsYearSelect({ year, years }: { year: number; years: number
         htmlFor="metrics-year"
         className="text-muted-foreground font-sans text-sm leading-5 font-normal tracking-normal"
       >
-        Año
+        {label}
       </label>
       <Select
         value={String(year)}

@@ -15,9 +15,15 @@ vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 vi.mock('@/lib/dashboard/queries', () => ({ getDashboardOverview: getDashboardOverviewMock }));
 vi.mock('@/lib/metrics/queries', () => ({ getMetricYears: getMetricYearsMock }));
 vi.mock('@/components/metrics/metrics-year-select', () => ({
-  MetricsYearSelect: ({ year, years }: { year: number; years: number[] }) => (
-    <p data-testid="year-select">{`${year} de ${years.join(',')}`}</p>
-  ),
+  MetricsYearSelect: ({
+    year,
+    years,
+    label,
+  }: {
+    year: number;
+    years: number[];
+    label?: string;
+  }) => <p data-testid="year-select">{`${label}: ${year} de ${years.join(',')}`}</p>,
 }));
 
 import DashboardPage from '@/app/(protected)/dashboard/page';
@@ -89,7 +95,7 @@ test('shows the overview for a selected year with data', async () => {
   render(await renderPage('2024'));
 
   expect(getDashboardOverviewMock).toHaveBeenCalledWith(2024);
-  expect(screen.getByTestId('year-select').textContent).toBe('2024 de 2026,2025,2024');
+  expect(screen.getByTestId('year-select').textContent).toBe('Año: 2024 de 2026,2025,2024');
   expect(screen.getByText('Total 2024')).toBeDefined();
 });
 
@@ -101,7 +107,7 @@ test.each([['1990'], ['2027'], ['abc'], ['2024.5'], [['2024', '2025']]])(
     render(await renderPage(year));
 
     expect(getDashboardOverviewMock).toHaveBeenCalledWith(2026);
-    expect(screen.getByTestId('year-select').textContent).toBe('2026 de 2026,2025,2024');
+    expect(screen.getByTestId('year-select').textContent).toBe('Año: 2026 de 2026,2025,2024');
   }
 );
 

@@ -3,6 +3,7 @@ import {
   // FileChartColumnIncreasing,
   FolderKanban,
   HomeIcon,
+  Tags,
   type LucideIcon,
   // Newspaper,
   Users,
@@ -88,6 +89,13 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
         title: 'Usuarios',
         href: '/management/users',
         icon: Users,
+        roles: ['admin'],
+      },
+      {
+        id: 'topics',
+        title: 'Temáticas',
+        href: '/management/topics',
+        icon: Tags,
         roles: ['admin'],
       },
       {

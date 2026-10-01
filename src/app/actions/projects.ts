@@ -22,12 +22,21 @@ import type { Prisma } from '@/generated/prisma/client';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 
+async function lockTopics(tx: Prisma.TransactionClient, topicIds: (number | null)[]) {
+  const ids = [...new Set(topicIds.filter((id): id is number => id !== null))].sort(
+    (a, b) => a - b
+  );
+  for (const id of ids) {
+    await tx.$queryRaw`SELECT "id" FROM "Topic" WHERE "id" = ${id} FOR UPDATE`;
+  }
+}
+
 async function validateRelations(
   tx: Prisma.TransactionClient,
   coordinatorId: number,
-  topicId: number | null,
+  topicId: number,
   currentCoordinatorId?: number,
-  currentTopicId?: number | null
+  currentTopicId?: number
 ): Promise<ProjectFormState | null> {
   const coordinator = await tx.user.findFirst({
     where: {
@@ -39,18 +48,16 @@ async function validateRelations(
     select: { id: true },
   });
   if (!coordinator) return { errors: { leadCoordinatorId: ['Elegí un coordinador válido'] } };
-  if (topicId !== null) {
-    const topic = await tx.topic.findFirst({
-      where: {
-        id: topicId,
-        ...(topicId === currentTopicId ? {} : { isActive: true }),
-      },
-      select: { id: true },
-    });
+  const topic = await tx.topic.findFirst({
+    where: {
+      id: topicId,
+      ...(topicId === currentTopicId ? {} : { isActive: true }),
+    },
+    select: { id: true },
+  });
 
-    if (!topic) {
-      return { errors: { topicId: ['Elegí una temática válida'] } };
-    }
+  if (!topic) {
+    return { errors: { topicId: ['Elegí una temática válida'] } };
   }
   return null;
 }
@@ -65,6 +72,7 @@ async function validateUniqueName(
     where: {
       name: { equals: name, mode: 'insensitive' },
       startYear,
+      deletedAt: null,
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
     select: { id: true },
@@ -92,6 +100,7 @@ export async function createProject(
   try {
     const result = await prisma.$transaction(
       async (tx): Promise<{ error: ProjectFormState } | { projectId: number }> => {
+        await lockTopics(tx, [projectData.topicId]);
         const error = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
@@ -157,12 +166,13 @@ export async function updateProject(
   try {
     const error = await prisma.$transaction(
       async (tx): Promise<ProjectFormState | null> => {
-        const previous = await tx.project.findUnique({
-          where: { id: projectId },
+        const previous = await tx.project.findFirst({
+          where: { id: projectId, deletedAt: null },
         });
         if (!previous) return { formError: 'El proyecto no existe o fue eliminado.' };
         if (!canEditProject(user, previous))
           return { formError: 'No tenés permiso para editar este proyecto.' };
+        await lockTopics(tx, [previous.topicId, projectData.topicId]);
         const relationError = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
@@ -226,4 +236,37 @@ export async function updateProject(
   }
   revalidateProject();
   redirect(`/dashboard/projects/${projectId}`);
+}
+
+export async function deleteProject(projectId: number): Promise<{ error?: string }> {
+  const user = await requireUser();
+  if (!parseId(projectId)) return { error: 'El proyecto no es válido.' };
+  try {
+    const error = await prisma.$transaction(async (tx) => {
+      const project = await tx.project.findFirst({
+        where: { id: projectId, deletedAt: null },
+        select: { id: true, leadCoordinatorId: true },
+      });
+      if (!project) return 'El proyecto no existe o ya fue eliminado.';
+      if (!canEditProject(user, project)) return 'No tenés permiso para eliminar este proyecto.';
+      const { count } = await tx.project.updateMany({
+        where: { id: projectId, deletedAt: null },
+        data: { deletedAt: new Date(), deletedBy: user.id },
+      });
+      if (count === 0) return 'El proyecto no existe o ya fue eliminado.';
+      await logAudit(tx, {
+        authorId: user.id,
+        action: 'deletion',
+        entity: 'project',
+        entityId: projectId,
+      });
+      return null;
+    });
+    if (error) return { error };
+  } catch (error) {
+    console.error('Failed to delete project', error);
+    return { error: 'No se pudo eliminar el proyecto. Intentá de nuevo.' };
+  }
+  revalidateProject();
+  return {};
 }

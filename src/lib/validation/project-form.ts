@@ -6,15 +6,11 @@ import { projectBeneficiarySchema } from './project-beneficiary';
 export const projectFormSchema = projectSchema
   .safeExtend({
     ...projectBeneficiarySchema.shape,
-    topicId: z.preprocess(
-      (value) => (value === '' || value === 'none' || value === undefined ? null : value),
-      z.coerce
-        .number({ error: 'Elegí una temática válida' })
-        .int('Elegí una temática válida')
-        .positive('Elegí una temática válida')
-        .max(MAX_INT32)
-        .nullable()
-    ),
+    topicId: z.coerce
+      .number({ error: 'Elegí una temática válida' })
+      .int('Elegí una temática válida')
+      .positive('Elegí una temática válida')
+      .max(MAX_INT32),
   })
   .refine((data) => data.year >= data.startYear, {
     message: 'El año de beneficiarios no puede ser anterior al año de inicio',

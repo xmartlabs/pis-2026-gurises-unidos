@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { saveMetricSettings } from '@/app/actions/metrics';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { formatNumber } from '@/lib/format';
 import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
 import type { MetricSetting, MetricValues } from '@/lib/metrics/queries';
+import { notify } from '@/lib/notify';
 
 export function MetricsForm({
   year,
@@ -20,25 +22,27 @@ export function MetricsForm({
 }) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState('');
   const visibleMetrics = metrics.filter((metric) => metric.showPublicly);
 
   function saveChanges() {
-    setMessage('');
     startTransition(async () => {
       try {
-        const result = await saveMetricSettings(
-          metrics.map(({ key, showPublicly }) => ({ key, showPublicly }))
-        );
-        setMessage(result.message);
+        const result = await saveMetricSettings({
+          year: Number(year),
+          metrics: metrics.map(({ key, showPublicly }) => ({ key, showPublicly })),
+        });
+        if (!result.success) {
+          notify.error({ title: result.message });
+          return;
+        }
+        notify.success({ title: result.message });
       } catch {
-        setMessage('No se pudieron guardar los cambios. Intentá de nuevo.');
+        notify.error({ title: 'No se pudieron guardar los cambios. Intentá de nuevo.' });
       }
     });
   }
 
   function setVisibility(key: string, showPublicly: boolean) {
-    setMessage('');
     setMetrics((current) =>
       current.map((metric) => (metric.key === key ? { ...metric, showPublicly } : metric))
     );
@@ -101,7 +105,6 @@ export function MetricsForm({
                       ?.showPublicly ?? false,
                 }))
               );
-              setMessage('');
             }}
           >
             <span className="flex w-fit items-center gap-2.5 leading-5">Restablecer valores</span>
@@ -111,19 +114,11 @@ export function MetricsForm({
               disabled={isPending}
               onClick={saveChanges}
               className="h-9 w-fit flex-col gap-2.5 rounded-lg px-4 py-2 shadow-[0_1px_2px_0_rgb(0_0_0/10%)]"
-              aria-describedby="metrics-save-status"
             >
               {isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </div>
         </div>
-        <p
-          id="metrics-save-status"
-          role="status"
-          className="text-muted-foreground text-sm empty:hidden"
-        >
-          {message}
-        </p>
       </section>
       <aside
         aria-label="Vista previa del sitio público"
@@ -161,7 +156,7 @@ export function MetricsForm({
             Estas cifras se actualizan automáticamente en el sitio público.
           </p>
           <div className="text-center">
-            <Button type="button" variant="link" size="lg">
+            <Button render={<Link href="/" />} nativeButton={false} variant="link" size="lg">
               Ver sitio público →
             </Button>
           </div>

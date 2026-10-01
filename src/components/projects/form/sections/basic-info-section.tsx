@@ -1,64 +1,62 @@
+'use client';
+
+import { useFormContext, useWatch } from 'react-hook-form';
 import { INTENSITY_OPTIONS, STATUS_OPTIONS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
 import { FormSection } from '@/components/ui/forms/form-section';
+import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
 
 export function BasicInfoSection({
-  variant,
-  values,
-  state,
-  updateField,
   yearOptions,
   coordinatorOptions,
   topics,
-}: Pick<
-  SectionProps,
-  'variant' | 'values' | 'state' | 'updateField' | 'yearOptions' | 'coordinatorOptions' | 'topics'
->) {
+}: Pick<SectionProps, 'yearOptions' | 'coordinatorOptions' | 'topics'>) {
+  const { clearErrors, setValue } = useFormContext<ProjectFormValues>();
+  const status = useWatch<ProjectFormValues, 'status'>({ name: 'status' });
+
   return (
-    <FormSection variant={variant} title="Información básica">
+    <FormSection title="Información básica">
       <TextInputField
-        variant={variant}
         maxLength={100}
         id="name"
         name="name"
         label="Nombre del proyecto"
-        value={values.name}
-        onValueChange={(value) => updateField('name', value)}
         placeholder="Ej: Espacio joven Malvín Norte"
         description="Nombre de fantasía — puede cambiarse después"
-        messages={state.errors?.name}
-        required
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SelectField
           id="status"
           name="status"
           label="Estado"
-          value={values.status}
           options={STATUS_OPTIONS}
-          messages={state.errors?.status}
           onValueChange={(value) => {
-            updateField('status', value);
-            if (value !== 'closed') updateField('endYear', '');
+            if (value !== 'closed') {
+              setValue('endYear', '');
+              clearErrors('endYear');
+            }
           }}
-          required
         />
         <SelectField
           id="topicId"
           name="topicId"
           label="Temática"
-          value={values.topicId || 'none'}
-          options={[
-            { value: 'none', label: 'Sin temática' },
-            ...topics.map((topic) => ({
-              value: String(topic.id),
-              label: topic.name,
-            })),
-          ]}
-          onValueChange={(value) => updateField('topicId', value === 'none' ? '' : value)}
-          messages={state.errors?.topicId}
+          placeholder="Seleccionar temática..."
+          options={topics.map((topic) => ({
+            value: String(topic.id),
+            label: topic.name,
+          }))}
+          disabled={topics.length === 0}
+          messages={
+            topics.length === 0
+              ? [
+                  'No hay temáticas disponibles. Un administrador debe crear o activar una antes de crear proyectos.',
+                ]
+              : undefined
+          }
+          required
         />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -66,35 +64,24 @@ export function BasicInfoSection({
           id="intensity"
           name="intensity"
           label="Intensidad"
-          value={values.intensity}
           options={INTENSITY_OPTIONS}
-          messages={state.errors?.intensity}
-          onValueChange={(value) => updateField('intensity', value)}
-          required
         />
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <SelectField
             id="startYear"
             name="startYear"
             label="Año de inicio"
-            value={values.startYear}
             options={yearOptions}
-            onValueChange={(value) => updateField('startYear', value)}
-            messages={state.errors?.startYear}
-            required
           />
           <SelectField
             id="endYear"
             name="endYear"
             label="Año de fin"
-            value={values.endYear}
             placeholder="Seleccionar..."
             clearLabel="Sin año de fin"
             options={yearOptions}
-            onValueChange={(value) => updateField('endYear', value)}
-            messages={state.errors?.endYear}
-            disabled={values.status !== 'closed'}
-            required={values.status === 'closed'}
+            disabled={status !== 'closed'}
+            required={status === 'closed'}
           />
         </div>
       </div>
@@ -102,12 +89,8 @@ export function BasicInfoSection({
         id="leadCoordinatorId"
         name="leadCoordinatorId"
         label="Coordinador responsable"
-        value={values.leadCoordinatorId}
         placeholder="Seleccionar coordinador..."
         options={coordinatorOptions}
-        onValueChange={(value) => updateField('leadCoordinatorId', value)}
-        messages={state.errors?.leadCoordinatorId}
-        required
       />
     </FormSection>
   );

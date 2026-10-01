@@ -13,6 +13,7 @@ export const TABLES = [
   'AuditLog',
   'Report',
   'Metric',
+  'PublicSettings',
   'Project',
   'User',
   'Topic',

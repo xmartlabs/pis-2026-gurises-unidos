@@ -101,14 +101,14 @@ describe('getDashboardOverview', () => {
     expect(secondaryKpis[2].delta).toBe('Sin cambios respecto a 2025');
   });
 
-  it('lists only projects with beneficiaries recorded in the selected year', async () => {
+  it('lists only non-deleted projects with beneficiaries recorded in the selected year', async () => {
     mockMetricsByYear({});
 
     await getDashboardOverview(2026);
 
     expect(prisma.project.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { projectBeneficiaries: { some: { year: 2026 } } },
+        where: { deletedAt: null, projectBeneficiaries: { some: { year: 2026 } } },
         select: expect.objectContaining({
           projectBeneficiaries: expect.objectContaining({ where: { year: 2026 } }),
         }),

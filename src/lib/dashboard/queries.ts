@@ -33,7 +33,7 @@ function formatCountDelta(current: number, previous: number, previousYear: numbe
 
 async function getProjectsWithActivity(year: number): Promise<DashboardProjectRow[]> {
   const projects = await prisma.project.findMany({
-    where: { projectBeneficiaries: { some: { year } } },
+    where: { deletedAt: null, projectBeneficiaries: { some: { year } } },
     select: {
       id: true,
       name: true,

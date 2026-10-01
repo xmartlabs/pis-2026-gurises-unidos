@@ -22,7 +22,7 @@ export const METRIC_DEFINITIONS: {
     key: 'teachers',
     name: 'Funcionarios de servicios básicos',
     description: 'Funcionarios de servicios básicos formados por la organización.',
-    showPublicly: false,
+    showPublicly: true,
   },
   {
     key: 'institutions',

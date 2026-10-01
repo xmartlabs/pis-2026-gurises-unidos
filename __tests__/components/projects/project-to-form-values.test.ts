@@ -19,6 +19,8 @@ const PROJECT = {
   createdAt: new Date('2024-01-01'),
   createdBy: 1,
   updatedAt: null,
+  deletedAt: null,
+  deletedBy: null,
   topicId: 1,
   projectBeneficiaries: [
     {
@@ -63,8 +65,4 @@ it('maps all counts from the requested year without mutating the project', () =>
     basicServiceStaff: '5',
   });
   expect(PROJECT).toEqual(original);
-});
-
-it('maps a missing topic to an empty selection', () => {
-  expect(projectToFormValues({ ...PROJECT, topicId: null }, 2026).topicId).toBe('');
 });
