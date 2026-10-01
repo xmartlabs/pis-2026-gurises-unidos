@@ -99,7 +99,7 @@ export async function deleteTopic(topicId: number): Promise<TopicActionState> {
     const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "Topic" WHERE "id" = ${topicId} FOR UPDATE`;
 
-      const projectCount = await tx.project.count({ where: { topicId } });
+      const projectCount = await tx.project.count({ where: { topicId, deletedAt: null } });
       if (projectCount > 0) return false;
 
       await tx.topic.update({
