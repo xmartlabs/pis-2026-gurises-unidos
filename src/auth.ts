@@ -85,7 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       if (
         currentUser.passwordChangedAt &&
-        currentUser.passwordChangedAt.getTime() > token.iat * 1000
+        Math.floor(currentUser.passwordChangedAt.getTime() / 1000) > token.iat
       ) {
         return null;
       }

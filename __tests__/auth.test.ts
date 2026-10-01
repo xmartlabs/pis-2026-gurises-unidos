@@ -228,6 +228,17 @@ describe('jwt', () => {
     );
   });
 
+  test('keeps the session valid when the password changed in the same second the token was issued', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      makeUser({ passwordChangedAt: new Date(1_000 * 1000 + 500) })
+    );
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(
+      expect.objectContaining({ sub: '1', role: 'admin' })
+    );
+  });
+
   test('invalidates the session when the password changed after the token was issued', async () => {
     const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(

@@ -32,7 +32,7 @@ export default async function PasswordResetPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="mx-auto flex max-w-md flex-1 flex-col justify-center gap-6">
           <div className="flex flex-col gap-1.5 lg:gap-2">
             <p className="text-primary text-3xl leading-9 font-bold tracking-normal">
               Cambiá tu contraseña
