@@ -15,7 +15,7 @@ export async function getTopics() {
         select: {
           projects: {
             where: { deletedAt: null },
-          }
+          },
         },
       },
     },
