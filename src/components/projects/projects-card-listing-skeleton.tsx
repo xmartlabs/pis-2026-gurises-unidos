@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-function ProjectCardSkeleton() {
+export function ProjectCardSkeleton() {
   return (
     <div className="bg-card flex flex-col gap-3.5 rounded-lg px-5 py-4.5">
       <div className="flex flex-row items-center justify-between">

@@ -5,31 +5,38 @@ import { ProjectsCardList } from '@/components/projects/projects-card-listing';
 import { ProjectsCardListSkeleton } from '@/components/projects/projects-card-listing-skeleton';
 import { listProjectFilterOptions, listProjects } from '@/lib/projects/list';
 import {
-  PROJECT_LIST_MAX_PAGE_SIZE,
+  PROJECT_LIST_PAGE_SIZE,
   parseProjectFilters,
   type RawProjectFilters,
 } from '@/lib/validation/project-filters';
+
+const DEFAULT_STATUS = 'active';
 
 type ProjectsPageProps = {
   searchParams: Promise<RawProjectFilters>;
 };
 
 async function Projects({ searchParams }: ProjectsPageProps) {
+  const params = await searchParams;
+  const { years } = await listProjectFilterOptions();
   const filters = parseProjectFilters({
-    ...(await searchParams),
+    ...params,
+    status: params.status ?? DEFAULT_STATUS,
+    beneficiaryYear: params.beneficiaryYear ?? years[0]?.toString(),
     page: undefined,
-    pageSize: String(PROJECT_LIST_MAX_PAGE_SIZE),
+    pageSize: String(PROJECT_LIST_PAGE_SIZE),
   });
-  const [{ items, total }, { years }] = await Promise.all([
-    listProjects(filters),
-    listProjectFilterOptions(),
-  ]);
+  const { items, total, page, totalPages } = await listProjects(filters);
 
   return (
     <ProjectsCardList
+      key={`${filters.status ?? 'all'}-${filters.beneficiaryYear ?? 'all'}`}
       projects={items}
       total={total}
+      page={page}
+      totalPages={totalPages}
       years={years}
+      status={filters.status ?? 'all'}
       beneficiaryYear={filters.beneficiaryYear}
     />
   );
