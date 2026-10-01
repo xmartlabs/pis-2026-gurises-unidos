@@ -28,7 +28,7 @@ export function MetricsYearSelect({ year, years }: { year: number; years: number
         htmlFor="metrics-year"
         className="text-muted-foreground font-sans text-sm leading-5 font-normal tracking-normal"
       >
-        Año
+        Año a mostrar en sitio público
       </label>
       <Select
         value={String(year)}
