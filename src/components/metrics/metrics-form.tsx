@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { saveMetricSettings } from '@/app/actions/metrics';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,10 @@ export function MetricsForm({
   function saveChanges() {
     startTransition(async () => {
       try {
-        const result = await saveMetricSettings(
-          metrics.map(({ key, showPublicly }) => ({ key, showPublicly }))
-        );
+        const result = await saveMetricSettings({
+          year: Number(year),
+          metrics: metrics.map(({ key, showPublicly }) => ({ key, showPublicly })),
+        });
         if (!result.success) {
           notify.error({ title: result.message });
           return;
@@ -154,7 +156,7 @@ export function MetricsForm({
             Estas cifras se actualizan automáticamente en el sitio público.
           </p>
           <div className="text-center">
-            <Button type="button" variant="link" size="lg">
+            <Button render={<Link href="/" />} nativeButton={false} variant="link" size="lg">
               Ver sitio público →
             </Button>
           </div>

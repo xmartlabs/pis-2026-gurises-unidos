@@ -74,16 +74,17 @@ model User {
   updatedAt          DateTime?  @updatedAt
   deletedAt          DateTime?
 
-  creator              User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
-  createdUsers         User[]               @relation("UserCreatedBy")
-  ledProjects          Project[]            @relation("ProjectLeadCoordinator")
-  createdProjects      Project[]            @relation("ProjectCreatedBy")
-  deletedProjects      Project[]            @relation("ProjectDeletedBy")
-  projectCoordinators  ProjectCoordinator[]
-  projectBeneficiaries ProjectBeneficiary[]
-  metricsUpdated       Metric[]
-  reportsGenerated     Report[]
-  auditLogs            AuditLog[]
+  creator               User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  createdUsers          User[]               @relation("UserCreatedBy")
+  ledProjects           Project[]            @relation("ProjectLeadCoordinator")
+  createdProjects       Project[]            @relation("ProjectCreatedBy")
+  deletedProjects       Project[]            @relation("ProjectDeletedBy")
+  projectCoordinators   ProjectCoordinator[]
+  projectBeneficiaries  ProjectBeneficiary[]
+  metricsUpdated        Metric[]
+  publicSettingsUpdated PublicSettings[]
+  reportsGenerated      Report[]
+  auditLogs             AuditLog[]
 }
 
 model Topic {
@@ -172,6 +173,15 @@ model Metric {
   sortOrder         Int
   updatedBy         Int?
   updatedAt         DateTime? @updatedAt
+
+  updater User? @relation(fields: [updatedBy], references: [id])
+}
+
+model PublicSettings {
+  id            Int       @id @default(1)
+  referenceYear Int
+  updatedBy     Int?
+  updatedAt     DateTime? @updatedAt
 
   updater User? @relation(fields: [updatedBy], references: [id])
 }

@@ -31,7 +31,7 @@ export default defineConfig({
     ? undefined
     : {
         command: `npm run dev -- --port ${LOCAL_PORT}`,
-        url: baseURL,
+        url: `${baseURL}/login`,
         reuseExistingServer: false,
         env: {
           DATABASE_URL: process.env.E2E_DATABASE_URL ?? '',

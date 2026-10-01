@@ -22,6 +22,7 @@ function buildProject(
     startYear: 2025,
     zone: 'city',
     localityNeighborhood: null,
+    publicDescription: null,
     leadCoordinator: { id: 1, firstName: 'Carlos', lastName: 'Coordinator' },
     department: { id: 1, name: 'Montevideo' },
     beneficiaries: [],
