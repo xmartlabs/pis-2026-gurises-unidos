@@ -13,6 +13,7 @@ declare module 'next-auth' {
       id: string;
       role: UserRole;
       avatarColorIndex: number;
+      remember?: boolean;
     } & DefaultSession['user'];
   }
 }
