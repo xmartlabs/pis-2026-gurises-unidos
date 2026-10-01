@@ -69,6 +69,7 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
 
   transactionMock.mockImplementation(async (callback) =>
     callback({
+      $queryRaw: vi.fn().mockResolvedValue([]),
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       topic: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },
