@@ -1,19 +1,32 @@
-import type { ProjectListItem } from '@/lib/projects/list';
-import { BENEFICIARY_FIELDS, type BeneficiaryCounts } from '@/lib/project-display';
+import prisma from '@/lib/prisma';
+import {
+  BENEFICIARY_FIELDS,
+  sumBeneficiaries,
+  type BeneficiaryCounts,
+} from '@/lib/project-display';
 
-export function getDepartmentBeneficiaries(projects: ProjectListItem[]) {
+export async function getDepartmentBeneficiaries(year: number) {
+  const records = await prisma.projectBeneficiary.findMany({
+    where: { year },
+    select: {
+      ...Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, true])),
+      project: { select: { department: { select: { name: true } } } },
+    },
+  });
+
   const totalsByDepartment = new Map<string, BeneficiaryCounts>();
-  for (const project of projects) {
+  for (const record of records as (BeneficiaryCounts & {
+    project: { department: { name: string } };
+  })[]) {
+    const department = record.project.department.name;
     const totals =
-      totalsByDepartment.get(project.department.name) ??
+      totalsByDepartment.get(department) ??
       (Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, 0])) as BeneficiaryCounts);
-    for (const record of project.beneficiaries) {
-      for (const { key } of BENEFICIARY_FIELDS) totals[key] += record[key];
-    }
-    totalsByDepartment.set(project.department.name, totals);
+    for (const { key } of BENEFICIARY_FIELDS) totals[key] += record[key];
+    totalsByDepartment.set(department, totals);
   }
 
   return [...totalsByDepartment]
     .map(([department, totals]) => ({ department, ...totals }))
-    .sort((a, b) => a.department.localeCompare(b.department));
+    .sort((a, b) => sumBeneficiaries(b) - sumBeneficiaries(a));
 }

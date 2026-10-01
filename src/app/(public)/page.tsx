@@ -4,9 +4,7 @@ import { formatIncrement, formatNumber } from '@/lib/format';
 import { getMetricSettings, getMetricValues, getReferenceYear } from '@/lib/metrics/queries';
 import { getStatsColumnsClass } from '@/lib/metrics/stats-layout';
 import { getPublicProjectsPage } from '@/lib/projects/public-projects';
-import { getYearProjects } from '@/lib/projects/year-projects';
 import { getDepartmentBeneficiaries } from '@/lib/projects/department-beneficiaries';
-import { sumBeneficiaries } from '@/lib/project-display';
 
 const LEVELS = [
   {
@@ -50,16 +48,15 @@ const PARTNERS = [
 
 export default async function Home() {
   const year = await getReferenceYear();
-  const [values, previousValues, settings, projects, firstProjectsPage] = await Promise.all([
-    getMetricValues(year),
-    getMetricValues(year - 1),
-    getMetricSettings(),
-    getYearProjects(year),
-    getPublicProjectsPage(year, '1'),
-  ]);
-  const departmentBeneficiaries = getDepartmentBeneficiaries(projects);
-  const departmentBubbles = [...departmentBeneficiaries]
-    .sort((a, b) => sumBeneficiaries(b) - sumBeneficiaries(a))
+  const [values, previousValues, settings, departmentBeneficiaries, firstProjectsPage] =
+    await Promise.all([
+      getMetricValues(year),
+      getMetricValues(year - 1),
+      getMetricSettings(),
+      getDepartmentBeneficiaries(year),
+      getPublicProjectsPage(year, '1'),
+    ]);
+  const departmentBubbles = departmentBeneficiaries
     .slice(0, MAX_DEPARTMENT_BUBBLES)
     .map(({ department }) => department);
   const hiddenDepartments = departmentBeneficiaries.length - MAX_DEPARTMENT_BUBBLES;
@@ -190,8 +187,8 @@ export default async function Home() {
             NUESTRA MISIÓN
           </h2>
           <p className="text-foreground text-center text-xl leading-7 font-normal tracking-normal sm:text-3xl sm:leading-9">
-            Hace {new Date().getFullYear() - FIRST_PROJECT_YEAR} años defendemos los derechos de la niñez y la adolescencia en Uruguay,
-            transformando realidades junto a las comunidades.
+            Hace {new Date().getFullYear() - FIRST_PROJECT_YEAR} años defendemos los derechos de la
+            niñez y la adolescencia en Uruguay, transformando realidades junto a las comunidades.
           </p>
         </div>
       </section>
