@@ -30,7 +30,16 @@ vi.mock('@/lib/credentials', () => ({
   verifyPassword: verifyPasswordMock,
 }));
 
-import { changePassword, resetPassword } from '@/app/actions/password';
+import { redirect } from 'next/navigation';
+import {
+  changePassword,
+  completeForcedPasswordChange,
+  resetPassword,
+} from '@/app/actions/password';
+
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+}));
 
 function buildFormData(fields: Record<string, string | undefined>): FormData {
   const formData = new FormData();
@@ -57,6 +66,10 @@ beforeEach(() => {
   findUniqueMock.mockReset();
   hashPasswordMock.mockReset();
   verifyPasswordMock.mockReset();
+  vi.mocked(redirect).mockReset();
+  vi.mocked(redirect).mockImplementation(() => {
+    throw new Error('NEXT_REDIRECT');
+  });
 });
 
 describe('changePassword', () => {
@@ -159,6 +172,37 @@ describe('changePassword', () => {
     const result = await changePassword({}, buildFormData(VALID_FIELDS));
 
     expect(result.formError).toBe('No se pudo cambiar la contraseña. Intentá de nuevo.');
+  });
+});
+
+describe('completeForcedPasswordChange', () => {
+  const VALID_FIELDS = {
+    currentPassword: 'old-password',
+    newPassword: 'NewPassword1',
+    confirmNewPassword: 'NewPassword1',
+  };
+
+  test('redirects to login after a successful password change', async () => {
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
+    findUniqueMock.mockResolvedValue(makeUser({ id: 7 }));
+    verifyPasswordMock.mockResolvedValue(true);
+    hashPasswordMock.mockResolvedValue('new-hash');
+    setupTransaction();
+
+    await expect(completeForcedPasswordChange({}, buildFormData(VALID_FIELDS))).rejects.toThrow(
+      'NEXT_REDIRECT'
+    );
+
+    expect(redirect).toHaveBeenCalledWith('/login?passwordChanged=1');
+  });
+
+  test('returns errors without redirecting when the change fails', async () => {
+    authMock.mockResolvedValue(null);
+
+    const result = await completeForcedPasswordChange({}, buildFormData(VALID_FIELDS));
+
+    expect(result.formError).toBe('Tu sesión ya no es válida. Iniciá sesión de nuevo.');
+    expect(redirect).not.toHaveBeenCalled();
   });
 });
 

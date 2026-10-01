@@ -16,6 +16,7 @@ const USER = {
   name: 'Ana García',
   email: 'ana@example.com',
   avatarColorIndex: 0,
+  mustChangePassword: false,
 };
 
 function renderFooter() {

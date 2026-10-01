@@ -1,5 +1,6 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
@@ -84,6 +85,19 @@ export async function changePassword(
   }
 
   return { success: true };
+}
+
+export async function completeForcedPasswordChange(
+  prevState: PasswordFormState,
+  formData: FormData
+): Promise<PasswordFormState> {
+  const result = await changePassword(prevState, formData);
+
+  if (result.success) {
+    redirect('/login?passwordChanged=1');
+  }
+
+  return result;
 }
 
 const resetPasswordSchema = z.object({

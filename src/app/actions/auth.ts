@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthError } from 'next-auth';
 import { flattenError } from 'zod';
-import { signIn, signOut } from '@/auth';
+import { auth, signIn, signOut } from '@/auth';
 import {
   getSessionExpirationTimestamp,
   SESSION_EXPIRATION_COOKIE,
@@ -46,6 +46,12 @@ export async function login(
     String(getSessionExpirationTimestamp(remember)),
     SESSION_EXPIRATION_COOKIE_OPTIONS
   );
+
+  const session = await auth();
+
+  if (session?.user?.mustChangePassword) {
+    redirect('/password-reset');
+  }
 
   redirect('/dashboard/projects');
 }

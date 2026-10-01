@@ -49,6 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.sub = user.id;
         token.role = user.role;
         token.avatarColorIndex = user.avatarColorIndex;
+        token.mustChangePassword = user.mustChangePassword;
         token.remember = user.remember;
         return token;
       }
@@ -73,6 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           role: true,
           status: true,
           passwordChangedAt: true,
+          mustChangePassword: true,
           deletedAt: true,
         },
       });
@@ -92,6 +94,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       token.email = currentUser.email;
       token.role = currentUser.role;
       token.avatarColorIndex = getAvatarColorIndex(currentUser.documentId);
+      token.mustChangePassword = currentUser.mustChangePassword;
 
       return token;
     },
@@ -101,6 +104,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role;
         session.user.avatarColorIndex = token.avatarColorIndex;
         session.user.remember = Boolean(token.remember);
+        session.user.mustChangePassword = token.mustChangePassword;
       }
       return session;
     },

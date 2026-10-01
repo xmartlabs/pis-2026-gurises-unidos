@@ -5,6 +5,7 @@ declare module 'next-auth' {
   interface User {
     role: UserRole;
     avatarColorIndex: number;
+    mustChangePassword: boolean;
     remember?: boolean;
   }
 
@@ -14,6 +15,7 @@ declare module 'next-auth' {
       role: UserRole;
       avatarColorIndex: number;
       remember?: boolean;
+      mustChangePassword: boolean;
     } & DefaultSession['user'];
   }
 }
@@ -22,6 +24,7 @@ declare module '@auth/core/jwt' {
   interface JWT {
     role: UserRole;
     avatarColorIndex: number;
+    mustChangePassword: boolean;
     remember?: boolean;
   }
 }
