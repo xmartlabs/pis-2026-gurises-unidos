@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { PaginationControls } from '@/components/pagination-controls';
-import { ProjectCard } from '@/components/projects/project-card';
+import { PublicProjectsList } from '@/components/projects/public-projects-list';
 import { formatIncrement, formatNumber } from '@/lib/format';
 import { getMetricSettings, getMetricValues, getReferenceYear } from '@/lib/metrics/queries';
 import { getStatsColumnsClass } from '@/lib/metrics/stats-layout';
+import { getPublicProjectsPage } from '@/lib/projects/public-projects';
 import { getYearProjects } from '@/lib/projects/year-projects';
 import { getDepartmentBeneficiaries } from '@/lib/projects/department-beneficiaries';
 import { sumBeneficiaries } from '@/lib/project-display';
@@ -32,7 +32,6 @@ const LEVELS = [
 ];
 
 const MAX_DEPARTMENT_BUBBLES = 4;
-const PROJECTS_PER_PAGE = 6;
 
 const PARTNERS = [
   'INAU',
@@ -48,28 +47,15 @@ const PARTNERS = [
   'UNFPA',
 ];
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const { page: rawPage } = await searchParams;
+export default async function Home() {
   const year = await getReferenceYear();
-  const [values, previousValues, settings, projects] = await Promise.all([
+  const [values, previousValues, settings, projects, firstProjectsPage] = await Promise.all([
     getMetricValues(year),
     getMetricValues(year - 1),
     getMetricSettings(),
     getYearProjects(year),
+    getPublicProjectsPage(year, '1'),
   ]);
-  const totalPages = Math.max(1, Math.ceil(projects.length / PROJECTS_PER_PAGE));
-  const parsedPage = Number(Array.isArray(rawPage) ? rawPage[0] : rawPage);
-  const currentPage = Number.isInteger(parsedPage)
-    ? Math.min(Math.max(parsedPage, 1), totalPages)
-    : 1;
-  const pageProjects = projects.slice(
-    (currentPage - 1) * PROJECTS_PER_PAGE,
-    currentPage * PROJECTS_PER_PAGE
-  );
   const departmentBeneficiaries = getDepartmentBeneficiaries(projects);
   const departmentBubbles = [...departmentBeneficiaries]
     .sort((a, b) => sumBeneficiaries(b) - sumBeneficiaries(a))
@@ -136,24 +122,7 @@ export default async function Home({
               Distribuidos en {values.departments} departamentos del Uruguay
             </p>
           </div>
-          <div className="grid w-full max-w-328 grid-cols-1 gap-4 lg:grid-cols-3">
-            {pageProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                variant="public-dark"
-                territory={project.department.name}
-                name={project.name}
-                description={project.publicDescription ?? ''}
-                reach={project.beneficiaries.reduce((sum, record) => sum + record.total, 0)}
-              />
-            ))}
-          </div>
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            basePath="/"
-            hash="#projects"
-          />
+          <PublicProjectsList initialPage={firstProjectsPage} />
         </div>
       </section>
       <section className="w-full">
