@@ -1,9 +1,7 @@
 'use server';
 
-import { getReferenceYear } from '@/lib/metrics/queries';
 import { getPublicProjectsPage } from '@/lib/projects/public-projects';
 
-export async function loadPublicProjectsPage(page: number) {
-  const year = await getReferenceYear();
+export async function loadPublicProjectsPage(year: number, page: number) {
   return getPublicProjectsPage(year, String(page));
 }

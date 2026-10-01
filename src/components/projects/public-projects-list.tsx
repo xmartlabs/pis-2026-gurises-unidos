@@ -11,10 +11,11 @@ import type { PublicProject, PublicProjectsPage } from '@/lib/projects/public-pr
 const SCROLL_TOP_THRESHOLD = 300;
 
 type PublicProjectsListProps = {
+  year: number;
   initialPage: PublicProjectsPage;
 };
 
-export function PublicProjectsList({ initialPage }: PublicProjectsListProps) {
+export function PublicProjectsList({ year, initialPage }: PublicProjectsListProps) {
   const [projects, setProjects] = useState<PublicProject[]>(initialPage.items);
   const [page, setPage] = useState(initialPage.page);
   const [hasMore, setHasMore] = useState(initialPage.hasMore);
@@ -31,7 +32,7 @@ export function PublicProjectsList({ initialPage }: PublicProjectsListProps) {
     setLoading(true);
     setFailed(false);
     try {
-      const next = await loadPublicProjectsPage(page + 1);
+      const next = await loadPublicProjectsPage(year, page + 1);
       setProjects((current) => [...current, ...next.items]);
       setPage(next.page);
       setHasMore(next.hasMore);
@@ -41,7 +42,7 @@ export function PublicProjectsList({ initialPage }: PublicProjectsListProps) {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [page]);
+  }, [year, page]);
 
   useEffect(() => {
     const container = containerRef.current;

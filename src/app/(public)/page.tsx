@@ -120,7 +120,7 @@ export default async function Home() {
               Distribuidos en {values.departments} departamentos del Uruguay
             </p>
           </div>
-          <PublicProjectsList initialPage={firstProjectsPage} />
+          <PublicProjectsList year={year} initialPage={firstProjectsPage} />
         </div>
       </section>
       <section className="w-full">
