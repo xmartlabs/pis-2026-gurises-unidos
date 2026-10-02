@@ -52,7 +52,11 @@ export function InstitutionalContribution({
         <ContributionItem
           value={`${formatNumber(data.activeProjects.projectCount)}/${formatNumber(data.activeProjects.totalCount)}`}
           label="proyectos activos"
-          detail="Proyecto activo este período"
+          detail={
+            data.activeProjects.projectCount === 1
+              ? 'Este proyecto está activo'
+              : 'Este proyecto no está activo'
+          }
         />
         <ContributionItem
           value={formatNumber(data.territories.count)}
