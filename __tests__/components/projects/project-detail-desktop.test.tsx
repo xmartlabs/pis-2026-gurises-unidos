@@ -42,9 +42,9 @@ test('shows the project year and breadcrumb in the desktop topbar', async () => 
 test('uses the full recent activity table on desktop', () => {
   render(<ProjectRecentActivity />);
 
-  const table = screen.getByRole('table');
+  const table = screen.getByRole('table', { hidden: true });
   expect(table.parentElement?.className).toContain('md:block');
-  expect(within(table).getAllByRole('row')).toHaveLength(6);
+  expect(within(table).getAllByRole('row', { hidden: true })).toHaveLength(6);
   expect(within(table).getByText('Articulación con escuela pública')).toBeDefined();
   expect(within(table).getAllByText('Carlos Méndez')).toHaveLength(2);
 });

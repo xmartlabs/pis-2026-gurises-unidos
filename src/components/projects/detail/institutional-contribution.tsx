@@ -15,7 +15,7 @@ function ContributionItem({
   detail: string;
 }) {
   return (
-    <div className="border-border flex flex-col border-b py-4 last:border-b-0 lg:rounded-lg lg:border-0 lg:bg-[#fff5e6] lg:px-4 lg:py-3.5 lg:dark:bg-amber-950/30">
+    <div className="border-border lg:bg-surface-highlight flex flex-col border-b py-4 last:border-b-0 lg:rounded-lg lg:border-0 lg:px-4 lg:py-3.5">
       <dt className="text-muted-foreground order-2 mt-0.5 text-sm lg:text-xs">{label}</dt>
       <dd className="order-1 text-2xl leading-8 font-bold tracking-tight tabular-nums">{value}</dd>
       <p className="text-muted-foreground order-3 mt-0.5 text-xs leading-4">{detail}</p>

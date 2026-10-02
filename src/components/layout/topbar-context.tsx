@@ -47,17 +47,16 @@ export function ProjectTopbarRegistration({
   years,
 }: ProjectTopbarConfig) {
   const { setProjectConfig } = useTopbar();
-  const yearsKey = years.join(',');
 
   useEffect(() => {
     setProjectConfig({
       projectName,
       selectedYear,
-      years: yearsKey.split(',').map(Number),
+      years,
     });
 
     return () => setProjectConfig(null);
-  }, [projectName, selectedYear, setProjectConfig, yearsKey]);
+  }, [projectName, selectedYear, setProjectConfig, years]);
 
   return null;
 }

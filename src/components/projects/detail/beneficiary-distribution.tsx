@@ -2,10 +2,10 @@ import { formatNumber } from '@/lib/format';
 import type { ProjectDetail } from '@/lib/projects/detail';
 
 const DISTRIBUTION_ROWS = [
-  { key: 'directChildrenAdolescents', label: 'NNA directos', color: 'bg-[#f5970c]' },
-  { key: 'families', label: 'Familias', color: 'bg-[#59bff0]' },
-  { key: 'basicServiceStaff', label: 'Docentes y educadores', color: 'bg-[#9c66ff]' },
-  { key: 'coordinatedInstitutions', label: 'Instituciones', color: 'bg-[#c5d900]' },
+  { key: 'directChildrenAdolescents', label: 'NNA directos', color: 'bg-beneficiary-children' },
+  { key: 'families', label: 'Familias', color: 'bg-beneficiary-families' },
+  { key: 'basicServiceStaff', label: 'Docentes y educadores', color: 'bg-beneficiary-staff' },
+  { key: 'coordinatedInstitutions', label: 'Instituciones', color: 'bg-beneficiary-institutions' },
 ] as const;
 
 export function BeneficiaryDistribution({

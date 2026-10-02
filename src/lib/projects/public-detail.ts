@@ -1,5 +1,6 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
+import { FIRST_PROJECT_YEAR } from '@/lib/project-display';
 
 const PUBLIC_PROJECT_SELECT = {
   id: true,
@@ -31,8 +32,16 @@ export type PublicProjectDetail = Prisma.ProjectGetPayload<{
 }>;
 
 export function getPublicProjectDetail(projectId: number) {
+  const currentYear = new Date().getFullYear();
+
   return prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
-    select: PUBLIC_PROJECT_SELECT,
+    select: {
+      ...PUBLIC_PROJECT_SELECT,
+      projectBeneficiaries: {
+        ...PUBLIC_PROJECT_SELECT.projectBeneficiaries,
+        where: { year: { gte: FIRST_PROJECT_YEAR, lte: currentYear } },
+      },
+    },
   });
 }

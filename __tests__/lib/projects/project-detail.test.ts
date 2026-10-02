@@ -166,7 +166,7 @@ describe('getProjectDetail', () => {
       })
     );
     expect(result.data.distribution).toHaveLength(7);
-    expect(result.data.metrics.annualGrowth).toBeCloseTo(28);
+    expect(result.data.metrics.annualGrowth).toBeCloseTo(30);
     expect(result.data.distribution).toContainEqual({
       key: 'directChildrenAdolescents',
       value: 100,

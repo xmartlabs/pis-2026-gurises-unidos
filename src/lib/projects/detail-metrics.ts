@@ -10,12 +10,31 @@ export type MetricComparison = {
   trend: MetricTrend | null;
 };
 
-export function getChildrenReached(record: BeneficiaryCounts | null): number | null {
+type ChildrenCounts = Pick<
+  BeneficiaryCounts,
+  'directChildrenAdolescents' | 'indirectChildrenAdolescents'
+>;
+
+export function getChildrenReached(record: ChildrenCounts | null): number | null {
   if (record === null) {
     return null;
   }
 
   return record.directChildrenAdolescents + record.indirectChildrenAdolescents;
+}
+
+export function getPeopleReached(record: BeneficiaryCounts | null): number | null {
+  if (record === null) {
+    return null;
+  }
+
+  return (
+    record.directChildrenAdolescents +
+    record.indirectChildrenAdolescents +
+    record.youth18To29 +
+    record.communityLeaders +
+    record.basicServiceStaff
+  );
 }
 
 export function calculatePercentage(

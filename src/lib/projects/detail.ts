@@ -1,11 +1,12 @@
 import type { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
-import { BENEFICIARY_FIELDS, FIRST_PROJECT_YEAR, sumBeneficiaries } from '@/lib/project-display';
+import { BENEFICIARY_FIELDS, FIRST_PROJECT_YEAR } from '@/lib/project-display';
 import {
   calculatePercentage,
   compareMetric,
   getChildrenReached,
+  getPeopleReached,
 } from '@/lib/projects/detail-metrics';
 import { canEditProject } from '@/lib/projects/permissions';
 import { parseProjectDetailInput } from '@/lib/validation/project-detail';
@@ -131,8 +132,8 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     previous?.coordinatedInstitutions ?? null
   );
   const annualGrowth = compareMetric(
-    current === null ? null : sumBeneficiaries(current),
-    previous === null ? null : sumBeneficiaries(previous)
+    getPeopleReached(current),
+    getPeopleReached(previous)
   ).percentageChange;
 
   const nationalChildrenReached =

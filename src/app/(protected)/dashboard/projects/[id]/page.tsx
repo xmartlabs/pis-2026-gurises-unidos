@@ -35,7 +35,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
   } = result.data;
 
   return (
-    <main className="bg-surface-page flex-1">
+    <div className="bg-surface-page flex-1">
       <ProjectTopbarRegistration
         projectName={project.name}
         selectedYear={selectedYear}
@@ -78,6 +78,6 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
         )}
         <ProjectRecentActivity />
       </div>
-    </main>
+    </div>
   );
 }

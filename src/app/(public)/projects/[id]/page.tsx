@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatNumber } from '@/lib/format';
 import { STATUS_LABEL } from '@/lib/project-display';
 import { STATUS_BADGE_VARIANT } from '@/lib/projects/constants';
+import { getChildrenReached } from '@/lib/projects/detail-metrics';
 import { getPublicProjectDetail } from '@/lib/projects/public-detail';
 import { parseId } from '@/lib/validation/ids';
 
@@ -26,9 +27,7 @@ export default async function PublicProjectPage({ params }: PublicProjectPagePro
   }
 
   const beneficiaries = project.projectBeneficiaries[0];
-  const childrenReached = beneficiaries
-    ? beneficiaries.directChildrenAdolescents + beneficiaries.indirectChildrenAdolescents
-    : null;
+  const childrenReached = getChildrenReached(beneficiaries ?? null);
   const territory = [project.department.name, project.localityNeighborhood]
     .filter(Boolean)
     .join(' · ');
