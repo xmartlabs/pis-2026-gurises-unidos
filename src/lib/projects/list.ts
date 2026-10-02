@@ -97,6 +97,7 @@ export async function listProjects(filters: ProjectFilters): Promise<ProjectList
             projectBeneficiaries: {
               ...PROJECT_LIST_SELECT.projectBeneficiaries,
               where: { year: filters.beneficiaryYear },
+              take: 1,
             },
           },
           orderBy: [{ name: 'asc' }, { id: 'asc' }],

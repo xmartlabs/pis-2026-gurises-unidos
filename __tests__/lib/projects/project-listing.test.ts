@@ -95,13 +95,13 @@ describe('AC1: paginated listing with each project data', () => {
     expect(items[1].beneficiaries).toEqual([]);
   });
 
-  test('requests every beneficiary year, newest first', async () => {
+  test('requests only the latest beneficiary year', async () => {
     await listWith({});
 
     const { projectBeneficiaries } = findManyArgs().select;
 
     expect(projectBeneficiaries.orderBy).toEqual({ year: 'desc' });
-    expect(projectBeneficiaries).not.toHaveProperty('take');
+    expect(projectBeneficiaries.take).toBe(1);
     expect(projectBeneficiaries.where).toStrictEqual({ year: undefined });
   });
 
