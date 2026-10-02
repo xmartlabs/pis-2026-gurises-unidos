@@ -104,13 +104,15 @@ function InternalProjectCard({
   totalReach,
 }: InternalProjectCardProps) {
   return (
-    <Link href={`/dashboard/projects/${id}`} className="block">
-      <Card className="bg-card flex flex-col gap-3.5 rounded-lg px-5 py-4.5 hover:shadow-sm/10">
-        <CardHeader className="text-primary flex flex-row justify-between p-0! text-base font-semibold">
-          <h2>{name}</h2>
+    <Link href={`/dashboard/projects/${id}`} className="block h-full">
+      <Card className="bg-card flex h-full flex-col gap-3.5 rounded-lg px-5 py-4.5 hover:shadow-sm/10">
+        <CardHeader className="text-primary flex flex-row justify-between gap-3 p-0! text-base font-semibold">
+          <h2 className="line-clamp-2 min-w-0" title={name}>
+            {name}
+          </h2>
           <Badge
             variant={STATUS_BADGE_VARIANT[status]}
-            className="h-5.5 gap-2.5 rounded-lg px-5.5 py-0.5 text-xs leading-4 font-medium tracking-normal"
+            className="h-5.5 shrink-0 gap-2.5 rounded-lg px-5.5 py-0.5 text-xs leading-4 font-medium tracking-normal"
           >
             {STATUS_LABEL[status]}
           </Badge>
@@ -141,7 +143,7 @@ function InternalProjectCard({
             </p>
           </CardDescription>
         </div>
-        <Separator />
+        <Separator className="mt-auto" />
         <CardDescription className="flex flex-row items-center justify-between">
           <p className="text-muted-foreground text-xs leading-4 font-normal tracking-normal">
             {totalReach !== null ? `Beneficiarios ${year}` : 'Sin beneficiarios'}
