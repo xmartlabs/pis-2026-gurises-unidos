@@ -21,6 +21,8 @@ import {
 import type { Prisma } from '@/generated/prisma/client';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
+import { PROJECT_LIST_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
+import { listProjects, type ProjectListPage } from '@/lib/projects/list';
 
 async function lockTopics(tx: Prisma.TransactionClient, topicIds: (number | null)[]) {
   const ids = [...new Set(topicIds.filter((id): id is number => id !== null))].sort(
@@ -269,4 +271,19 @@ export async function deleteProject(projectId: number): Promise<{ error?: string
   }
   revalidateProject();
   return {};
+}
+
+export async function loadProjectsPage(
+  filters: { status: string; beneficiaryYear: string; search?: string },
+  page: number
+): Promise<ProjectListPage> {
+  await requireUser();
+
+  return listProjects(
+    parseProjectFilters({
+      ...filters,
+      page: String(page),
+      pageSize: String(PROJECT_LIST_PAGE_SIZE),
+    })
+  );
 }
