@@ -26,7 +26,7 @@ export function AppBreadcrumb() {
       <BreadcrumbList>
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
-          const isDisabled = index === 0;
+          const isDisabled = index === 0 && crumb.href !== '/dashboard';
 
           return (
             <Fragment key={crumb.href}>
