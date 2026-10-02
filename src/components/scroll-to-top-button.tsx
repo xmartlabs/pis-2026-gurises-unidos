@@ -34,7 +34,7 @@ export function ScrollToTopButton() {
           size="icon"
           aria-label="Volver arriba"
           onClick={scrollToTop}
-          className="bg-primary/90 fixed bottom-5 left-5 z-40 h-10 w-10 rounded-full shadow-md lg:right-8 lg:bottom-5"
+          className="bg-primary/90 fixed bottom-5 left-5 z-40 h-10 w-10 rounded-full shadow-md lg:right-8 lg:bottom-5 lg:left-auto"
         >
           <ArrowUp />
         </Button>
