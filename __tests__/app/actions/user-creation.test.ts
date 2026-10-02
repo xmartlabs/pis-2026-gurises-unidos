@@ -117,6 +117,7 @@ describe('createUser', () => {
         role: 'coordinator',
         status: 'active',
         passwordHash: 'hashed-password',
+        mustChangePassword: true,
         createdBy: 7,
       }),
     });

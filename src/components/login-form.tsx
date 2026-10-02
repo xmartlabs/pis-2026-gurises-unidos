@@ -4,12 +4,12 @@ import { startTransition, useActionState, useEffect, useState, type SubmitEvent 
 import { FormProvider, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { login } from '@/app/actions/auth';
-import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { loginSchema } from '@/lib/validation/auth';
+import InputVisibilityToggle from './ui/forms/input-visibility-toggle';
 
 type LoginFormValues = {
   documentId: string;
@@ -76,23 +76,10 @@ export function LoginForm({ sessionExpired = false }: { sessionExpired?: boolean
             placeholder="Tu contraseña"
             onChange={clearServerPasswordError}
             trailingAction={
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="px-2 py-1"
-                type="button"
-              >
-                {showPassword ? (
-                  <EyeIcon
-                    strokeWidth={1}
-                    className="text-primary md:text-muted-foreground h-6 w-6 lg:h-4.5 lg:w-4.5"
-                  />
-                ) : (
-                  <EyeOffIcon
-                    strokeWidth={1}
-                    className="text-primary lg:text-muted-foreground h-6 w-6 lg:h-4.5 lg:w-4.5"
-                  />
-                )}
-              </button>
+              <InputVisibilityToggle
+                visible={showPassword}
+                onToggle={() => setShowPassword((value) => !value)}
+              />
             }
           />
         </div>

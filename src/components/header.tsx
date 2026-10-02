@@ -80,7 +80,9 @@ export async function Header() {
               <SheetClose render={<Link href="#sobre-nosotros" />}>Sobre nosotros</SheetClose> */}
               {session?.user ? (
                 <>
-                  <SheetClose render={<Link href={projectsHref} />}>Proyectos</SheetClose>
+                  <SheetClose nativeButton={false} render={<Link href={projectsHref} />}>
+                    Proyectos
+                  </SheetClose>
                   <span className="text-muted-foreground text-xs">{session.user.email}</span>
                   <form action={logout}>
                     <SheetClose
@@ -97,6 +99,7 @@ export async function Header() {
                 </>
               ) : (
                 <SheetClose
+                  nativeButton={false}
                   render={
                     <Link
                       href="/login"
