@@ -3,26 +3,38 @@ import {
   calculatePercentage,
   compareMetric,
   getChildrenReached,
+  getPeopleReached,
 } from '@/lib/projects/detail-metrics';
+import type { BeneficiaryCounts } from '@/lib/project-display';
 import { parseProjectDetailInput } from '@/lib/validation/project-detail';
+
+const BENEFICIARY_COUNTS: BeneficiaryCounts = {
+  directChildrenAdolescents: 100,
+  indirectChildrenAdolescents: 20,
+  youth18To29: 30,
+  families: 40,
+  coordinatedInstitutions: 5,
+  communityLeaders: 6,
+  basicServiceStaff: 7,
+};
 
 describe('getChildrenReached', () => {
   it('adds direct and indirect children only', () => {
-    expect(
-      getChildrenReached({
-        directChildrenAdolescents: 100,
-        indirectChildrenAdolescents: 20,
-        youth18To29: 30,
-        families: 40,
-        coordinatedInstitutions: 5,
-        communityLeaders: 6,
-        basicServiceStaff: 7,
-      })
-    ).toBe(120);
+    expect(getChildrenReached(BENEFICIARY_COUNTS)).toBe(120);
   });
 
   it('preserves missing records', () => {
     expect(getChildrenReached(null)).toBeNull();
+  });
+});
+
+describe('getPeopleReached', () => {
+  it('adds people only, excluding families and institutions', () => {
+    expect(getPeopleReached(BENEFICIARY_COUNTS)).toBe(163);
+  });
+
+  it('preserves missing records', () => {
+    expect(getPeopleReached(null)).toBeNull();
   });
 });
 

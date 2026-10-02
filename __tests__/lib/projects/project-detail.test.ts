@@ -30,6 +30,7 @@ const PROJECT = {
   status: 'active',
   intensity: 'high',
   startYear: 2024,
+  endYear: null,
   leadCoordinatorId: 2,
   generalObjective: 'Support children and families',
   publicDescription: 'Community project',
@@ -65,6 +66,7 @@ function createCounts(overrides: Partial<BeneficiaryCounts> = {}): BeneficiaryCo
 const CURRENT = createCounts({
   directChildrenAdolescents: 100,
   indirectChildrenAdolescents: 20,
+  communityLeaders: 10,
   families: 25,
   coordinatedInstitutions: 5,
 });
@@ -118,7 +120,7 @@ describe('getProjectDetail', () => {
     }
 
     expect(result.data).toMatchObject({
-      project: { coverPhoto: '/images/project-placeholders/2.webp' },
+      project: { coverPhoto: '/images/project-placeholders/2.webp', endYear: null },
       selectedYear: 2026,
       comparisonYear: 2025,
       availableYears: [2026, 2025],
@@ -140,7 +142,6 @@ describe('getProjectDetail', () => {
           value: 5,
           trend: 'stable',
         },
-        annualGrowth: 20,
       },
       institutionalContribution: {
         nationalReach: {
@@ -161,10 +162,11 @@ describe('getProjectDetail', () => {
 
     expect(prismaMock.project.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        select: expect.objectContaining({ coverPhoto: true }),
+        select: expect.objectContaining({ coverPhoto: true, endYear: true }),
       })
     );
     expect(result.data.distribution).toHaveLength(7);
+    expect(result.data.metrics.annualGrowth).toBeCloseTo(30);
     expect(result.data.distribution).toContainEqual({
       key: 'directChildrenAdolescents',
       value: 100,
@@ -258,6 +260,19 @@ describe('getProjectDetail', () => {
             previousValue: null,
           },
         },
+      },
+    });
+  });
+
+  it('offers a requested year without data in the year options', async () => {
+    const result = await getProjectDetail('12', '2015');
+
+    expect(result).toMatchObject({
+      status: 'success',
+      data: {
+        selectedYear: 2015,
+        hasData: false,
+        availableYears: [2026, 2025, 2015],
       },
     });
   });

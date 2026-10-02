@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { TopbarProvider } from '@/components/layout/topbar-context';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Topbar } from '@/components/topbar';
 
@@ -22,11 +23,13 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar user={session.user} />
-      <SidebarInset className="min-w-0">
-        <Topbar />
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-      </SidebarInset>
+      <TopbarProvider>
+        <AppSidebar user={session.user} />
+        <SidebarInset className="min-w-0">
+          <Topbar />
+          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        </SidebarInset>
+      </TopbarProvider>
     </SidebarProvider>
   );
 }

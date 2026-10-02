@@ -6,6 +6,7 @@ import {
   calculatePercentage,
   compareMetric,
   getChildrenReached,
+  getPeopleReached,
 } from '@/lib/projects/detail-metrics';
 import { canEditProject } from '@/lib/projects/permissions';
 import { parseProjectDetailInput } from '@/lib/validation/project-detail';
@@ -43,6 +44,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
       status: true,
       intensity: true,
       startYear: true,
+      endYear: true,
       leadCoordinatorId: true,
       generalObjective: true,
       publicDescription: true,
@@ -89,7 +91,11 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
   const comparisonYear = selectedYear - 1;
 
   const availableYears = [
-    ...new Set([currentYear, ...project.projectBeneficiaries.map((record) => record.year)]),
+    ...new Set([
+      currentYear,
+      selectedYear,
+      ...project.projectBeneficiaries.map((record) => record.year),
+    ]),
   ].sort((a, b) => b - a);
 
   const [current, previous, national, activeProjectCount] = await Promise.all([
@@ -129,6 +135,10 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     current?.coordinatedInstitutions ?? null,
     previous?.coordinatedInstitutions ?? null
   );
+  const annualGrowth = compareMetric(
+    getPeopleReached(current),
+    getPeopleReached(previous)
+  ).percentageChange;
 
   const nationalChildrenReached =
     (national._sum.directChildrenAdolescents ?? 0) +
@@ -151,7 +161,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
         childrenReached,
         families,
         institutions,
-        annualGrowth: childrenReached.percentageChange,
+        annualGrowth,
       },
       distribution: BENEFICIARY_FIELDS.map(({ key }) => ({
         key,

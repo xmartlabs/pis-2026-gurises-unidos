@@ -112,4 +112,16 @@ describe('proxy', () => {
 
     expect(response.headers.get('location')).toBe('https://example.com/dashboard/projects');
   });
+
+  test('allows unauthenticated access to a public project', () => {
+    const response = runProxy(makeRequest('/projects/42'));
+
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+  });
+
+  test('does not make nested project administration routes public', () => {
+    const response = runProxy(makeRequest('/projects/42/edit'));
+
+    expect(response.headers.get('location')).toBe('https://example.com/login');
+  });
 });

@@ -13,6 +13,11 @@
   --status-success: #16a34b;
   --status-warning: #ff9500;
   --history-marker: #ff9500;
+  --beneficiary-children: #f5970c;
+  --beneficiary-families: #59bff0;
+  --beneficiary-staff: #9c66ff;
+  --beneficiary-institutions: #c5d900;
+  --surface-highlight: #fff5e6;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -60,6 +65,11 @@
   --color-surface-subtle: var(--surface-subtle);
   --color-surface-brand-deep: var(--surface-brand-deep);
   --color-text-accent: var(--text-accent);
+  --color-beneficiary-children: var(--beneficiary-children);
+  --color-beneficiary-families: var(--beneficiary-families);
+  --color-beneficiary-staff: var(--beneficiary-staff);
+  --color-beneficiary-institutions: var(--beneficiary-institutions);
+  --color-surface-highlight: var(--surface-highlight);
   --font-sans: var(--font-mulish);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -120,6 +130,7 @@
   --status-success: #4ade80;
   --status-warning: #ffb340;
   --history-marker: #ffb340;
+  --surface-highlight: oklch(0.279 0.077 45.635 / 30%);
   --project-cover: linear-gradient(154deg, #203a2b 7.14%, #3a3425 46.43%, #3d2d25 78.57%);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

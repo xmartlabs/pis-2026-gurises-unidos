@@ -53,7 +53,9 @@ test('shows the end year on a closed project detail', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: E2E_CLOSED_PROJECT.name })
   ).toBeVisible();
-  await expect(page.getByText(`Hasta ${E2E_CLOSED_PROJECT.endYear}`)).toBeVisible();
+  await expect(
+    page.getByText(`${E2E_CLOSED_PROJECT.startYear}–${E2E_CLOSED_PROJECT.endYear}`)
+  ).toBeVisible();
 });
 
 test('opens the project detail from the list', async ({ page }) => {
@@ -63,5 +65,6 @@ test('opens the project detail from the list', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: E2E_ACTIVE_PROJECT.name })
   ).toBeVisible();
-  await expect(page.getByText(`Coordinador/a: ${COORDINATOR_NAME}`)).toBeVisible();
+  await expect(page.getByText('Coordinador/a:')).toBeVisible();
+  await expect(page.getByText(COORDINATOR_NAME)).toBeVisible();
 });
