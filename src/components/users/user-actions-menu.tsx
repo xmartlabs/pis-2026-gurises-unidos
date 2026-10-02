@@ -11,17 +11,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ResetPasswordDialog } from '@/components/users/reset-password-dialog';
 import { UserStatusDialog } from '@/components/users/user-status-dialog';
 import { fullName, type User } from '@/lib/users/format';
 
 export function UserActionsMenu({
   user,
   canChangeStatus,
+  canResetPassword,
 }: {
   user: User;
   canChangeStatus: boolean;
+  canResetPassword: boolean;
 }) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const showStatusAction = canChangeStatus && user.status !== 'pendingInvitation';
 
   return (
@@ -41,9 +45,14 @@ export function UserActionsMenu({
           >
             Editar
           </DropdownMenuItem>
-          {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-            Restablecer contraseña
-          </DropdownMenuItem> */}
+          {canResetPassword && (
+            <DropdownMenuItem
+              className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
+              onClick={() => setIsResetPasswordDialogOpen(true)}
+            >
+              Restablecer contraseña
+            </DropdownMenuItem>
+          )}
           {showStatusAction && (
             <DropdownMenuItem
               className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
@@ -61,6 +70,13 @@ export function UserActionsMenu({
           </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
+      {canResetPassword && (
+        <ResetPasswordDialog
+          userId={user.id}
+          open={isResetPasswordDialogOpen}
+          onOpenChange={setIsResetPasswordDialogOpen}
+        />
+      )}
       {showStatusAction && (
         <UserStatusDialog
           user={user}

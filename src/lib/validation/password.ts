@@ -31,3 +31,7 @@ export const forcedPasswordChangeSchema = z
   });
 
 export type ForcedPasswordChangeFormValues = z.infer<typeof forcedPasswordChangeSchema>;
+
+export const resetPasswordFormSchema = z.object({
+  newPassword: passwordSchema,
+});

@@ -29,7 +29,11 @@ export function UsersTable({ users, currentUserId }: { users: User[]; currentUse
                 <p className="text-muted-foreground truncate text-sm">{user.email}</p>
                 <p className="text-foreground mt-1 text-sm">{ROLE_LABELS[user.role]}</p>
               </div>
-              <UserActionsMenu user={user} canChangeStatus={user.id !== currentUserId} />
+              <UserActionsMenu
+                user={user}
+                canChangeStatus={user.id !== currentUserId}
+                canResetPassword={user.id !== currentUserId}
+              />
             </CardContent>
             <CardContent className="flex items-center justify-between gap-3 px-4">
               <Badge className={STATUS_CLASSNAMES[user.status]}>{STATUS_LABELS[user.status]}</Badge>
@@ -83,7 +87,11 @@ export function UsersTable({ users, currentUserId }: { users: User[]; currentUse
                   {formatDate(user.lastAccess)}
                 </TableCell>
                 <TableCell className="h-15 px-4 py-3 text-right">
-                  <UserActionsMenu user={user} canChangeStatus={user.id !== currentUserId} />
+                  <UserActionsMenu
+                    user={user}
+                    canChangeStatus={user.id !== currentUserId}
+                    canResetPassword={user.id !== currentUserId}
+                  />
                 </TableCell>
               </TableRow>
             ))}

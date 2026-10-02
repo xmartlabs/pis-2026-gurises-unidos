@@ -9,6 +9,7 @@ const { updateUserStatusMock, notifySuccessMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/app/actions/users', () => ({ updateUserStatus: updateUserStatusMock }));
+vi.mock('@/app/actions/password', () => ({ resetPassword: vi.fn() }));
 vi.mock('@/lib/notify', () => ({ notify: { success: notifySuccessMock } }));
 
 const USER: User = {
@@ -119,4 +120,25 @@ test('keeps the dialog open and shows the error when the change fails', async ()
   );
   expect(screen.getByRole('alertdialog')).toBeTruthy();
   expect(notifySuccessMock).not.toHaveBeenCalled();
+});
+
+test('opens the reset password dialog from the actions menu', async () => {
+  render(<UsersTable users={[USER]} currentUserId={CURRENT_USER_ID} />);
+
+  openActionsMenu();
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Restablecer contraseña' }));
+
+  expect(await screen.findByText('¿Restablecer la contraseña?')).toBeTruthy();
+  expect(
+    ((await screen.findByLabelText('Contraseña temporal')) as HTMLInputElement).value
+  ).not.toBe('');
+});
+
+test('hides the reset password action on the current user row', () => {
+  render(<UsersTable users={[USER]} currentUserId={USER.id} />);
+
+  openActionsMenu();
+
+  expect(screen.getByRole('menuitem', { name: 'Editar' })).toBeTruthy();
+  expect(screen.queryByRole('menuitem', { name: 'Restablecer contraseña' })).toBeNull();
 });
