@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { ProjectsCardList } from '@/components/projects/projects-card-listing';
 import type { ProjectListItem, ProjectListPage } from '@/lib/projects/list';
 import type { StatusFilterValue } from '@/lib/projects/constants';
@@ -82,22 +82,26 @@ function buildPage(items: ProjectListItem[], page: number, totalPages: number): 
   return { items, total: items.length, page, pageSize: 20, totalPages };
 }
 
-function renderList({
-  projects = [buildProject(1, 'Active project')],
-  total = projects.length,
-  page = 1,
-  totalPages = 1,
-  status = 'active',
-  beneficiaryYear = 2025,
-}: {
+type ListProps = {
   projects?: ProjectListItem[];
   total?: number;
   page?: number;
   totalPages?: number;
   status?: StatusFilterValue;
   beneficiaryYear?: number;
-} = {}) {
-  render(
+  search?: string;
+};
+
+function buildList({
+  projects = [buildProject(1, 'Active project')],
+  total = projects.length,
+  page = 1,
+  totalPages = 1,
+  status = 'active',
+  beneficiaryYear = 2025,
+  search,
+}: ListProps = {}) {
+  return (
     <ProjectsCardList
       projects={projects}
       total={total}
@@ -106,8 +110,19 @@ function renderList({
       years={[2025, 2024]}
       status={status}
       beneficiaryYear={beneficiaryYear}
+      search={search}
     />
   );
+}
+
+function renderList(props: ListProps = {}) {
+  return render(buildList(props));
+}
+
+function typeSearch(value: string) {
+  fireEvent.change(screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' }), {
+    target: { value },
+  });
 }
 
 beforeEach(() => {
@@ -115,6 +130,10 @@ beforeEach(() => {
   mocks.replace.mockClear();
   mocks.loadProjectsPage.mockReset();
   mocks.observers.length = 0;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 test('marks the status received from the server as selected', () => {
@@ -195,6 +214,7 @@ test('requests all years when no beneficiary year is selected', async () => {
       years={[2025]}
       status="all"
       beneficiaryYear={undefined}
+      search={undefined}
     />
   );
   await revealSentinel();
@@ -248,4 +268,93 @@ test('offers a retry when loading the next page fails', async () => {
   expect(mocks.loadProjectsPage).toHaveBeenCalledTimes(2);
   expect(screen.getByText('Recovered project')).toBeTruthy();
   expect(screen.queryByText('No se pudieron cargar más proyectos.')).toBeNull();
+});
+
+test('stores the search in the URL once the user stops typing', () => {
+  vi.useFakeTimers();
+  mocks.searchParams = new URLSearchParams('status=active');
+
+  renderList();
+  typeSearch('cen');
+  typeSearch('centro');
+
+  expect(mocks.replace).not.toHaveBeenCalled();
+
+  act(() => vi.runOnlyPendingTimers());
+
+  expect(mocks.replace).toHaveBeenCalledTimes(1);
+  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects?status=active&search=centro', {
+    scroll: false,
+  });
+});
+
+test('keeps a filter changed while the search is still being typed', () => {
+  vi.useFakeTimers();
+  mocks.searchParams = new URLSearchParams('status=active');
+
+  renderList();
+  typeSearch('cen');
+  fireEvent.click(screen.getByRole('tab', { name: 'Cerrados' }));
+  act(() => vi.runOnlyPendingTimers());
+
+  expect(mocks.replace).toHaveBeenLastCalledWith('/dashboard/projects?status=closed&search=cen', {
+    scroll: false,
+  });
+});
+
+test('removes the search from the URL when the field is cleared', () => {
+  vi.useFakeTimers();
+  mocks.searchParams = new URLSearchParams('search=centro');
+
+  renderList({ search: 'centro' });
+  expect(screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' })).toHaveProperty(
+    'value',
+    'centro'
+  );
+
+  typeSearch('   ');
+  act(() => vi.runOnlyPendingTimers());
+
+  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects', { scroll: false });
+});
+
+test('requests the next page with the current search', async () => {
+  mocks.loadProjectsPage.mockResolvedValue(buildPage([], 2, 2));
+
+  renderList({ totalPages: 2, search: 'centro' });
+  await revealSentinel();
+
+  expect(mocks.loadProjectsPage).toHaveBeenCalledWith(
+    { status: 'active', beneficiaryYear: '2025', search: 'centro' },
+    2
+  );
+});
+
+test('keeps the typed text and focus when the search results arrive', () => {
+  const { rerender } = renderList();
+  const input = screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' });
+  input.focus();
+  typeSearch('centro juv');
+
+  rerender(buildList({ search: 'centro', projects: [buildProject(5, 'Centro juvenil Cerro')] }));
+
+  expect(screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' })).toBe(input);
+  expect(document.activeElement).toBe(input);
+  expect(input).toHaveProperty('value', 'centro juv');
+});
+
+test('restarts the loaded list when the filters change', async () => {
+  mocks.loadProjectsPage.mockResolvedValue(
+    buildPage([buildProject(2, 'Second page project')], 2, 2)
+  );
+
+  const { rerender } = renderList({ totalPages: 2 });
+  await revealSentinel();
+  expect(screen.getByText('Second page project')).toBeTruthy();
+
+  rerender(buildList({ search: 'closed', projects: [buildProject(9, 'Matching project')] }));
+
+  expect(screen.getByText('Matching project')).toBeTruthy();
+  expect(screen.queryByText('Active project')).toBeNull();
+  expect(screen.queryByText('Second page project')).toBeNull();
 });

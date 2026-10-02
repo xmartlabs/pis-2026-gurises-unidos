@@ -30,7 +30,6 @@ async function Projects({ searchParams }: ProjectsPageProps) {
 
   return (
     <ProjectsCardList
-      key={`${filters.status ?? 'all'}-${filters.beneficiaryYear ?? 'all'}`}
       projects={items}
       total={total}
       page={page}
@@ -38,6 +37,7 @@ async function Projects({ searchParams }: ProjectsPageProps) {
       years={years}
       status={filters.status ?? 'all'}
       beneficiaryYear={filters.beneficiaryYear}
+      search={filters.search}
     />
   );
 }

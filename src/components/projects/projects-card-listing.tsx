@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -11,18 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
-import { ProjectCard } from '@/components/projects/project-card';
-import { ProjectCardSkeleton } from '@/components/projects/projects-card-listing-skeleton';
-import { loadProjectsPage } from '@/app/actions/projects';
+import { ProjectCardsGrid, type ProjectListQuery } from '@/components/projects/project-cards-grid';
 import type { ProjectListItem } from '@/lib/projects/list';
 import { STATUS_FILTERS, type StatusFilterValue } from '@/lib/projects/constants';
 import { ScrollToTopButton } from '@/components/scroll-to-top-button';
 
 const ALL_YEARS = 'all';
-const LOAD_MORE_MARGIN = '400px';
-const LOADING_SKELETONS = 3;
+const SEARCH_DEBOUNCE_MS = 400;
 
 type YearFilterValue = number | typeof ALL_YEARS;
 
@@ -34,6 +33,7 @@ type ProjectsCardListProps = {
   years: number[];
   status: StatusFilterValue;
   beneficiaryYear: number | undefined;
+  search: string | undefined;
 };
 
 export function ProjectsCardList({
@@ -44,11 +44,21 @@ export function ProjectsCardList({
   years,
   status,
   beneficiaryYear,
+  search,
 }: ProjectsCardListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [searchText, setSearchText] = useState(search ?? '');
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const requestedParams = useRef(searchParams.toString());
+
+  useEffect(() => () => clearTimeout(searchTimeout.current), []);
+
+  useEffect(() => {
+    requestedParams.current = searchParams.toString();
+  }, [searchParams]);
 
   const year: YearFilterValue = beneficiaryYear ?? ALL_YEARS;
   const yearOptions: { value: YearFilterValue; label: string }[] = [
@@ -58,57 +68,30 @@ export function ProjectsCardList({
 
   const current = STATUS_FILTERS.find((f) => f.value === status) ?? STATUS_FILTERS[0];
 
-  function updateFilter(key: 'status' | 'beneficiaryYear', value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
-    startTransition(() => router.replace(`${pathname}?${params.toString()}`, { scroll: false }));
+  const query = useMemo<ProjectListQuery>(
+    () => ({ status, beneficiaryYear: String(year), search }),
+    [status, year, search]
+  );
+
+  function updateFilter(key: 'status' | 'beneficiaryYear' | 'search', value: string | null) {
+    const params = new URLSearchParams(requestedParams.current);
+    if (value) params.set(key, value);
+    else params.delete(key);
+    const queryString = params.toString();
+    requestedParams.current = queryString;
+    startTransition(() =>
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false })
+    );
   }
 
-  const [items, setItems] = useState(projects);
-  const [pagination, setPagination] = useState({ page, totalPages });
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const hasMore = pagination.page < pagination.totalPages;
-
-  const loadMore = useCallback(async () => {
-    setIsLoadingMore(true);
-    setLoadFailed(false);
-    try {
-      const next = await loadProjectsPage(
-        { status, beneficiaryYear: String(beneficiaryYear ?? ALL_YEARS) },
-        pagination.page + 1
-      );
-      setItems((loaded) => {
-        const loadedIds = new Set(loaded.map((p) => p.id));
-        return [...loaded, ...next.items.filter((p) => !loadedIds.has(p.id))];
-      });
-      setPagination({ page: next.page, totalPages: next.totalPages });
-    } catch {
-      setLoadFailed(true);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [status, beneficiaryYear, pagination.page]);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasMore || isLoadingMore || loadFailed) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) void loadMore();
-      },
-      { rootMargin: LOAD_MORE_MARGIN }
+  function handleSearchChange(value: string) {
+    setSearchText(value);
+    clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(
+      () => updateFilter('search', value.trim() || null),
+      SEARCH_DEBOUNCE_MS
     );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, loadFailed, loadMore]);
-
-  const cards = items.flatMap((project) => {
-    const cardBeneficiaries = project.beneficiaries.length > 0 ? project.beneficiaries : [null];
-    return cardBeneficiaries.map((yearBeneficiaries) => ({ project, yearBeneficiaries }));
-  });
+  }
 
   const filteredCountLabel = `${total} ${total === 1 ? 'proyecto' : 'proyectos'}`;
 
@@ -158,12 +141,13 @@ export function ProjectsCardList({
           </h1>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="block lg:hidden">{yearSelect}</div>
+          <div className="lg:hidden">{yearSelect}</div>
           {newProjectButton}
         </div>
       </div>
-      <div className="flex flex-row justify-between">
-        <div className="flex flex-row items-center gap-1.5">
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-row items-center gap-3">
           <Tabs value={status} onValueChange={(value) => updateFilter('status', String(value))}>
             <div className="bg-secondary flex h-9 w-fit flex-row items-center rounded-lg px-0.5 py-0.75">
               <TabsList aria-label="Filtrar por estado">
@@ -186,53 +170,31 @@ export function ProjectsCardList({
             {filteredCountLabel}
           </p>
         </div>
-        <div className="hidden flex-row items-center gap-1.5 lg:flex">{yearSelect}</div>
+        <InputGroup className="bg-background h-9 w-full rounded-md lg:ml-auto lg:w-80">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput
+            aria-label="Buscar proyectos por nombre"
+            placeholder="Buscar por nombre..."
+            value={searchText}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+        </InputGroup>
+        <div className="hidden lg:block">{yearSelect}</div>
       </div>
       <p className="text-primary block text-lg leading-7 font-semibold lg:hidden">
         {filteredCountLabel}
       </p>
 
-      {cards.length === 0 ? (
-        <p className="text-muted-foreground py-10 text-center text-sm">
-          No hay proyectos con estas características.
-        </p>
-      ) : (
-        <div
-          aria-busy={isPending || isLoadingMore}
-          className={cn(
-            'grid grid-cols-[repeat(auto-fill,minmax(358px,1fr))] gap-4 transition-opacity',
-            isPending && 'opacity-60'
-          )}
-        >
-          {cards.map(({ project: p, yearBeneficiaries }) => (
-            <ProjectCard
-              key={`${p.id}-${yearBeneficiaries?.year ?? 'none'}`}
-              id={p.id}
-              name={p.name}
-              status={p.status}
-              territory={p.department}
-              coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
-              intensity={p.intensity}
-              year={yearBeneficiaries?.year ?? p.startYear}
-              totalReach={yearBeneficiaries?.total ?? null}
-            />
-          ))}
-          {isLoadingMore &&
-            Array.from({ length: LOADING_SKELETONS }).map((_, index) => (
-              <ProjectCardSkeleton key={index} />
-            ))}
-        </div>
-      )}
-
-      {loadFailed && (
-        <div className="flex flex-col items-center gap-2 py-4">
-          <p className="text-muted-foreground text-sm">No se pudieron cargar más proyectos.</p>
-          <Button variant="outline" onClick={() => void loadMore()}>
-            Reintentar
-          </Button>
-        </div>
-      )}
-      {hasMore && <div ref={sentinelRef} aria-hidden="true" />}
+      <ProjectCardsGrid
+        key={`${query.status}-${query.beneficiaryYear}-${query.search ?? ''}`}
+        projects={projects}
+        page={page}
+        totalPages={totalPages}
+        query={query}
+        isPending={isPending}
+      />
       <ScrollToTopButton />
     </div>
   );
