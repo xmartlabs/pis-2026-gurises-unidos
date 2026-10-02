@@ -76,3 +76,38 @@ test('shows unavailable comparisons without producing invalid percentages', () =
   expect(screen.getAllByText('Sin datos de 2025')).toHaveLength(3);
   expect(screen.getByText('—')).toBeDefined();
 });
+
+test('uses the absolute family increase when the previous year is zero', () => {
+  render(
+    <ProjectMetrics
+      metrics={{
+        childrenReached: {
+          value: 100,
+          previousValue: 90,
+          absoluteChange: 10,
+          percentageChange: 11.1,
+          trend: 'increased',
+        },
+        families: {
+          value: 50,
+          previousValue: 0,
+          absoluteChange: 50,
+          percentageChange: null,
+          trend: 'increased',
+        },
+        institutions: {
+          value: 5,
+          previousValue: 5,
+          absoluteChange: 0,
+          percentageChange: 0,
+          trend: 'stable',
+        },
+        annualGrowth: 20,
+      }}
+      comparisonYear={2024}
+    />
+  );
+
+  expect(screen.getByText('+50 vs. 2024')).toBeDefined();
+  expect(screen.queryByText('Sin base de comparación')).toBeNull();
+});

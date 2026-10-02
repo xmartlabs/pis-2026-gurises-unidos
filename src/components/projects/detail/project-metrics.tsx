@@ -27,10 +27,14 @@ function comparisonCopy(value: number | null, comparisonYear: number) {
 
 function percentageComparisonCopy(
   value: number | null,
+  absoluteChange: number | null,
   comparisonYear: number,
   previousValue: number | null
 ) {
   if (previousValue === null) return `Sin datos de ${comparisonYear}`;
+  if (value === null && absoluteChange !== null) {
+    return comparisonCopy(absoluteChange, comparisonYear);
+  }
   if (value === null) return 'Sin base de comparación';
   if (value === 0) return 'Sin cambios vs. año anterior';
   return `${formatSignedPercentage(value)} vs. año anterior`;
@@ -82,6 +86,7 @@ export function ProjectMetrics({
           value={formatMetricValue(metrics.families.value)}
           detail={percentageComparisonCopy(
             metrics.families.percentageChange,
+            metrics.families.absoluteChange,
             comparisonYear,
             metrics.families.previousValue
           )}

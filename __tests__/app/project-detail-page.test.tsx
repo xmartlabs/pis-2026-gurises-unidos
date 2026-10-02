@@ -121,7 +121,7 @@ test('renders the selected project year and its main sections', async () => {
   expect(screen.getByRole('heading', { name: 'Distribución de beneficiarios' })).toBeDefined();
   expect(screen.getByRole('heading', { name: 'Contribución institucional' })).toBeDefined();
   expect(screen.getByRole('heading', { name: 'Actividad reciente' })).toBeDefined();
-  expect(screen.getByText('Año de los datos')).toBeDefined();
+  expect(screen.getByText('Año de los datos').parentElement?.className).toContain('md:hidden');
   expect(screen.getByRole('combobox', { name: 'Seleccionar año' })).toBeDefined();
   expect(screen.getAllByText('Taller de convivencia grupal')).toHaveLength(2);
   expect(screen.getByRole('link', { name: 'Editar proyecto' }).getAttribute('href')).toBe(

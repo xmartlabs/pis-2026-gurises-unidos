@@ -13,16 +13,18 @@ beforeEach(() => {
   pushMock.mockReset();
 });
 
-test('stores the selected project year in the URL', () => {
+test('stores the selected project year in the URL', async () => {
   render(<ProjectYearSelector year={2026} years={[2026, 2025, 2024]} />);
 
-  fireEvent.click(screen.getByRole('tab', { name: '2025' }));
+  fireEvent.click(screen.getByRole('combobox', { name: 'Seleccionar año' }));
+  fireEvent.keyDown(await screen.findByRole('option', { name: '2025' }), { key: 'Enter' });
 
   expect(pushMock).toHaveBeenCalledWith('/dashboard/projects/42?year=2025', { scroll: false });
 });
 
-test('marks the current project year as selected', () => {
+test('shows the current project year in the dropdown', () => {
   render(<ProjectYearSelector year={2025} years={[2026, 2025, 2024]} />);
 
-  expect(screen.getByRole('tab', { name: '2025' }).getAttribute('aria-selected')).toBe('true');
+  expect(screen.getByRole('combobox', { name: 'Seleccionar año' }).textContent).toContain('2025');
+  expect(screen.queryByRole('tablist')).toBeNull();
 });

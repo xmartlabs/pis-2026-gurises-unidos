@@ -106,7 +106,7 @@ export function ProjectDetailHeader({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 sm:hidden">
+      <div className="mt-4 flex items-center justify-between gap-3 md:hidden">
         <span className="text-muted-foreground text-sm">Año de los datos</span>
         <ProjectYearSelector year={selectedYear} years={years} />
       </div>

@@ -1,33 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronDown } from 'lucide-react';
-import type { Session } from 'next-auth';
 import logo from '@/assets/logo.png';
 import { AppBreadcrumb } from '@/components/breadcrumb';
 import { useTopbar } from '@/components/layout/topbar-context';
 import { ProjectYearSelector } from '@/components/projects/detail/project-year-selector';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { getInitials } from '@/lib/utils';
-import { getAvatarColorClassName } from '@/lib/users/avatar';
 
-function ProfileAvatar({ user, className }: { user: Session['user']; className: string }) {
-  return (
-    <Link href="/management/profile" className={className} aria-label="Abrir mi perfil">
-      <Avatar>
-        {user.image && <AvatarImage src={user.image} alt="" />}
-        <AvatarFallback className={getAvatarColorClassName(user.avatarColorIndex)}>
-          {getInitials(user.name)}
-        </AvatarFallback>
-      </Avatar>
-    </Link>
-  );
-}
-
-export function Topbar({ user }: { user: Session['user'] }) {
+export function Topbar() {
   const { projectConfig } = useTopbar();
 
   return (
@@ -46,20 +26,9 @@ export function Topbar({ user }: { user: Session['user'] }) {
       </div>
       <div className="hidden shrink-0 items-center gap-2 md:flex">
         {projectConfig && (
-          <>
-            <ProjectYearSelector year={projectConfig.selectedYear} years={projectConfig.years} />
-            <div className="border-border text-muted-foreground flex h-9 min-w-35 items-center justify-between gap-3 rounded-lg border px-3 text-sm">
-              <span>Todo el país</span>
-              <ChevronDown className="size-4" aria-hidden="true" />
-            </div>
-            <Button type="button" variant="outline" size="lg" onClick={() => window.print()}>
-              Exportar
-            </Button>
-          </>
+          <ProjectYearSelector year={projectConfig.selectedYear} years={projectConfig.years} />
         )}
-        <ProfileAvatar user={user} className="ml-1 hidden md:block" />
       </div>
-      <ProfileAvatar user={user} className="md:hidden" />
     </header>
   );
 }
