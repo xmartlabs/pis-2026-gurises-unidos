@@ -70,12 +70,7 @@ export function ProjectCardsGrid({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, loadFailed, loadMore]);
 
-  const cards = items.flatMap((project) => {
-    const cardBeneficiaries = project.beneficiaries.length > 0 ? project.beneficiaries : [null];
-    return cardBeneficiaries.map((yearBeneficiaries) => ({ project, yearBeneficiaries }));
-  });
-
-  if (cards.length === 0) {
+  if (items.length === 0) {
     return (
       <p className="text-muted-foreground py-10 text-center text-sm">
         No hay proyectos con estas características.
@@ -92,19 +87,22 @@ export function ProjectCardsGrid({
           isPending && 'opacity-60'
         )}
       >
-        {cards.map(({ project: p, yearBeneficiaries }) => (
-          <ProjectCard
-            key={`${p.id}-${yearBeneficiaries?.year ?? 'none'}`}
-            id={p.id}
-            name={p.name}
-            status={p.status}
-            territory={p.department}
-            coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
-            intensity={p.intensity}
-            year={yearBeneficiaries?.year ?? p.startYear}
-            totalReach={yearBeneficiaries?.total ?? null}
-          />
-        ))}
+        {items.map((p) => {
+          const latestBeneficiaries = p.beneficiaries.at(0);
+          return (
+            <ProjectCard
+              key={p.id}
+              id={p.id}
+              name={p.name}
+              status={p.status}
+              territory={p.department}
+              coordinator={`${p.leadCoordinator.firstName} ${p.leadCoordinator.lastName}`}
+              intensity={p.intensity}
+              year={latestBeneficiaries?.year ?? p.startYear}
+              totalReach={latestBeneficiaries?.total ?? null}
+            />
+          );
+        })}
         {isLoadingMore &&
           Array.from({ length: LOADING_SKELETONS }).map((_, index) => (
             <ProjectCardSkeleton key={index} />

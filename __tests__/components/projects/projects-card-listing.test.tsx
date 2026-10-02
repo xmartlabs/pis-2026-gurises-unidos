@@ -163,7 +163,7 @@ test('stores the all status explicitly so the default is not applied again', () 
   });
 });
 
-test('renders one card per beneficiary year and one for projects without data', () => {
+test('renders one card per project with its latest beneficiary year', () => {
   renderList({
     projects: [
       buildProject(1, 'Project with years', 'active', [
@@ -175,7 +175,9 @@ test('renders one card per beneficiary year and one for projects without data', 
     status: 'all',
   });
 
-  expect(screen.getAllByText('Project with years')).toHaveLength(2);
+  expect(screen.getAllByText('Project with years')).toHaveLength(1);
+  expect(screen.getByText('Beneficiarios 2025')).toBeTruthy();
+  expect(screen.queryByText('Beneficiarios 2024')).toBeNull();
   expect(screen.getAllByText('Project without data')).toHaveLength(1);
   expect(screen.getByText('Sin beneficiarios')).toBeTruthy();
 });
