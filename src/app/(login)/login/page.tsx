@@ -124,7 +124,7 @@ function LeftColumn({
           </p>
         </div>
         {passwordChanged ? (
-          <p className="text-sm leading-5 font-medium tracking-normal text-emerald-700">
+          <p className="text-status-success text-sm leading-5 font-medium tracking-normal">
             Tu contraseña se actualizó correctamente. Iniciá sesión con la nueva contraseña.
           </p>
         ) : null}
