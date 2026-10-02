@@ -40,7 +40,7 @@ export function ProjectRecentActivity() {
   return (
     <section
       aria-labelledby="recent-activity-title"
-      className="md:border-border md:bg-card md:overflow-hidden md:rounded-[14px] md:border"
+      hidden className="md:border-border md:bg-card md:overflow-hidden md:rounded-[14px] md:border"
     >
       <div className="flex items-center justify-between gap-4 md:px-5 md:py-4">
         <h2 id="recent-activity-title" className="text-base font-semibold md:text-sm">
