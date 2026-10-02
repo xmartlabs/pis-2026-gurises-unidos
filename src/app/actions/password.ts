@@ -179,6 +179,11 @@ export async function resetPassword(
   }
 
   const { userId, newPassword } = parsed.data;
+  const adminId = Number(session.user.id);
+
+  if (userId === adminId) {
+    return { formError: 'No podés restablecer tu propia contraseña. Cambiala desde Mi perfil.' };
+  }
 
   const targetUser = await prisma.user.findUnique({ where: { id: userId } });
 
@@ -187,7 +192,6 @@ export async function resetPassword(
   }
 
   const newPasswordHash = await hashPassword(newPassword);
-  const adminId = Number(session.user.id);
 
   try {
     await prisma.$transaction(

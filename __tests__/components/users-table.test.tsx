@@ -128,7 +128,7 @@ test('opens the reset password dialog from the actions menu', async () => {
   openActionsMenu();
   fireEvent.click(screen.getByRole('menuitem', { name: 'Restablecer contraseña' }));
 
-  expect(await screen.findByText('¿Restablecer la contraseña?')).toBeTruthy();
+  expect(await screen.findByText('¿Restablecer la contraseña de Ana García?')).toBeTruthy();
   expect(
     ((await screen.findByLabelText('Contraseña temporal')) as HTMLInputElement).value
   ).not.toBe('');

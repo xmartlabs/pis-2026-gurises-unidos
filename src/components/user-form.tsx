@@ -257,7 +257,10 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                 <CardContent className="px-6">
                   <FieldGroup className="gap-4">
                     {isEditing && initialValues ? (
-                      <ResetPasswordDialog userId={initialValues.id} />
+                      <ResetPasswordDialog
+                        userId={initialValues.id}
+                        userName={`${initialValues.firstName} ${initialValues.lastName}`}
+                      />
                     ) : (
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <TextInputField

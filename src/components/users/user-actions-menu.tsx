@@ -15,18 +15,10 @@ import { ResetPasswordDialog } from '@/components/users/reset-password-dialog';
 import { UserStatusDialog } from '@/components/users/user-status-dialog';
 import { fullName, type User } from '@/lib/users/format';
 
-export function UserActionsMenu({
-  user,
-  canChangeStatus,
-  canResetPassword,
-}: {
-  user: User;
-  canChangeStatus: boolean;
-  canResetPassword: boolean;
-}) {
+export function UserActionsMenu({ user, isCurrentUser }: { user: User; isCurrentUser: boolean }) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
-  const showStatusAction = canChangeStatus && user.status !== 'pendingInvitation';
+  const showStatusAction = !isCurrentUser && user.status !== 'pendingInvitation';
 
   return (
     <>
@@ -45,7 +37,7 @@ export function UserActionsMenu({
           >
             Editar
           </DropdownMenuItem>
-          {canResetPassword && (
+          {!isCurrentUser && (
             <DropdownMenuItem
               className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
               onClick={() => setIsResetPasswordDialogOpen(true)}
@@ -70,9 +62,10 @@ export function UserActionsMenu({
           </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
-      {canResetPassword && (
+      {!isCurrentUser && (
         <ResetPasswordDialog
           userId={user.id}
+          userName={fullName(user)}
           open={isResetPasswordDialogOpen}
           onOpenChange={setIsResetPasswordDialogOpen}
         />

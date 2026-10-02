@@ -46,12 +46,7 @@ export function ChangePasswordForm() {
       return;
     }
     if (!state.success) return;
-    notify.success({
-      title: 'Tu contraseña se actualizó correctamente',
-      description: 'Iniciá sesión con tu nueva contraseña.',
-      timeout: 6000,
-    });
-    router.replace('/login');
+    router.replace('/login?passwordChanged=1');
   }, [state, router]);
 
   return (

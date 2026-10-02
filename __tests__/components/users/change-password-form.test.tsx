@@ -71,7 +71,7 @@ describe('ChangePasswordForm', () => {
     fillForm('Old12345', 'Abcdefg1', 'Abcdefg1');
     await submitForm();
 
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/login?passwordChanged=1'));
   });
 
   test('keeps the session when the password change fails', async () => {

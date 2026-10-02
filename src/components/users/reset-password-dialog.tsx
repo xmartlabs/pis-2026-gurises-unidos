@@ -28,11 +28,17 @@ type ResetPasswordValues = {
 
 type ResetPasswordDialogProps = {
   userId: number;
+  userName: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
 
-export function ResetPasswordDialog({ userId, open, onOpenChange }: ResetPasswordDialogProps) {
+export function ResetPasswordDialog({
+  userId,
+  userName,
+  open,
+  onOpenChange,
+}: ResetPasswordDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -53,7 +59,12 @@ export function ResetPasswordDialog({ userId, open, onOpenChange }: ResetPasswor
         </AlertDialogTrigger>
       )}
       <AlertDialogContent>
-        <ResetPasswordForm userId={userId} pending={pending} startTransition={startTransition} />
+        <ResetPasswordForm
+          userId={userId}
+          userName={userName}
+          pending={pending}
+          startTransition={startTransition}
+        />
       </AlertDialogContent>
     </AlertDialog>
   );
@@ -61,10 +72,12 @@ export function ResetPasswordDialog({ userId, open, onOpenChange }: ResetPasswor
 
 function ResetPasswordForm({
   userId,
+  userName,
   pending,
   startTransition,
 }: {
   userId: number;
+  userName: string;
   pending: boolean;
   startTransition: TransitionStartFunction;
 }) {
@@ -106,7 +119,9 @@ function ResetPasswordForm({
     <FormProvider {...form}>
       <AlertDialogHeader>
         <AlertDialogTitle>
-          {state.success ? 'Contraseña restablecida' : '¿Restablecer la contraseña?'}
+          {state.success
+            ? `Contraseña de ${userName} restablecida`
+            : `¿Restablecer la contraseña de ${userName}?`}
         </AlertDialogTitle>
         <AlertDialogDescription>
           {state.success

@@ -16,7 +16,7 @@ beforeEach(() => {
 
 describe('ResetPasswordDialog', () => {
   test('resets the password of the selected user with a generated temporary password', async () => {
-    render(<ResetPasswordDialog userId={7} />);
+    render(<ResetPasswordDialog userId={7} userName="Ana García" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
 
@@ -24,10 +24,11 @@ describe('ResetPasswordDialog', () => {
     const generatedPassword = passwordInput.value;
 
     expect(generatedPassword).not.toBe('');
+    expect(screen.getByText('¿Restablecer la contraseña de Ana García?')).toBeDefined();
 
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }));
 
-    expect(await screen.findByText('Contraseña restablecida')).toBeDefined();
+    expect(await screen.findByText('Contraseña de Ana García restablecida')).toBeDefined();
 
     const formData = resetPasswordMock.mock.calls[0][1];
     expect(formData.get('userId')).toBe('7');
@@ -35,7 +36,7 @@ describe('ResetPasswordDialog', () => {
   });
 
   test('blocks invalid temporary passwords', async () => {
-    render(<ResetPasswordDialog userId={7} />);
+    render(<ResetPasswordDialog userId={7} userName="Ana García" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
     fireEvent.change(await screen.findByLabelText('Contraseña temporal'), {
@@ -48,7 +49,7 @@ describe('ResetPasswordDialog', () => {
   });
 
   test('generates a new temporary password every time the dialog opens', async () => {
-    render(<ResetPasswordDialog userId={7} />);
+    render(<ResetPasswordDialog userId={7} userName="Ana García" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
     const firstPassword = (
