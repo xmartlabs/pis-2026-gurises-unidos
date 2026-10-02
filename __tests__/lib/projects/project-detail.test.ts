@@ -264,6 +264,19 @@ describe('getProjectDetail', () => {
     });
   });
 
+  it('offers a requested year without data in the year options', async () => {
+    const result = await getProjectDetail('12', '2015');
+
+    expect(result).toMatchObject({
+      status: 'success',
+      data: {
+        selectedYear: 2015,
+        hasData: false,
+        availableYears: [2026, 2025, 2015],
+      },
+    });
+  });
+
   it('uses the exact requested year for national totals', async () => {
     await getProjectDetail('12', '2025');
 

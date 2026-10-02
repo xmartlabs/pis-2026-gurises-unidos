@@ -91,7 +91,11 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
   const comparisonYear = selectedYear - 1;
 
   const availableYears = [
-    ...new Set([currentYear, ...project.projectBeneficiaries.map((record) => record.year)]),
+    ...new Set([
+      currentYear,
+      selectedYear,
+      ...project.projectBeneficiaries.map((record) => record.year),
+    ]),
   ].sort((a, b) => b - a);
 
   const [current, previous, national, activeProjectCount] = await Promise.all([
