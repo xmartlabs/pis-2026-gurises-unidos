@@ -119,6 +119,11 @@ export async function completeForcedPasswordChange(
   }
 
   const { newPassword } = parsed.data;
+
+  if (await verifyPassword(newPassword, user.passwordHash)) {
+    return { errors: { newPassword: ['La nueva contraseña debe ser distinta a la actual.'] } };
+  }
+
   const result = await updateOwnPassword(user.id, newPassword);
 
   if (!result.success) {

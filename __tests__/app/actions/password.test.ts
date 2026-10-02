@@ -201,6 +201,7 @@ describe('completeForcedPasswordChange', () => {
     const user = makeUser({ id: 7, mustChangePassword: true, documentId: '41234567' });
     authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com', remember: true } });
     findUniqueMock.mockResolvedValue(user);
+    verifyPasswordMock.mockResolvedValue(false);
     hashPasswordMock.mockResolvedValue('new-hash');
     signInMock.mockResolvedValue(undefined);
     setupTransaction();
@@ -209,7 +210,7 @@ describe('completeForcedPasswordChange', () => {
       'NEXT_REDIRECT'
     );
 
-    expect(verifyPasswordMock).not.toHaveBeenCalled();
+    expect(verifyPasswordMock).toHaveBeenCalledWith(VALID_FIELDS.newPassword, user.passwordHash);
     expect(signInMock).toHaveBeenCalledWith('credentials', {
       documentId: '41234567',
       password: VALID_FIELDS.newPassword,
@@ -227,6 +228,7 @@ describe('completeForcedPasswordChange', () => {
   test('falls back to login when the silent sign-in fails after the password was updated', async () => {
     authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
     findUniqueMock.mockResolvedValue(makeUser({ id: 7, mustChangePassword: true }));
+    verifyPasswordMock.mockResolvedValue(false);
     hashPasswordMock.mockResolvedValue('new-hash');
     signInMock.mockRejectedValue(new AuthError());
     setupTransaction();
@@ -255,6 +257,23 @@ describe('completeForcedPasswordChange', () => {
     const result = await completeForcedPasswordChange({}, buildFormData(VALID_FIELDS));
 
     expect(result.formError).toBe('La contraseña ya fue actualizada.');
+    expect(hashPasswordMock).not.toHaveBeenCalled();
+    expect(signInMock).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test('rejects when the new password matches the current temporary password', async () => {
+    const user = makeUser({ id: 7, mustChangePassword: true });
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
+    findUniqueMock.mockResolvedValue(user);
+    verifyPasswordMock.mockResolvedValue(true);
+
+    const result = await completeForcedPasswordChange({}, buildFormData(VALID_FIELDS));
+
+    expect(result.errors?.newPassword).toEqual([
+      'La nueva contraseña debe ser distinta a la actual.',
+    ]);
+    expect(verifyPasswordMock).toHaveBeenCalledWith(VALID_FIELDS.newPassword, user.passwordHash);
     expect(hashPasswordMock).not.toHaveBeenCalled();
     expect(signInMock).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
