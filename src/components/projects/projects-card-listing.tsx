@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { ProjectCardsGrid, type ProjectListQuery } from '@/components/projects/project-cards-grid';
 import type { ProjectListItem } from '@/lib/projects/list';
 import { STATUS_FILTERS, type StatusFilterValue } from '@/lib/projects/constants';
+import { PROJECT_SEARCH_MAX_LENGTH } from '@/lib/validation/project-filters';
 import { ScrollToTopButton } from '@/components/scroll-to-top-button';
 
 const ALL_YEARS = 'all';
@@ -177,6 +178,7 @@ export function ProjectsCardList({
           <InputGroupInput
             aria-label="Buscar proyectos por nombre"
             placeholder="Buscar por nombre..."
+            maxLength={PROJECT_SEARCH_MAX_LENGTH}
             value={searchText}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
