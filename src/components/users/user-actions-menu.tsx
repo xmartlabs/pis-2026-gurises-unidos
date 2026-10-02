@@ -11,18 +11,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ResetPasswordDialog } from '@/components/users/reset-password-dialog';
 import { UserStatusDialog } from '@/components/users/user-status-dialog';
 import { fullName, type User } from '@/lib/users/format';
 
-export function UserActionsMenu({
-  user,
-  canChangeStatus,
-}: {
-  user: User;
-  canChangeStatus: boolean;
-}) {
+export function UserActionsMenu({ user, isCurrentUser }: { user: User; isCurrentUser: boolean }) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const showStatusAction = canChangeStatus && user.status !== 'pendingInvitation';
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const showStatusAction = !isCurrentUser && user.status !== 'pendingInvitation';
 
   return (
     <>
@@ -41,9 +37,14 @@ export function UserActionsMenu({
           >
             Editar
           </DropdownMenuItem>
-          {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-            Restablecer contraseña
-          </DropdownMenuItem> */}
+          {!isCurrentUser && (
+            <DropdownMenuItem
+              className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
+              onClick={() => setIsResetPasswordDialogOpen(true)}
+            >
+              Restablecer contraseña
+            </DropdownMenuItem>
+          )}
           {showStatusAction && (
             <DropdownMenuItem
               className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
@@ -61,6 +62,14 @@ export function UserActionsMenu({
           </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
+      {!isCurrentUser && (
+        <ResetPasswordDialog
+          userId={user.id}
+          userName={fullName(user)}
+          open={isResetPasswordDialogOpen}
+          onOpenChange={setIsResetPasswordDialogOpen}
+        />
+      )}
       {showStatusAction && (
         <UserStatusDialog
           user={user}

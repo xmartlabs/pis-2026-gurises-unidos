@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest';
 
 vi.mock('@/app/actions/profile', () => ({ updateProfile: vi.fn() }));
+vi.mock('@/app/actions/password', () => ({ changePassword: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 
 import { ProfileForm } from '@/components/profile-form';
 
@@ -63,7 +65,7 @@ describe('ProfileForm', () => {
     fireEvent.change(firstNameInput, { target: { value: '' } });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
     await act(async () => {
-      fireEvent.submit(submitButton.closest('form')!);
+      fireEvent.submit((submitButton as HTMLButtonElement).form!);
     });
 
     await waitFor(() => {
@@ -84,7 +86,9 @@ describe('ProfileForm', () => {
     fireEvent.change(lastNameInput, { target: { value: 'Pérez' } });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
     await act(async () => {
-      fireEvent.submit(screen.getByRole('button', { name: 'Guardar cambios' }).closest('form')!);
+      fireEvent.submit(
+        (screen.getByRole('button', { name: 'Guardar cambios' }) as HTMLButtonElement).form!
+      );
     });
     await screen.findByText('El nombre es obligatorio.');
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));

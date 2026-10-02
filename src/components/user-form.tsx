@@ -16,6 +16,7 @@ import { SelectField } from '@/components/ui/forms/select-field';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ResetPasswordDialog } from '@/components/users/reset-password-dialog';
 
 import { Copy } from 'lucide-react';
 
@@ -38,6 +39,7 @@ type UserFormValues = {
 type UserFormProps = {
   mode?: 'create' | 'edit';
   initialValues?: {
+    id: number;
     firstName: string;
     lastName: string;
     documentId: string;
@@ -254,16 +256,11 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                 </CardHeader>
                 <CardContent className="px-6">
                   <FieldGroup className="gap-4">
-                    {isEditing ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        className="w-fit px-4"
-                        disabled
-                      >
-                        Restablecer contraseña
-                      </Button>
+                    {isEditing && initialValues ? (
+                      <ResetPasswordDialog
+                        userId={initialValues.id}
+                        userName={`${initialValues.firstName} ${initialValues.lastName}`}
+                      />
                     ) : (
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <TextInputField
@@ -300,7 +297,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
                     )}
                     <FieldDescription className="text-xs leading-4">
                       {isEditing
-                        ? 'Se enviará una nueva contraseña temporal para que la persona vuelva a ingresar.'
+                        ? 'Se generará una contraseña temporal que la persona deberá cambiar al ingresar.'
                         : 'El administrador comparte esta contraseña con la persona. El ingreso al sistema es por cédula.'}
                     </FieldDescription>
                   </FieldGroup>

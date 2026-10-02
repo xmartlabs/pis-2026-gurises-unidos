@@ -95,6 +95,24 @@ describe('changePassword', () => {
     confirmNewPassword: 'NewPassword1',
   };
 
+  test('rejects a new password equal to the current one', async () => {
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
+
+    const result = await changePassword(
+      {},
+      buildFormData({
+        currentPassword: 'NewPassword1',
+        newPassword: 'NewPassword1',
+        confirmNewPassword: 'NewPassword1',
+      })
+    );
+
+    expect(result.errors?.newPassword).toEqual([
+      'La nueva contraseña debe ser distinta a la actual.',
+    ]);
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
   test('rejects when there is no valid session', async () => {
     authMock.mockResolvedValue(null);
 
@@ -292,6 +310,18 @@ describe('resetPassword', () => {
     const result = await resetPassword({}, buildFormData(VALID_FIELDS));
 
     expect(result.formError).toBe('No tenés permisos para realizar esta acción.');
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  test('rejects when the admin tries to reset their own password', async () => {
+    authMock.mockResolvedValue({ user: { id: '9', role: 'admin' } });
+
+    const result = await resetPassword({}, buildFormData(VALID_FIELDS));
+
+    expect(result.formError).toBe(
+      'No podés restablecer tu propia contraseña. Cambiala desde Mi perfil.'
+    );
+    expect(findUniqueMock).not.toHaveBeenCalled();
     expect(transactionMock).not.toHaveBeenCalled();
   });
 
