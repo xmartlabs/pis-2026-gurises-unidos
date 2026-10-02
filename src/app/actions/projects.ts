@@ -271,6 +271,8 @@ export async function deleteProject(projectId: number): Promise<{ error?: string
   }
   revalidateProject();
   return {};
+}
+
 export async function loadProjectsPage(
   filters: { status: string; beneficiaryYear: string; search?: string },
   page: number
