@@ -78,7 +78,8 @@ async function decodeSessionCookie() {
   return decode({ token: cookie!.value, secret: process.env.AUTH_SECRET!, salt: SESSION_COOKIE });
 }
 
-function expectExpirationCookieAround(expectedTimestamp: number) {
+function expectSessionToExpireAround(token: { exp?: unknown } | null, expectedTimestamp: number) {
+  expect(Math.abs(Number(token?.exp) * 1000 - expectedTimestamp)).toBeLessThan(60_000);
   const cookie = cookieJar.get(SESSION_EXPIRATION_COOKIE);
   expect(cookie?.options).toEqual(SESSION_EXPIRATION_COOKIE_OPTIONS);
   expect(Math.abs(Number(cookie?.value) - expectedTimestamp)).toBeLessThan(60_000);
@@ -110,7 +111,7 @@ describe('login (integration)', () => {
       name: 'Login Integration',
       remember: false,
     });
-    expectExpirationCookieAround(before + getSessionMaxAge(false) * 1000);
+    expectSessionToExpireAround(token, before + getSessionMaxAge(false) * 1000);
     const { lastAccess } = await loadUser(user.id);
     expect(lastAccess?.getTime()).toBeGreaterThanOrEqual(before - 1000);
   });
@@ -121,12 +122,13 @@ describe('login (integration)', () => {
 
     await expectRedirectToDashboard(login({}, buildFormData(user.documentId, PASSWORD, true)));
 
-    expect(await decodeSessionCookie()).toMatchObject({
+    const token = await decodeSessionCookie();
+    expect(token).toMatchObject({
       sub: String(user.id),
       role: 'admin',
       remember: true,
     });
-    expectExpirationCookieAround(before + getSessionMaxAge(true) * 1000);
+    expectSessionToExpireAround(token, before + getSessionMaxAge(true) * 1000);
   });
 
   test('accepts a document id written with dots and a dash', async () => {

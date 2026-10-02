@@ -205,11 +205,20 @@ describe('createProject (integration)', () => {
     const projectId = await expectRedirectToNewProject(
       createProject(
         {},
-        buildFormData({ name: 'Closed on creation', status: 'closed', endYear: '2023' })
+        buildFormData({
+          name: 'Closed on creation',
+          status: 'closed',
+          endYear: '2023',
+          year: '2022',
+        })
       )
     );
 
-    expect(await loadProject(projectId)).toMatchObject({ status: 'closed', endYear: 2023 });
+    expect(await loadProject(projectId)).toMatchObject({
+      status: 'closed',
+      endYear: 2023,
+      projectBeneficiaries: [expect.objectContaining({ year: 2022 })],
+    });
   });
 
   test('defaults empty beneficiary counts to zero', async () => {
