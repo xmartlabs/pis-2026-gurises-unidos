@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ProjectsCardList } from '@/components/projects/projects-card-listing';
 import { ProjectsCardListSkeleton } from '@/components/projects/projects-card-listing-skeleton';
-import { listProjectFilterOptions, listProjects } from '@/lib/projects/list';
+import { listBeneficiaryYears, listProjects } from '@/lib/projects/list';
 import {
   PROJECT_LIST_PAGE_SIZE,
   parseProjectFilters,
@@ -18,7 +18,7 @@ type ProjectsPageProps = {
 
 async function Projects({ searchParams }: ProjectsPageProps) {
   const params = await searchParams;
-  const { years } = await listProjectFilterOptions();
+  const years = await listBeneficiaryYears();
   const filters = parseProjectFilters({
     ...params,
     status: params.status ?? DEFAULT_STATUS,

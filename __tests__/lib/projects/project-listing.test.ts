@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { prismaMock } from '../../mocks/prisma';
-import { listProjectFilterOptions, listProjects } from '@/lib/projects/list';
+import { listBeneficiaryYears, listProjectFilterOptions, listProjects } from '@/lib/projects/list';
 import {
   PROJECT_LIST_MAX_PAGE_SIZE,
   PROJECT_LIST_PAGE_SIZE,
@@ -328,16 +328,28 @@ describe('parseProjectFilters', () => {
   });
 });
 
+describe('listBeneficiaryYears', () => {
+  test('returns the distinct beneficiary years of non deleted projects, newest first', async () => {
+    prismaMock.projectBeneficiary.findMany.mockResolvedValue([{ year: 2026 }, { year: 2024 }]);
+
+    expect(await listBeneficiaryYears()).toEqual([2026, 2024]);
+    expect(prismaMock.projectBeneficiary.findMany).toHaveBeenCalledWith({
+      where: { project: { deletedAt: null } },
+      distinct: ['year'],
+      select: { year: true },
+      orderBy: { year: 'desc' },
+    });
+  });
+});
+
 describe('listProjectFilterOptions', () => {
-  test('returns coordinators and departments that lead or host projects and beneficiaries years', async () => {
+  test('returns coordinators and departments that lead or host projects', async () => {
     prismaMock.user.findMany.mockResolvedValue([CARLOS]);
     prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
-    prismaMock.projectBeneficiary.findMany.mockResolvedValue([{ year: 2025 }, { year: 2024 }]);
 
     expect(await listProjectFilterOptions()).toEqual({
       coordinators: [CARLOS],
       departments: [MONTEVIDEO],
-      years: [2025, 2024],
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { ledProjects: { some: { deletedAt: null } } } })
@@ -345,11 +357,5 @@ describe('listProjectFilterOptions', () => {
     expect(prismaMock.department.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { projects: { some: { deletedAt: null } } } })
     );
-    expect(prismaMock.projectBeneficiary.findMany).toHaveBeenCalledWith({
-      where: { project: { deletedAt: null } },
-      distinct: ['year'],
-      select: { year: true },
-      orderBy: { year: 'desc' },
-    });
   });
 });
