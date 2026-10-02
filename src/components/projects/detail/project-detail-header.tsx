@@ -62,8 +62,7 @@ export function ProjectDetailHeader({
     .filter(Boolean)
     .join(' — ');
   const coordinator = `${project.leadCoordinator.firstName} ${project.leadCoordinator.lastName}`;
-  const periodEnd = project.endYear ?? Math.max(new Date().getFullYear(), project.startYear);
-  const period = `${project.startYear}–${periodEnd}`;
+  const period = `${project.startYear}–${project.endYear ?? 'actualidad'}`;
   const description = project.generalObjective ?? project.publicDescription;
 
   return (
