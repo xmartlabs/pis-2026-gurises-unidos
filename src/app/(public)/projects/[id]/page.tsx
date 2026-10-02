@@ -49,7 +49,6 @@ export default async function PublicProjectPage({ params }: PublicProjectPagePro
           </h1>
           <p className="text-muted-foreground mt-5 max-w-2xl text-base leading-7 sm:text-lg">
             {project.publicDescription ??
-              project.generalObjective ??
               'Conocé el trabajo y el alcance de este proyecto de Gurises Unidos.'}
           </p>
           <p className="text-muted-foreground mt-4 text-sm">Período: {period}</p>

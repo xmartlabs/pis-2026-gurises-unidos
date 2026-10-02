@@ -22,7 +22,6 @@ const PROJECT = {
   startYear: 2024,
   endYear: 2026,
   localityNeighborhood: null,
-  generalObjective: 'Support adolescents and families.',
   publicDescription: 'Community support project.',
   coverPhoto: null,
   department: { name: 'Montevideo' },
@@ -63,4 +62,14 @@ test('returns not found when the public project does not exist', async () => {
   await expect(PublicProjectPage({ params: Promise.resolve({ id: '42' }) })).rejects.toThrow(
     'NEXT_NOT_FOUND'
   );
+});
+
+test('falls back to the generic text when there is no public description', async () => {
+  getPublicProjectDetailMock.mockResolvedValue({ ...PROJECT, publicDescription: null });
+
+  render(await PublicProjectPage({ params: Promise.resolve({ id: '42' }) }));
+
+  expect(
+    screen.getByText('Conocé el trabajo y el alcance de este proyecto de Gurises Unidos.')
+  ).toBeDefined();
 });

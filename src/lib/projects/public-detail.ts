@@ -8,7 +8,6 @@ const PUBLIC_PROJECT_SELECT = {
   startYear: true,
   endYear: true,
   localityNeighborhood: true,
-  generalObjective: true,
   publicDescription: true,
   coverPhoto: true,
   department: {
