@@ -58,6 +58,13 @@ export function ProjectsCardList({
   useEffect(() => () => clearTimeout(searchTimeout.current), []);
 
   useEffect(() => {
+    const requestedSearch = new URLSearchParams(requestedParams.current).get('search') ?? undefined;
+    if (search === requestedSearch) return;
+    clearTimeout(searchTimeout.current);
+    setSearchText(search ?? '');
+  }, [search]);
+
+  useEffect(() => {
     requestedParams.current = searchParams.toString();
   }, [searchParams]);
 
@@ -112,7 +119,6 @@ export function ProjectsCardList({
       items={yearOptions}
       value={year}
       onValueChange={(value) => value !== null && updateFilter('beneficiaryYear', String(value))}
-      disabled={isPending}
     >
       <SelectTrigger
         aria-label="Filtrar por año"

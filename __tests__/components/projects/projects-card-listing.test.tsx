@@ -331,9 +331,13 @@ test('requests the next page with the current search', async () => {
 });
 
 test('keeps the typed text and focus when the search results arrive', () => {
+  vi.useFakeTimers();
+
   const { rerender } = renderList();
   const input = screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' });
   input.focus();
+  typeSearch('centro');
+  act(() => vi.runOnlyPendingTimers());
   typeSearch('centro juv');
 
   rerender(buildList({ search: 'centro', projects: [buildProject(5, 'Centro juvenil Cerro')] }));
@@ -341,6 +345,24 @@ test('keeps the typed text and focus when the search results arrive', () => {
   expect(screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' })).toBe(input);
   expect(document.activeElement).toBe(input);
   expect(input).toHaveProperty('value', 'centro juv');
+});
+
+test('shows the search from the URL when it changes outside the field', () => {
+  vi.useFakeTimers();
+  mocks.searchParams = new URLSearchParams('search=centro');
+
+  const { rerender } = renderList({ search: 'centro' });
+  typeSearch('centro juv');
+
+  mocks.searchParams = new URLSearchParams('search=taller');
+  rerender(buildList({ search: 'taller' }));
+  act(() => vi.runOnlyPendingTimers());
+
+  expect(screen.getByRole('textbox', { name: 'Buscar proyectos por nombre' })).toHaveProperty(
+    'value',
+    'taller'
+  );
+  expect(mocks.replace).not.toHaveBeenCalled();
 });
 
 test('restarts the loaded list when the filters change', async () => {
