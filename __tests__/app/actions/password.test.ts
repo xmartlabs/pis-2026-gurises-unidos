@@ -3,21 +3,25 @@ import { makeUser } from '../../fixtures/user';
 
 const {
   authMock,
+  signInMock,
   logAuditMock,
   transactionMock,
   findUniqueMock,
   hashPasswordMock,
   verifyPasswordMock,
+  cookieStore,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
+  signInMock: vi.fn(),
   logAuditMock: vi.fn(),
   transactionMock: vi.fn(),
   findUniqueMock: vi.fn(),
   hashPasswordMock: vi.fn(),
   verifyPasswordMock: vi.fn(),
+  cookieStore: { set: vi.fn(), delete: vi.fn() },
 }));
 
-vi.mock('@/auth', () => ({ auth: authMock }));
+vi.mock('@/auth', () => ({ auth: authMock, signIn: signInMock }));
 vi.mock('@/lib/audit-log', () => ({ logAudit: logAuditMock }));
 vi.mock('@/lib/prisma', () => ({
   default: {
@@ -29,8 +33,27 @@ vi.mock('@/lib/credentials', () => ({
   hashPassword: hashPasswordMock,
   verifyPassword: verifyPasswordMock,
 }));
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => cookieStore),
+}));
 
-import { changePassword, resetPassword } from '@/app/actions/password';
+import { AuthError } from 'next-auth';
+import { redirect } from 'next/navigation';
+import {
+  changePassword,
+  completeForcedPasswordChange,
+  resetPassword,
+} from '@/app/actions/password';
+import {
+  SESSION_EXPIRATION_COOKIE,
+  SESSION_EXPIRATION_COOKIE_OPTIONS,
+} from '@/lib/auth/session-expiration';
+
+vi.mock('next-auth', () => import('@auth/core/errors'));
+
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+}));
 
 function buildFormData(fields: Record<string, string | undefined>): FormData {
   const formData = new FormData();
@@ -52,11 +75,17 @@ function setupTransaction() {
 
 beforeEach(() => {
   authMock.mockReset();
+  signInMock.mockReset();
   logAuditMock.mockReset();
   transactionMock.mockReset();
   findUniqueMock.mockReset();
   hashPasswordMock.mockReset();
   verifyPasswordMock.mockReset();
+  cookieStore.set.mockReset();
+  vi.mocked(redirect).mockReset();
+  vi.mocked(redirect).mockImplementation(() => {
+    throw new Error('NEXT_REDIRECT');
+  });
 });
 
 describe('changePassword', () => {
@@ -159,6 +188,95 @@ describe('changePassword', () => {
     const result = await changePassword({}, buildFormData(VALID_FIELDS));
 
     expect(result.formError).toBe('No se pudo cambiar la contraseña. Intentá de nuevo.');
+  });
+});
+
+describe('completeForcedPasswordChange', () => {
+  const VALID_FIELDS = {
+    newPassword: 'NewPassword1',
+    confirmNewPassword: 'NewPassword1',
+  };
+
+  test('signs the user back in and redirects to the dashboard after a successful change', async () => {
+    const user = makeUser({ id: 7, mustChangePassword: true, documentId: '41234567' });
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com', remember: true } });
+    findUniqueMock.mockResolvedValue(user);
+    verifyPasswordMock.mockResolvedValue(false);
+    hashPasswordMock.mockResolvedValue('new-hash');
+    signInMock.mockResolvedValue(undefined);
+    setupTransaction();
+
+    await expect(completeForcedPasswordChange({}, buildFormData(VALID_FIELDS))).rejects.toThrow(
+      'NEXT_REDIRECT'
+    );
+
+    expect(verifyPasswordMock).toHaveBeenCalledWith(VALID_FIELDS.newPassword, user.passwordHash);
+    expect(signInMock).toHaveBeenCalledWith('credentials', {
+      documentId: '41234567',
+      password: VALID_FIELDS.newPassword,
+      remember: 'true',
+      redirect: false,
+    });
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      SESSION_EXPIRATION_COOKIE,
+      expect.any(String),
+      SESSION_EXPIRATION_COOKIE_OPTIONS
+    );
+    expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
+  });
+
+  test('falls back to login when the silent sign-in fails after the password was updated', async () => {
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
+    findUniqueMock.mockResolvedValue(makeUser({ id: 7, mustChangePassword: true }));
+    verifyPasswordMock.mockResolvedValue(false);
+    hashPasswordMock.mockResolvedValue('new-hash');
+    signInMock.mockRejectedValue(new AuthError());
+    setupTransaction();
+
+    await expect(completeForcedPasswordChange({}, buildFormData(VALID_FIELDS))).rejects.toThrow(
+      'NEXT_REDIRECT'
+    );
+
+    expect(redirect).toHaveBeenCalledWith('/login?passwordChanged=1');
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  test('returns errors without redirecting when the change fails', async () => {
+    authMock.mockResolvedValue(null);
+
+    const result = await completeForcedPasswordChange({}, buildFormData(VALID_FIELDS));
+
+    expect(result.formError).toBe('Tu sesión ya no es válida. Iniciá sesión de nuevo.');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test('rejects when the user is not required to change their password', async () => {
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
+    findUniqueMock.mockResolvedValue(makeUser({ id: 7, mustChangePassword: false }));
+
+    const result = await completeForcedPasswordChange({}, buildFormData(VALID_FIELDS));
+
+    expect(result.formError).toBe('La contraseña ya fue actualizada.');
+    expect(hashPasswordMock).not.toHaveBeenCalled();
+    expect(signInMock).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test('rejects when the new password matches the current temporary password', async () => {
+    const user = makeUser({ id: 7, mustChangePassword: true });
+    authMock.mockResolvedValue({ user: { id: '7', email: 'user@example.com' } });
+    findUniqueMock.mockResolvedValue(user);
+    verifyPasswordMock.mockResolvedValue(true);
+
+    const result = await completeForcedPasswordChange({}, buildFormData(VALID_FIELDS));
+
+    expect(result.errors?.newPassword).toEqual([
+      'La nueva contraseña debe ser distinta a la actual.',
+    ]);
+    expect(verifyPasswordMock).toHaveBeenCalledWith(VALID_FIELDS.newPassword, user.passwordHash);
+    expect(hashPasswordMock).not.toHaveBeenCalled();
+    expect(signInMock).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
   });
 });
 

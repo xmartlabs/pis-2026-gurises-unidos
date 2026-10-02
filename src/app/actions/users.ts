@@ -51,6 +51,7 @@ export async function createUser(
             role: userData.role,
             status: 'active',
             passwordHash,
+            mustChangePassword: true,
             createdBy: Number(session.user.id),
           },
         });

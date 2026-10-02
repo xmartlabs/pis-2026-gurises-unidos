@@ -137,12 +137,13 @@ describe('jwt', () => {
     vi.mocked(prisma.user.findUnique).mockReset();
   });
 
-  test('sets sub, role, avatar color, and remember when a user is present', async () => {
+  test('sets sub, role, avatar color, mustChangePassword, and remember when a user is present', async () => {
     const token = { sub: 'old' };
     const user = {
       id: '42',
       role: 'coordinator' as const,
       avatarColorIndex: 7,
+      mustChangePassword: true,
       remember: true,
     };
 
@@ -150,6 +151,7 @@ describe('jwt', () => {
       sub: '42',
       role: 'coordinator',
       avatarColorIndex: 7,
+      mustChangePassword: true,
       remember: true,
     });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
@@ -186,6 +188,7 @@ describe('jwt', () => {
         documentId: '41234567',
         role: 'admin',
         passwordChangedAt: null,
+        mustChangePassword: true,
       })
     );
 
@@ -195,6 +198,7 @@ describe('jwt', () => {
       email: 'ana@example.com',
       role: 'admin',
       avatarColorIndex: 7,
+      mustChangePassword: true,
       iat: 1_000,
     });
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
@@ -207,6 +211,7 @@ describe('jwt', () => {
         role: true,
         status: true,
         passwordChangedAt: true,
+        mustChangePassword: true,
         deletedAt: true,
       },
     });
@@ -216,6 +221,17 @@ describe('jwt', () => {
     const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(
       makeUser({ passwordChangedAt: new Date(500 * 1000) })
+    );
+
+    await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(
+      expect.objectContaining({ sub: '1', role: 'admin' })
+    );
+  });
+
+  test('keeps the session valid when the password changed in the same second the token was issued', async () => {
+    const token = { sub: '1', role: 'admin' as const, iat: 1_000 };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      makeUser({ passwordChangedAt: new Date(1_000 * 1000 + 500) })
     );
 
     await expect(capturedConfig().callbacks?.jwt?.({ token } as never)).resolves.toEqual(
@@ -245,13 +261,14 @@ describe('jwt', () => {
 });
 
 describe('session', () => {
-  test('copies id, role, avatar color, and remember from the token onto session.user', () => {
+  test('copies id, role, avatar color, remember, and mustChangePassword from the token onto session.user', () => {
     const session = { user: { name: 'Ana Admin' }, expires: '2026-01-01T00:00:00.000Z' };
     const token = {
       sub: '42',
       role: 'coordinator' as const,
       avatarColorIndex: 7,
       remember: true,
+      mustChangePassword: true,
     };
 
     expect(capturedConfig().callbacks?.session?.({ session, token } as never)).toEqual({
@@ -261,6 +278,7 @@ describe('session', () => {
         role: 'coordinator',
         avatarColorIndex: 7,
         remember: true,
+        mustChangePassword: true,
       },
       expires: '2026-01-01T00:00:00.000Z',
     });

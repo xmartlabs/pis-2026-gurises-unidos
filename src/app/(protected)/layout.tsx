@@ -13,6 +13,10 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     redirect('/login');
   }
 
+  if (session.user.mustChangePassword) {
+    redirect('/password-reset');
+  }
+
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
 

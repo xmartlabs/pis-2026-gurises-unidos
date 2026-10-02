@@ -18,6 +18,7 @@ describe('toAuthUser', () => {
       name: 'Ana Admin',
       role,
       avatarColorIndex: Number(user.documentId.at(-1)),
+      mustChangePassword: false,
     });
   });
 });
