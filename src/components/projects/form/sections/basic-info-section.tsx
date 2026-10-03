@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { INTENSITY_OPTIONS, STATUS_OPTIONS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
@@ -15,6 +16,20 @@ export function BasicInfoSection({
 }: Pick<SectionProps, 'yearOptions' | 'coordinatorOptions' | 'topics'>) {
   const { clearErrors, setValue } = useFormContext<ProjectFormValues>();
   const status = useWatch<ProjectFormValues, 'status'>({ name: 'status' });
+  const startYear = useWatch<ProjectFormValues, 'startYear'>({ name: 'startYear' });
+  const endYear = useWatch<ProjectFormValues, 'endYear'>({ name: 'endYear' });
+  const startYearOptions = yearOptions.filter(
+    ({ value }) => status !== 'closed' || !endYear || Number(value) <= Number(endYear)
+  );
+  const endYearOptions = yearOptions.filter(
+    ({ value }) => !startYear || Number(value) >= Number(startYear)
+  );
+
+  useEffect(() => {
+    if (status === 'closed' && startYear && endYear && Number(endYear) < Number(startYear)) {
+      setValue('endYear', '', { shouldValidate: true });
+    }
+  }, [status, startYear, endYear, setValue]);
 
   return (
     <FormSection title="Información básica">
@@ -71,7 +86,7 @@ export function BasicInfoSection({
             id="startYear"
             name="startYear"
             label="Año de inicio"
-            options={yearOptions}
+            options={startYearOptions}
           />
           <SelectField
             id="endYear"
@@ -79,7 +94,7 @@ export function BasicInfoSection({
             label="Año de fin"
             placeholder="Seleccionar..."
             clearLabel="Sin año de fin"
-            options={yearOptions}
+            options={endYearOptions}
             disabled={status !== 'closed'}
             required={status === 'closed'}
           />

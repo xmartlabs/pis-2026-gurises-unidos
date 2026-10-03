@@ -168,6 +168,7 @@ export async function updateProject(
   try {
     const error = await prisma.$transaction(
       async (tx): Promise<ProjectFormState | null> => {
+        await tx.$queryRaw`SELECT "id" FROM "Project" WHERE "id" = ${projectId} FOR UPDATE`;
         const previous = await tx.project.findFirst({
           where: { id: projectId, deletedAt: null },
         });
@@ -190,6 +191,22 @@ export async function updateProject(
           projectId
         );
         if (nameError) return nameError;
+        if (projectData.status === 'closed' && projectData.endYear !== null) {
+          const laterBeneficiary = await tx.projectBeneficiary.findFirst({
+            where: { projectId, year: { gt: projectData.endYear } },
+            orderBy: { year: 'desc' },
+            select: { year: true },
+          });
+          if (laterBeneficiary) {
+            return {
+              errors: {
+                endYear: [
+                  `El año de cierre no puede ser anterior a ${laterBeneficiary.year}, que tiene beneficiarios registrados`,
+                ],
+              },
+            };
+          }
+        }
         const fields = changedFields(projectData, previous);
         if (fields.length) {
           await tx.project.update({

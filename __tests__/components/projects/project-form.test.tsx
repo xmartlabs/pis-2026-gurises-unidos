@@ -244,3 +244,67 @@ it('refreshes the topic list after a selected topic becomes invalid', async () =
 
   expect(routerRefreshMock).toHaveBeenCalledOnce();
 });
+
+it('limits the start year to the closing year and restores later years when reopened', async () => {
+  renderFormWith({ status: 'closed', startYear: '2020', endYear: '2022', year: '2020' });
+  fireEvent.click(screen.getByLabelText('Año de inicio'));
+  expect(await screen.findByRole('option', { name: '2022' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: '2023' })).toBeNull();
+  expect(screen.getByRole('option', { name: '2020' })).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('option', { name: '2020' }), { key: 'Enter' });
+
+  fireEvent.click(screen.getByLabelText('Estado'));
+  fireEvent.keyDown(await screen.findByRole('option', { name: 'Activo' }), { key: 'Enter' });
+  fireEvent.click(screen.getByLabelText('Año de inicio'));
+  expect(await screen.findByRole('option', { name: '2026' })).toBeTruthy();
+});
+
+it('limits the closing year to years at or after the start year', async () => {
+  renderFormWith({ status: 'closed', startYear: '2020', endYear: '2022' });
+  fireEvent.click(screen.getByLabelText('Año de fin'));
+  expect(await screen.findByRole('option', { name: '2020' })).toBeTruthy();
+  expect(screen.getByRole('option', { name: '2026' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: '2019' })).toBeNull();
+});
+
+it('clears an invalid closing year and advances beneficiaries to the start year', async () => {
+  render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[]}
+      departments={[]}
+      initialValues={{ status: 'closed', startYear: '2024', endYear: '2022', year: '2020' }}
+      beneficiaryRecords={[
+        {
+          year: 2024,
+          directChildrenAdolescents: 0,
+          indirectChildrenAdolescents: 0,
+          youth18To29: 0,
+          families: 7,
+          coordinatedInstitutions: 0,
+          communityLeaders: 0,
+          basicServiceStaff: 0,
+        },
+      ]}
+      submitAction={vi.fn()}
+    />
+  );
+  await waitFor(() => {
+    expect(screen.getByLabelText('Año de fin').textContent).toContain('Seleccionar...');
+    expect(screen.getByLabelText('Año de beneficiarios').textContent).toContain('2024');
+    expect((screen.getByLabelText('Familias') as HTMLInputElement).value).toBe('7');
+  });
+  expect(
+    await screen.findByText('El año de fin es obligatorio para proyectos cerrados')
+  ).toBeTruthy();
+  expect(
+    screen.queryByText('El año de beneficiarios no puede ser anterior al año de inicio')
+  ).toBeNull();
+  expect(
+    screen.queryByText('El año de beneficiarios no puede ser posterior al año de cierre')
+  ).toBeNull();
+  fireEvent.click(screen.getByLabelText('Año de beneficiarios'));
+  expect(await screen.findByRole('option', { name: '2024' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: '2022' })).toBeNull();
+});

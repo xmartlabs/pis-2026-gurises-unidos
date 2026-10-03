@@ -18,6 +18,8 @@ export function BeneficiariesSection({
   const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
 
   const startYear = useWatch({ name: 'startYear' });
+  const status = useWatch({ name: 'status' });
+  const endYear = useWatch({ name: 'endYear' });
   const year = useWatch({ name: 'year' });
 
   // TODO: Implement multiple years support on the backend
@@ -45,8 +47,17 @@ export function BeneficiariesSection({
     if (!startYear || !year) return;
     if (Number(year) < Number(startYear)) {
       selectYear(startYear);
+      return;
     }
-  }, [startYear, year, selectYear]);
+    if (
+      status === 'closed' &&
+      endYear &&
+      Number(endYear) >= Number(startYear) &&
+      Number(year) > Number(endYear)
+    ) {
+      selectYear(endYear);
+    }
+  }, [startYear, status, endYear, year, selectYear]);
 
   return (
     <FormSection
