@@ -130,6 +130,46 @@ afterEach(async () => {
 });
 
 describe('updateProject (integration)', () => {
+  test('rejects closing before stored beneficiary years without changing any data', async () => {
+    const projectId = await createProjectFixture();
+    signInAs(seed.adminId);
+    const before = await loadProject(projectId);
+
+    const result = await updateProject(
+      projectId,
+      {},
+      buildFormData({ status: 'closed', endYear: '2022', year: '2022', families: '99' })
+    );
+
+    expect(result.errors?.endYear).toEqual([
+      'El año de cierre no puede ser anterior a 2024, que tiene beneficiarios registrados',
+    ]);
+    expect(await loadProject(projectId)).toEqual(before);
+    expect(await auditLogsFor(projectId)).toEqual([]);
+  });
+
+  test('allows closing in the last stored beneficiary year and preserves its records', async () => {
+    const projectId = await createProjectFixture();
+    signInAs(seed.adminId);
+    const before = await loadProject(projectId);
+
+    await expectRedirectToProject(
+      updateProject(
+        projectId,
+        {},
+        buildFormData({ status: 'closed', endYear: String(BENEFICIARY_YEAR) })
+      ),
+      projectId
+    );
+
+    const after = await loadProject(projectId);
+    expect(after).toMatchObject({ status: 'closed', endYear: BENEFICIARY_YEAR });
+    expect(after.projectBeneficiaries).toEqual(before.projectBeneficiaries);
+    expect(await auditLogsFor(projectId)).toEqual([
+      expect.objectContaining({ entity: 'project', action: 'update' }),
+    ]);
+  });
+
   test('persists changed fields and topic and audits only what changed', async () => {
     const projectId = await createProjectFixture();
     signInAs(seed.adminId);

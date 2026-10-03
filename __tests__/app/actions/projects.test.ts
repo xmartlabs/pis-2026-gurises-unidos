@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   softDeleteProject: vi.fn(),
   createBeneficiary: vi.fn(),
   findBeneficiary: vi.fn(),
+  findLaterBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
   audit: vi.fn(),
   queryRaw: vi.fn(),
@@ -47,6 +48,7 @@ const TX = {
   user: { findFirst: mocks.findCoordinator },
   topic: { findFirst: mocks.findTopic },
   projectBeneficiary: {
+    findFirst: mocks.findLaterBeneficiary,
     create: mocks.createBeneficiary,
     findUnique: mocks.findBeneficiary,
     upsert: mocks.upsertBeneficiary,
@@ -109,6 +111,7 @@ beforeEach(() => {
   mocks.updateProject.mockResolvedValue({ id: 10 });
   mocks.createBeneficiary.mockResolvedValue({ id: 20 });
   mocks.findBeneficiary.mockResolvedValue({ id: 20 });
+  mocks.findLaterBeneficiary.mockResolvedValue(null);
   mocks.upsertBeneficiary.mockResolvedValue({ id: 20 });
 });
 
@@ -282,6 +285,32 @@ it('creates the project and beneficiaries with audit entries in one transaction'
 });
 
 describe('updateProject persistence', () => {
+  it('rejects closing before an existing beneficiary year without writing', async () => {
+    mocks.findLaterBeneficiary.mockResolvedValue({ year: 2024 });
+    const result = await updateProject(
+      10,
+      {},
+      formData({ status: 'closed', endYear: '2022', year: '2022' })
+    );
+    expect(result).toEqual({
+      errors: {
+        endYear: [
+          'El año de cierre no puede ser anterior a 2024, que tiene beneficiarios registrados',
+        ],
+      },
+    });
+    expect(mocks.findLaterBeneficiary).toHaveBeenCalledWith({
+      where: { projectId: 10, year: { gt: 2022 } },
+      orderBy: { year: 'desc' },
+      select: { year: true },
+    });
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
   it.each([0, -1, 1.5, NaN, Infinity, 2_147_483_648])(
     'rejects invalid project id %s',
     async (id) => {

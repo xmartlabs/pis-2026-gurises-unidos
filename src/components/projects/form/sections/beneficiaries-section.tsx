@@ -45,15 +45,17 @@ export function BeneficiariesSection({
 
   useEffect(() => {
     if (!startYear || !year) return;
-    if (status === 'closed' && endYear) {
-      if (Number(endYear) < Number(startYear)) return;
-      if (Number(year) > Number(endYear)) {
-        selectYear(endYear);
-        return;
-      }
-    }
     if (Number(year) < Number(startYear)) {
       selectYear(startYear);
+      return;
+    }
+    if (
+      status === 'closed' &&
+      endYear &&
+      Number(endYear) >= Number(startYear) &&
+      Number(year) > Number(endYear)
+    ) {
+      selectYear(endYear);
     }
   }, [startYear, status, endYear, year, selectYear]);
 
