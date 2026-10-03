@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { PROJECT_PLACEHOLDERS } from '@/lib/projects/project-placeholders';
 import { loadSeedData, type SeedData } from '../fixtures';
 import { signInAs } from '../session';
+import { auditLogsFor, deleteProject, loadProject } from './project-helpers';
 
 const BENEFICIARY_YEAR = 2024;
 
@@ -59,46 +60,6 @@ async function createProjectFixture(name: string, startYear = 2020) {
   });
   createdProjectIds.push(project.id);
   return project.id;
-}
-
-async function deleteProject(id: number) {
-  const beneficiaryIds = (
-    await prisma.projectBeneficiary.findMany({ where: { projectId: id }, select: { id: true } })
-  ).map((beneficiary) => beneficiary.id);
-  await prisma.$transaction([
-    prisma.auditLog.deleteMany({
-      where: {
-        OR: [
-          { entity: 'project', entityId: id },
-          { entity: 'beneficiary', entityId: { in: beneficiaryIds } },
-        ],
-      },
-    }),
-    prisma.projectBeneficiary.deleteMany({ where: { projectId: id } }),
-    prisma.project.deleteMany({ where: { id } }),
-  ]);
-}
-
-function loadProject(id: number) {
-  return prisma.project.findUniqueOrThrow({
-    where: { id },
-    include: { projectBeneficiaries: true },
-  });
-}
-
-async function auditLogsFor(id: number) {
-  const beneficiaryIds = (
-    await prisma.projectBeneficiary.findMany({ where: { projectId: id }, select: { id: true } })
-  ).map((beneficiary) => beneficiary.id);
-  return prisma.auditLog.findMany({
-    where: {
-      OR: [
-        { entity: 'project', entityId: id },
-        { entity: 'beneficiary', entityId: { in: beneficiaryIds } },
-      ],
-    },
-    orderBy: { id: 'asc' },
-  });
 }
 
 async function expectRedirectToNewProject(result: Promise<unknown>) {
