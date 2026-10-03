@@ -16,11 +16,13 @@ export const projectFormSchema = projectSchema
     message: 'El año de beneficiarios no puede ser anterior al año de inicio',
     path: ['year'],
   })
-  .refine((data) => data.status !== 'closed' || data.endYear === null || data.year <= data.endYear, {
+  .refine(
+    (data) => data.status !== 'closed' || data.endYear === null || data.year <= data.endYear,
+    {
       message: 'El año de beneficiarios no puede ser posterior al año de cierre',
       path: ['year'],
-  });
-  
+    }
+  );
 
 export function splitProjectFormData(data: z.infer<typeof projectFormSchema>) {
   const {
