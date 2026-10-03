@@ -198,11 +198,34 @@ describe.each([
   });
 
   it('accepts an end year equal to the start year on a closed project', async () => {
-    await expect(submit(formData({ status: 'closed', endYear: '2019' }))).rejects.toThrow(
-      'Redirect: /dashboard/projects/10'
-    );
+    await expect(
+      submit(formData({ status: 'closed', endYear: '2019', year: '2019' }))
+    ).rejects.toThrow('Redirect: /dashboard/projects/10');
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['2023', '2024'])(
+    'rejects beneficiary year %s after project closure before writing',
+    async (year) => {
+      const result = await submit(formData({ status: 'closed', endYear: '2022', year }));
+      expect(result).toEqual({
+        errors: { year: ['El año de beneficiarios no puede ser posterior al año de cierre'] },
+      });
+      expect(mocks.transaction).not.toHaveBeenCalled();
+      expect(mocks.redirect).not.toHaveBeenCalled();
+      expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(['2019', '2021', '2022'])(
+    'accepts beneficiary year %s within the closed project period',
+    async (year) => {
+      await expect(submit(formData({ status: 'closed', endYear: '2022', year }))).rejects.toThrow(
+        'Redirect: /dashboard/projects/10'
+      );
+      expect(mocks.transaction).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it('handles stale session references', async () => {
     mocks.transaction.mockRejectedValue(databaseError('P2003', { constraint: 'authorId' }));
