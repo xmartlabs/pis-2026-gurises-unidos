@@ -13,10 +13,17 @@ type ImageUploadFieldProps = {
   id: string;
   label: string;
   value: File | null;
+  imageUrl?: string | null;
   onValueChange: (value: File | null) => void;
 };
 
-export function ImageUploadField({ id, label, value, onValueChange }: ImageUploadFieldProps) {
+export function ImageUploadField({
+  id,
+  label,
+  value,
+  imageUrl,
+  onValueChange,
+}: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>();
   const errorId = `${id}-error`;
@@ -56,9 +63,15 @@ export function ImageUploadField({ id, label, value, onValueChange }: ImageUploa
       />
       <Label
         htmlFor={id}
-        className="border-input bg-muted text-muted-foreground hover:bg-accent peer-focus-visible:ring-ring flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg border px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2"
+        className="peer-focus-visible:ring-ring border-input bg-muted text-muted-foreground hover:bg-accent flex min-h-18 w-full cursor-pointer items-center justify-center rounded-lg border px-4 py-3 text-center text-xs leading-4 font-normal peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2"
       >
-        Clic para subir imagen (JPG, PNG, máx. 5MB)
+        <span>
+          {value
+            ? `${value.name} · Cambiar imagen`
+            : imageUrl
+              ? 'Cambiar imagen'
+              : 'Clic para subir imagen (JPG, PNG, máx. 5MB)'}
+        </span>
       </Label>
       {value && (
         <Button

@@ -1,6 +1,7 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import type { ChangeEvent, ComponentProps, ReactNode } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
 import { cn } from 'cn';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -12,44 +13,65 @@ type TextInputFieldProps = Omit<
   id: string;
   name: string;
   label: string;
-  value: string;
-  onValueChange: (value: string) => void;
   description?: string;
   messages?: string[];
+  trailingAction?: ReactNode;
   className?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 };
 
 export function TextInputField({
   id,
   name,
   label,
-  value,
-  onValueChange,
   description,
   messages,
+  trailingAction,
   className,
+  onChange,
   ...inputProps
 }: TextInputFieldProps) {
+  const { register, control } = useFormContext();
+  const { errors } = useFormState({ control, name });
+  const registration = register(name);
+  const fieldError = errors[name];
+  const schemaMessage =
+    fieldError && 'message' in fieldError && typeof fieldError.message === 'string'
+      ? fieldError.message
+      : undefined;
+  const errorMessage = schemaMessage ?? messages?.[0];
+
   return (
-    <Field className={cn('min-w-0 gap-1.5', className)} data-invalid={Boolean(messages?.length)}>
+    <Field className={cn('min-w-0 gap-1.5', className)} data-invalid={Boolean(errorMessage)}>
       <FieldLabel htmlFor={id} className="text-foreground text-xs leading-4 font-medium">
         {label}
       </FieldLabel>
-      <Input
-        {...inputProps}
-        id={id}
-        name={name}
-        value={value}
-        onChange={(event) => onValueChange(event.currentTarget.value)}
-        aria-invalid={Boolean(messages?.length)}
-        className="border-input bg-background h-9 min-w-0 rounded-lg px-3 text-base shadow-none md:text-sm"
-      />
-      {description && (
+      <div className="relative">
+        <Input
+          {...inputProps}
+          {...registration}
+          id={id}
+          onChange={(event) => {
+            onChange?.(event);
+            void registration.onChange(event);
+          }}
+          aria-invalid={Boolean(errorMessage)}
+          className={cn(
+            'border-input bg-background h-9 min-w-0 rounded-lg px-3 text-base md:text-sm',
+            trailingAction && 'pr-8'
+          )}
+        />
+        {trailingAction && (
+          <div className="absolute top-1/2 right-1 -translate-y-1/2">{trailingAction}</div>
+        )}
+      </div>
+      {errorMessage ? (
+        <FieldError className="text-xs leading-4">{errorMessage}</FieldError>
+      ) : description ? (
         <FieldDescription className="text-muted-foreground text-xs leading-4">
           {description}
         </FieldDescription>
-      )}
-      <FieldError className="text-xs leading-4">{messages?.[0]}</FieldError>
+      ) : null}
     </Field>
   );
 }

@@ -5,6 +5,19 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --project-cover: linear-gradient(154deg, #e7f0e9 7.14%, #f9f1e2 46.43%, #f5e8db 78.57%);
+  --surface-page: #fafafb;
+  --surface-subtle: #f5f5f5;
+  --surface-brand-deep: #0e3a2e;
+  --text-accent: #f5970c;
+  --status-success: #16a34b;
+  --status-warning: #ff9500;
+  --history-marker: #ff9500;
+  --beneficiary-children: #f5970c;
+  --beneficiary-families: #59bff0;
+  --beneficiary-staff: #9c66ff;
+  --beneficiary-institutions: #c5d900;
+  --surface-highlight: #fff5e6;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -21,6 +34,7 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
+  --border-default: #e5e5e7;
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
@@ -44,6 +58,18 @@
 }
 
 @theme inline {
+  --color-surface-page: var(--surface-page);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-history-marker: var(--history-marker);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-brand-deep: var(--surface-brand-deep);
+  --color-text-accent: var(--text-accent);
+  --color-beneficiary-children: var(--beneficiary-children);
+  --color-beneficiary-families: var(--beneficiary-families);
+  --color-beneficiary-staff: var(--beneficiary-staff);
+  --color-beneficiary-institutions: var(--beneficiary-institutions);
+  --color-surface-highlight: var(--surface-highlight);
   --font-sans: var(--font-mulish);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -62,6 +88,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-default: var(--border-default);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -99,6 +126,12 @@
 }
 
 .dark {
+  --surface-page: oklch(0.18 0 0);
+  --status-success: #4ade80;
+  --status-warning: #ffb340;
+  --history-marker: #ffb340;
+  --surface-highlight: oklch(0.279 0.077 45.635 / 30%);
+  --project-cover: linear-gradient(154deg, #203a2b 7.14%, #3a3425 46.43%, #3d2d25 78.57%);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -174,4 +207,8 @@
   html {
     @apply font-sans;
   }
+}
+
+@utility bg-project-cover {
+  background-image: var(--project-cover);
 }

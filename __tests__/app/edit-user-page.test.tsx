@@ -23,6 +23,9 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/app/actions/users', () => ({
   createUser: vi.fn(async () => ({})),
 }));
+vi.mock('@/app/actions/password', () => ({
+  resetPassword: vi.fn(async () => ({})),
+}));
 
 import EditUserPage from '@/app/(protected)/management/users/[id]/edit/page';
 

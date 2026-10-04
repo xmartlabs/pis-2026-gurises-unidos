@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
+import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import { ADMIN } from './fixtures';
 
 const prisma = new PrismaClient();
@@ -51,7 +52,7 @@ const PROJECT_BASE_NAMES = [
 
 const PROJECT_DEPARTMENTS = ['Montevideo', 'Canelones', 'Salto', 'Rivera', 'Maldonado'];
 
-const STATUSES = ['active', 'inProgress', 'completed', 'archived'] as const;
+const STATUSES = ['active', 'paused', 'closed'] as const;
 const INTENSITIES = ['high', 'medium', 'low'] as const;
 const ZONES = ['city', 'inland', 'border', 'rural'] as const;
 
@@ -146,43 +147,36 @@ async function main() {
         const name = `${base} - ${departmentName}`;
         const startYear = 2018 + (index % 8);
 
+        const status = STATUSES[index % STATUSES.length];
+
         const data = {
           name,
-          status: STATUSES[index % STATUSES.length],
+          status,
           intensity: INTENSITIES[index % INTENSITIES.length],
           startYear,
+          endYear:
+            status === 'closed'
+              ? Math.min(startYear + 1 + (index % 3), new Date().getFullYear())
+              : null,
           leadCoordinatorId: coordinatorIds[index % coordinatorIds.length],
           departmentId: departments.get(departmentName)!,
+          topicId: topicIds[index % topicIds.length],
           zone: ZONES[index % ZONES.length],
           localityNeighborhood: index % 3 === 0 ? null : `Barrio ${index + 1}`,
           generalObjective: null,
           publicDescription: null,
-          coverPhoto: null,
+          coverPhoto: PROJECT_PLACEHOLDERS[index % PROJECT_PLACEHOLDERS.length],
           internalNotes: null,
           createdBy: admin.id,
         };
 
         const existing = await tx.project.findFirst({
-          where: { name, startYear },
-          orderBy: { id: 'asc' },
+          where: { name, startYear, deletedAt: null },
+          select: { id: true },
         });
-
         const project = existing
           ? await tx.project.update({ where: { id: existing.id }, data })
           : await tx.project.create({ data });
-
-        const projectTopicIds = [
-          topicIds[index % topicIds.length],
-          topicIds[(index + 2) % topicIds.length],
-        ];
-
-        await tx.projectTopic.deleteMany({
-          where: { projectId: project.id, topicId: { notIn: projectTopicIds } },
-        });
-        await tx.projectTopic.createMany({
-          data: projectTopicIds.map((topicId) => ({ projectId: project.id, topicId })),
-          skipDuplicates: true,
-        });
 
         const yearCount = index % 7 === 0 ? 0 : 1 + (index % 4);
 

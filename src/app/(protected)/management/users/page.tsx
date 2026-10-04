@@ -1,8 +1,6 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { auth } from '@/auth';
-import prisma from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -13,60 +11,27 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { UsersListToolbar } from '@/components/users/users-list-toolbar';
 import { UsersTable } from '@/components/users/users-table';
+import { UserStatsCards } from '@/components/users/user-stats-cards';
+import { ErrorScreen } from '@/components/error-screen';
+import { getUserList, getUserStats, parseUserListFilters } from '@/lib/users/list';
 
-const NOT_DELETED_WHERE = { deletedAt: null };
-
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await auth();
 
   if (session?.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    return <ErrorScreen code={403} />;
   }
 
-  const [users, total, admins, coordinators, pendingInvitations] = await Promise.all([
-    prisma.user.findMany({
-      where: NOT_DELETED_WHERE,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        status: true,
-        lastAccess: true,
-      },
-      orderBy: [{ id: 'asc' }],
-    }),
+  const filters = parseUserListFilters(await searchParams);
+  const [users, stats] = await Promise.all([getUserList(filters), getUserStats()]);
 
-    prisma.user.count({
-      where: NOT_DELETED_WHERE,
-    }),
-
-    prisma.user.count({
-      where: {
-        ...NOT_DELETED_WHERE,
-        role: 'admin',
-      },
-    }),
-
-    prisma.user.count({
-      where: {
-        ...NOT_DELETED_WHERE,
-        role: 'coordinator',
-      },
-    }),
-
-    prisma.user.count({
-      where: {
-        ...NOT_DELETED_WHERE,
-        status: 'pendingInvitation',
-      },
-    }),
-  ]);
-
-  const hasOnlyCurrentAdmin = users.length <= 1;
+  const hasOnlyCurrentAdmin = stats.total <= 1;
 
   return (
     <div className="mx-auto w-full max-w-296">
@@ -110,37 +75,11 @@ export default async function UsersPage() {
         </div>
       ) : (
         <div className="flex w-full flex-col gap-5 px-4 pt-6 pb-8 sm:px-6">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold">{total}</CardTitle>
-                <CardDescription>Total de usuarios</CardDescription>
-              </CardHeader>
-            </Card>
+          <UserStatsCards stats={stats} />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold">{admins}</CardTitle>
-                <CardDescription>Administradores</CardDescription>
-              </CardHeader>
-            </Card>
+          <UsersListToolbar filters={filters} filteredCount={users.length} />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold">{coordinators}</CardTitle>
-                <CardDescription>Coordinadores</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold">{pendingInvitations}</CardTitle>
-                <CardDescription>Invitaciones pendientes</CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <UsersTable users={users} />
+          <UsersTable users={users} currentUserId={Number(session.user.id)} />
         </div>
       )}
     </div>

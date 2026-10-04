@@ -5,6 +5,7 @@ type AuditLogEntry = {
   action: AuditAction;
   entity: AuditEntity;
   entityId: number;
+  details?: Prisma.InputJsonValue;
 };
 
 export function logAudit(tx: Prisma.TransactionClient, entry: AuditLogEntry) {

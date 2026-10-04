@@ -1,19 +1,26 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { ProjectFormState } from '@/lib/validation/project';
 
-const { authMock, redirectMock, logAuditMock, transactionMock } = vi.hoisted(() => ({
+const { authMock, redirectMock, logAuditMock, transactionMock, findUserMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
   redirectMock: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
   logAuditMock: vi.fn(),
   transactionMock: vi.fn(),
+  findUserMock: vi.fn(),
 }));
 
 vi.mock('@/auth', () => ({ auth: authMock }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 vi.mock('@/lib/audit-log', () => ({ logAudit: logAuditMock }));
-vi.mock('@/lib/prisma', () => ({ default: { $transaction: transactionMock } }));
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    $transaction: transactionMock,
+    user: { findUnique: findUserMock },
+  },
+}));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 import { createProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
@@ -24,6 +31,7 @@ type FormDataInput = Record<string, string | undefined>;
 
 const VALID_FIELDS: FormDataInput = {
   name: 'Community Center',
+  topicId: '1',
   status: 'active',
   intensity: 'high',
   startYear: '2020',
@@ -61,7 +69,10 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
 
   transactionMock.mockImplementation(async (callback) =>
     callback({
-      project: { create: projectCreate },
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      topic: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },
       projectBeneficiary: { create: beneficiaryCreate },
     })
   );
@@ -79,6 +90,7 @@ function knownRequestError(code: string, meta: Record<string, unknown>) {
 
 beforeEach(() => {
   authMock.mockResolvedValue({ user: { id: '7' } });
+  findUserMock.mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null });
   redirectMock.mockImplementation((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   });
@@ -132,6 +144,7 @@ describe('createProject', () => {
         status: 'active',
         intensity: 'high',
         startYear: 2020,
+        endYear: null,
         leadCoordinatorId: 1,
         departmentId: 2,
         zone: 'city',
@@ -139,7 +152,9 @@ describe('createProject', () => {
         generalObjective: null,
         publicDescription: null,
         internalNotes: null,
+        coverPhoto: expect.stringMatching(/^\/images\/project-placeholders\/[1-6]\.webp$/),
         createdBy: 7,
+        topicId: 1,
       },
     });
     expect(beneficiaryCreate).toHaveBeenCalledWith({
@@ -171,6 +186,43 @@ describe('createProject', () => {
       action: 'creation',
       entity: 'beneficiary',
       entityId: 9,
+      details: {
+        year: 2024,
+        values: {
+          directChildrenAdolescents: 10,
+          indirectChildrenAdolescents: 5,
+          youth18To29: 3,
+          families: 2,
+          coordinatedInstitutions: 1,
+          communityLeaders: 4,
+          basicServiceStaff: 6,
+        },
+      },
+    });
+  });
+
+  test('allows a coordinator to create a project', async () => {
+    authMock.mockResolvedValue({ user: { id: '3' } });
+    findUserMock.mockResolvedValue({
+      id: 3,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    const { projectCreate } = setupTransaction();
+
+    await expect(createProject(EMPTY_STATE, buildFormData())).rejects.toThrow(
+      'NEXT_REDIRECT:/dashboard/projects/42'
+    );
+
+    expect(projectCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ createdBy: 3 }),
+    });
+    expect(logAuditMock).toHaveBeenCalledWith(expect.anything(), {
+      authorId: 3,
+      action: 'creation',
+      entity: 'project',
+      entityId: 42,
     });
   });
 
@@ -253,4 +305,72 @@ describe('createProject', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create project', unexpectedError);
     expect(redirectMock).not.toHaveBeenCalled();
   });
+
+  const TEXT_LIMITS = [
+    { field: 'name', limit: 100 },
+    { field: 'localityNeighborhood', limit: 100 },
+    { field: 'generalObjective', limit: 500 },
+    { field: 'publicDescription', limit: 1000 },
+    { field: 'internalNotes', limit: 1000 },
+  ];
+
+  test.each(TEXT_LIMITS)(
+    'accepts $field with exactly $limit characters',
+    async ({ field, limit }) => {
+      const { projectCreate } = setupTransaction();
+      const value = 'a'.repeat(limit);
+      await expect(createProject(EMPTY_STATE, buildFormData({ [field]: value }))).rejects.toThrow(
+        'NEXT_REDIRECT:/dashboard/projects/42'
+      );
+
+      expect(projectCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({ [field]: value }),
+      });
+    }
+  );
+
+  test.each(TEXT_LIMITS)(
+    'rejects $field above $limit characters without accessing the database',
+    async ({ field, limit }) => {
+      const result = await createProject(
+        EMPTY_STATE,
+        buildFormData({ [field]: 'a'.repeat(limit + 1) })
+      );
+
+      expect(result.errors?.[field]).toEqual([`Máx. ${limit} caracteres`]);
+      expect(transactionMock).not.toHaveBeenCalled();
+    }
+  );
+
+  const BENEFICIARY_FIELDS = [
+    'directChildrenAdolescents',
+    'indirectChildrenAdolescents',
+    'youth18To29',
+    'families',
+    'coordinatedInstitutions',
+    'communityLeaders',
+    'basicServiceStaff',
+  ];
+
+  test.each(BENEFICIARY_FIELDS)('accepts the int32 maximum for %s', async (field) => {
+    const { beneficiaryCreate } = setupTransaction();
+
+    await expect(
+      createProject(EMPTY_STATE, buildFormData({ [field]: '2147483647' }))
+    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
+
+    expect(beneficiaryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ [field]: 2_147_483_647 }),
+    });
+  });
+
+  test.each(BENEFICIARY_FIELDS)(
+    'rejects %s above the int32 maximum without accessing the database',
+    async (field) => {
+      const result = await createProject(EMPTY_STATE, buildFormData({ [field]: '2147483648' }));
+
+      expect(result.errors?.[field]).toEqual(['La cantidad es demasiado grande']);
+      expect(transactionMock).not.toHaveBeenCalled();
+    }
+  );
 });

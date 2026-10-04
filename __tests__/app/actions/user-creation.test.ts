@@ -22,6 +22,14 @@ vi.mock('@/lib/prisma', () => ({ default: { $transaction: transactionMock } }));
 
 const EMPTY_STATE: UserFormState = {};
 
+const SUBMITTED_VALUES = {
+  firstName: 'Ana',
+  lastName: 'García',
+  documentId: '77777777',
+  email: 'ana@gmail.com',
+  role: 'coordinator',
+};
+
 function buildFormData(overrides: Record<string, string> = {}) {
   const formData = new FormData();
   const fields = {
@@ -33,7 +41,6 @@ function buildFormData(overrides: Record<string, string> = {}) {
     role: 'coordinator',
     status: 'active',
     password: 'Test1234',
-    passwordConfirm: 'Test1234',
     ...overrides,
   };
 
@@ -89,7 +96,7 @@ describe('createUser', () => {
   test('returns validation errors without touching the database', async () => {
     const result = await createUser(EMPTY_STATE, buildFormData({ documentId: '77777776' }));
 
-    expect(result.errors?.documentId).toEqual(['Ingresá una cédula uruguaya válida (8 dígitos).']);
+    expect(result.errors?.documentId).toEqual(['Ingresá una cédula uruguaya válida.']);
     expect(transactionMock).not.toHaveBeenCalled();
   });
 
@@ -110,6 +117,7 @@ describe('createUser', () => {
         role: 'coordinator',
         status: 'active',
         passwordHash: 'hashed-password',
+        mustChangePassword: true,
         createdBy: 7,
       }),
     });
@@ -148,10 +156,7 @@ describe('createUser', () => {
   });
 
   test('returns error for a weak password', async () => {
-    const result = await createUser(
-      EMPTY_STATE,
-      buildFormData({ password: '1234', passwordConfirm: '1234' })
-    );
+    const result = await createUser(EMPTY_STATE, buildFormData({ password: '1234' }));
 
     expect(result.errors?.password).toEqual(
       expect.arrayContaining([
@@ -164,18 +169,12 @@ describe('createUser', () => {
     expect(hashMock).not.toHaveBeenCalled();
   });
 
-  test('returns an error when passwords do not match', async () => {
-    const result = await createUser(EMPTY_STATE, buildFormData({ passwordConfirm: 'Dif123' }));
-
-    expect(result.errors?.passwordConfirm).toContain('Las contraseñas no coinciden.');
-    expect(transactionMock).not.toHaveBeenCalled();
-  });
-
   test('returns a duplicate document error', async () => {
     transactionMock.mockRejectedValue(knownRequestError('P2002', { target: ['documentId'] }));
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'Ya existe un usuario con ese documento.',
+      values: SUBMITTED_VALUES,
     });
   });
 
@@ -184,6 +183,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'Ya existe un usuario con ese correo electrónico.',
+      values: SUBMITTED_VALUES,
     });
   });
 
@@ -192,6 +192,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'Tu sesión ya no es válida. Cerrá sesión y volvé a ingresar.',
+      values: SUBMITTED_VALUES,
     });
   });
 
@@ -200,6 +201,7 @@ describe('createUser', () => {
 
     await expect(createUser(EMPTY_STATE, buildFormData())).resolves.toEqual({
       formError: 'No se pudo crear el usuario. Intentá de nuevo.',
+      values: SUBMITTED_VALUES,
     });
   });
 

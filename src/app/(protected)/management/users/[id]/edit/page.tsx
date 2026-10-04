@@ -1,8 +1,9 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { formatLastAccess, formatUserDate } from '@/lib/users/format';
+import { formatDate, formatUserDate } from '@/lib/users/format';
 import { UserForm } from '@/components/user-form';
+import { ErrorScreen } from '@/components/error-screen';
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -12,7 +13,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   }
 
   if (session.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    return <ErrorScreen code={403} />;
   }
 
   const { id } = await params;
@@ -20,6 +21,10 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
 
   if (!Number.isInteger(userId) || userId <= 0) {
     notFound();
+  }
+
+  if (userId === Number(session.user.id)) {
+    redirect('/management/profile');
   }
 
   const user = await prisma.user.findUnique({
@@ -72,6 +77,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
             key={user.id}
             mode="edit"
             initialValues={{
+              id: user.id,
               firstName: user.firstName,
               lastName: user.lastName,
               documentId: user.documentId,
@@ -80,7 +86,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
               status: user.status,
               information: {
                 createdAt: formatUserDate(user.createdAt),
-                lastAccess: formatLastAccess(user.lastAccess),
+                lastAccess: formatDate(user.lastAccess),
                 createdBy: creatorName,
                 updatedAt: formatUserDate(user.updatedAt),
               },

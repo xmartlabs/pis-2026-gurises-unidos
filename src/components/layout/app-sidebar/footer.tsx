@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { logout } from '@/app/actions/auth';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -18,9 +19,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, UserRound } from 'lucide-react';
 import type { Session } from 'next-auth';
 import { getInitials } from '@/lib/utils';
+import { getAvatarColorClassName } from '@/lib/users/avatar';
 
 interface Props {
   user: Session['user'];
@@ -29,8 +31,10 @@ interface Props {
 function SidebarUser({ user }: Props) {
   return (
     <>
-      <Avatar className="rounded-md after:rounded-sm">
-        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+      <Avatar className="rounded-md after:rounded-md">
+        <AvatarFallback className={`rounded-md ${getAvatarColorClassName(user.avatarColorIndex)}`}>
+          {getInitials(user.name)}
+        </AvatarFallback>
       </Avatar>
       <span className="grid min-w-0 flex-1 text-left leading-tight">
         <span className="truncate leading-5 font-medium">{user.name ?? 'Usuario'}</span>
@@ -55,7 +59,7 @@ function LogoutButton() {
 }
 
 export function AppSidebarFooter({ user }: Props) {
-  const { isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   if (isMobile) {
     return (
@@ -64,6 +68,15 @@ export function AppSidebarFooter({ user }: Props) {
           <SidebarUser user={user} />
         </div>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="h-10 gap-3 [&_svg]:size-5"
+              render={<Link href="/management/profile" onClick={() => setOpenMobile(false)} />}
+            >
+              <UserRound />
+              <span>Mi perfil</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <LogoutButton />
           </SidebarMenuItem>
@@ -92,6 +105,11 @@ export function AppSidebarFooter({ user }: Props) {
                   </span>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/management/profile" />}>
+                <UserRound />
+                <span>Mi perfil</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <form action={logout}>
                 <DropdownMenuItem

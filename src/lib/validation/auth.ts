@@ -13,7 +13,7 @@ export const loginSchema = z.object({
     .string()
     .trim()
     .min(1, 'El documento es obligatorio.')
-    .refine(isValidUruguayanDocumentId, 'Ingresá una cédula uruguaya válida (8 dígitos).')
+    .refine(isValidUruguayanDocumentId, 'Ingresá una cédula uruguaya válida.')
     .transform(normalizeDocumentId),
   password: z.string().min(1, 'La contraseña es obligatoria.'),
 });

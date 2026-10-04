@@ -6,3 +6,16 @@ export const ADMIN = {
   role: 'admin',
   status: 'active',
 } as const;
+
+export const TABLES = [
+  'ProjectCoordinator',
+  'ProjectBeneficiary',
+  'AuditLog',
+  'Report',
+  'Metric',
+  'PublicSettings',
+  'Project',
+  'User',
+  'Topic',
+  'Department',
+];

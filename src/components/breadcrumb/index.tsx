@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { getBreadcrumbsFromPathname } from './utils';
 
-export function AppBreadcrumb() {
+export function AppBreadcrumb({ currentLabel }: { currentLabel?: string }) {
   const pathname = usePathname();
   const crumbs = getBreadcrumbsFromPathname(pathname);
 
@@ -26,15 +26,16 @@ export function AppBreadcrumb() {
       <BreadcrumbList>
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
-          const isDisabled = index === 0;
+          const isDisabled = index === 0 && crumb.href !== '/dashboard';
+          const label = isLast && currentLabel ? currentLabel : crumb.label;
 
           return (
             <Fragment key={crumb.href}>
               <BreadcrumbItem>
                 {isLast || isDisabled ? (
-                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  <BreadcrumbPage>{label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink render={<Link href={crumb.href} />}>{crumb.label}</BreadcrumbLink>
+                  <BreadcrumbLink render={<Link href={crumb.href} />}>{label}</BreadcrumbLink>
                 )}
               </BreadcrumbItem>
               {!isLast ? <BreadcrumbSeparator /> : null}
