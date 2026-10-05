@@ -5,7 +5,6 @@ export async function copyText(text: string) {
   }
 
   const activeElement = document.activeElement as HTMLElement | null;
-  // Modal dialogs trap focus, so the textarea has to live inside the open dialog to be selectable.
   const container = activeElement?.closest<HTMLElement>('[role="dialog"]') ?? document.body;
   const textarea = document.createElement('textarea');
   textarea.value = text;

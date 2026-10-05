@@ -12,7 +12,6 @@ type PublicProjectPageProps = {
   params: Promise<{ id: string }>;
 };
 
-// Unused: nothing links here since "Ver vista pública" points to the home page.
 export default async function PublicProjectPage({ params }: PublicProjectPageProps) {
   const { id } = await params;
   const projectId = parseId(id);
