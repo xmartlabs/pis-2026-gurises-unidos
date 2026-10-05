@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader } from '@/components/ui/card';
@@ -24,6 +25,7 @@ type PublicProjectCardProps = {
   territory: string;
   name: string;
   description: string;
+  coverPhoto: string | null;
   reach: number;
 };
 
@@ -58,6 +60,7 @@ function PublicProjectCard({
   territory,
   name,
   description,
+  coverPhoto,
   reach,
 }: PublicProjectCardProps) {
   const styles = PUBLIC_VARIANT_STYLES[variant];
@@ -66,7 +69,17 @@ function PublicProjectCard({
     <article
       className={`${styles.card} flex flex-col overflow-hidden rounded-xl border-t-4 sm:border-t-0`}
     >
-      <div className={`${styles.image} hidden h-54.5 w-full sm:block`} />
+      <div className={`${styles.image} relative hidden h-54.5 w-full sm:block`}>
+        {coverPhoto && (
+          <Image
+            src={coverPhoto}
+            alt={`Portada de ${name}`}
+            fill
+            sizes="(min-width: 1024px) 33vw, 50vw"
+            className="object-cover"
+          />
+        )}
+      </div>
       <div className="flex flex-col gap-2 px-5 py-4">
         <div className="flex items-center gap-2">
           <span className={`${styles.dot} size-1.5 rounded-full`} />

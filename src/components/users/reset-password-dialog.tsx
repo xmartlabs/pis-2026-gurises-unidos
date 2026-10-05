@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { copyText } from '@/lib/clipboard';
 import { notify } from '@/lib/notify';
 import { generateTemporaryPassword } from '@/lib/users';
 import { resetPasswordFormSchema } from '@/lib/validation/password';
@@ -91,7 +92,7 @@ function ResetPasswordForm({
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(getValues('newPassword'));
+      await copyText(getValues('newPassword'));
       notify.success({ title: 'Contraseña copiada al portapapeles' });
     } catch {
       notify.error({ title: 'No se pudo copiar la contraseña' });
