@@ -223,7 +223,7 @@ export default async function Home() {
             Conocé en qué proyectos podés colaborar y cómo tu apoyo se convierte en impacto real
             para miles de gurises.
           </p>
-          <div className="mx-auto flex h-11 w-39.25 flex-col pt-2">
+          <div className="mx-auto flex h-11 w-39.25 flex-col pt-2" hidden>
             <Button className="bg-foreground text-background hover:bg-foreground/90 h-9 w-full gap-2.5 px-4 py-2">
               Quiero colaborar
             </Button>
