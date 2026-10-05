@@ -127,9 +127,7 @@ test('renders the selected project year and its main sections', async () => {
   expect(screen.getByRole('link', { name: 'Editar proyecto' }).getAttribute('href')).toBe(
     '/dashboard/projects/42/edit'
   );
-  expect(screen.getByRole('link', { name: 'Ver vista pública →' }).getAttribute('href')).toBe(
-    '/projects/42'
-  );
+  expect(screen.getByRole('link', { name: 'Ver vista pública →' }).getAttribute('href')).toBe('/');
 });
 
 test('returns not found for invalid project input', async () => {

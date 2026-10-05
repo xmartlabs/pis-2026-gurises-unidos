@@ -61,7 +61,6 @@ test('keeps the public card horizontal and separates contribution rows on mobile
   const { container } = render(
     <>
       <ProjectPublicCard
-        id={42}
         name="El Resorte"
         description="Community support project."
         coverPhoto={null}
