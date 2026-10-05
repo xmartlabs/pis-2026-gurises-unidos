@@ -22,6 +22,7 @@ import { Copy } from 'lucide-react';
 
 import { userEditFormSchema, userFormSchema, type UserFormState } from '@/lib/validation/user';
 import { generateTemporaryPassword } from '@/lib/users';
+import { copyText } from '@/lib/clipboard';
 import { notify } from '@/lib/notify';
 
 const initialState: UserFormState = {};
@@ -122,7 +123,7 @@ export function UserForm({ mode = 'create', initialValues }: UserFormProps) {
     if (!password) return;
 
     try {
-      await navigator.clipboard.writeText(password);
+      await copyText(password);
       notify.success({ title: 'Contraseña copiada al portapapeles' });
     } catch {
       notify.error({ title: 'No se pudo copiar la contraseña' });

@@ -75,6 +75,7 @@ export function PublicProjectsList({ year, initialPage }: PublicProjectsListProp
               territory={project.department}
               name={project.name}
               description={project.description}
+              coverPhoto={project.coverPhoto}
               reach={project.reach}
             />
           ))}

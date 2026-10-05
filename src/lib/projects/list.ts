@@ -12,6 +12,7 @@ const PROJECT_LIST_SELECT = {
   zone: true,
   localityNeighborhood: true,
   publicDescription: true,
+  coverPhoto: true,
   leadCoordinator: { select: { id: true, firstName: true, lastName: true } },
   department: { select: { id: true, name: true } },
   projectBeneficiaries: {
