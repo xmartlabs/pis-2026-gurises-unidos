@@ -72,6 +72,7 @@ function buildProject(
     zone: 'city',
     localityNeighborhood: null,
     publicDescription: null,
+    coverPhoto: null,
     leadCoordinator: { id: 1, firstName: 'Carlos', lastName: 'Coordinator' },
     department: { id: 1, name: 'Montevideo' },
     beneficiaries,

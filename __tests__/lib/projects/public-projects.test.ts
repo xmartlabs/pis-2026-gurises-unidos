@@ -6,6 +6,7 @@ const ROW = {
   id: 1,
   name: 'Centro comunitario',
   publicDescription: null,
+  coverPhoto: '/images/project-placeholders/1.webp',
   department: { id: 1, name: 'Montevideo' },
   projectBeneficiaries: [
     {
@@ -34,7 +35,14 @@ describe('getPublicProjectsPage', () => {
 
     expect(result).toEqual({
       items: [
-        { id: 1, name: 'Centro comunitario', department: 'Montevideo', description: '', reach: 15 },
+        {
+          id: 1,
+          name: 'Centro comunitario',
+          department: 'Montevideo',
+          description: '',
+          coverPhoto: '/images/project-placeholders/1.webp',
+          reach: 15,
+        },
       ],
       page: 1,
       hasMore: true,

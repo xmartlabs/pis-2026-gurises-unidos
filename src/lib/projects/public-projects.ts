@@ -8,6 +8,7 @@ export type PublicProject = {
   name: string;
   department: string;
   description: string;
+  coverPhoto: string | null;
   reach: number;
 };
 
@@ -37,6 +38,7 @@ export async function getPublicProjectsPage(
           name: project.name,
           department: project.department.name,
           description: project.publicDescription ?? '',
+          coverPhoto: project.coverPhoto,
           reach: project.beneficiaries.reduce((sum, record) => sum + record.total, 0),
         })),
     page: result.page,
