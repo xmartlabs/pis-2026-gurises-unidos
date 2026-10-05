@@ -20,8 +20,19 @@ async function main() {
 
   await prisma.$transaction(
     async (tx) => {
-      const tables = TABLES.map((table) => `"${table}"`).join(',');
-      await tx.$executeRawUnsafe(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
+      const existingTables = await tx.$queryRaw<{ name: string }[]>`
+        SELECT name FROM unnest(${TABLES}::text[]) AS name
+        WHERE to_regclass(quote_ident(name)) IS NOT NULL
+      `;
+      const tables = existingTables.map(({ name }) => `"${name}"`).join(',');
+      if (tables) {
+        await tx.$executeRawUnsafe(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
+      }
+
+      await tx.$executeRaw`
+        UPDATE "_prisma_migrations" SET rolled_back_at = now()
+        WHERE finished_at IS NULL AND rolled_back_at IS NULL
+      `;
 
       if (mode === 'reset') {
         await tx.user.create({ data: { ...ADMIN, passwordHash } });
