@@ -32,5 +32,7 @@ export const BENEFICIARY_CATEGORIES = BENEFICIARY_FIELDS.map(({ key, label }, in
 }));
 
 export function beneficiaryValues(counts: Partial<BeneficiaryCounts>) {
-  return Object.entries(counts).map(([key, value]) => ({ value, category: { connect: { key } } }));
+  return Object.entries(counts)
+    .filter(([, value]) => value > 0)
+    .map(([key, value]) => ({ value, category: { connect: { key } } }));
 }

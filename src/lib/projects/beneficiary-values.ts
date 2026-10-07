@@ -17,7 +17,7 @@ export function toBeneficiaryCounts(values: BeneficiaryValueRow[]): BeneficiaryC
 }
 
 export function toBeneficiaryValuesCreate(counts: BeneficiaryCounts) {
-  return BENEFICIARY_FIELDS.map(({ key }) => ({
+  return BENEFICIARY_FIELDS.filter(({ key }) => counts[key] > 0).map(({ key }) => ({
     value: counts[key],
     category: { connect: { key } },
   }));
@@ -32,4 +32,22 @@ export async function sumBeneficiaryValues(
     _sum: { value: true },
   });
   return _sum.value ?? 0;
+}
+
+export async function sumBeneficiaryCounts(where: Prisma.ProjectBeneficiaryWhereInput) {
+  const [sums, categories] = await Promise.all([
+    prisma.projectBeneficiaryValue.groupBy({
+      by: ['categoryId'],
+      where: { beneficiary: where },
+      _sum: { value: true },
+    }),
+    prisma.beneficiaryCategory.findMany({ select: { id: true, key: true } }),
+  ]);
+  const keyById = new Map(categories.map(({ id, key }) => [id, key]));
+  return toBeneficiaryCounts(
+    sums.map(({ categoryId, _sum }) => ({
+      value: _sum.value ?? 0,
+      category: { key: keyById.get(categoryId) ?? '' },
+    }))
+  );
 }

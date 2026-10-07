@@ -7,7 +7,8 @@ import {
   readProjectFormData,
   splitProjectFormData,
 } from '@/lib/validation/project-form';
-import { beneficiaryValueRows, beneficiaryValuesCreate } from '../../mocks/beneficiary-values';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
+import { beneficiaryValues } from '../../../prisma/fixtures';
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -364,7 +365,7 @@ describe('updateProject persistence', () => {
           internalNotes: 'Team notes',
         },
       });
-      const values = beneficiaryValuesCreate({
+      const values = beneficiaryValues({
         directChildrenAdolescents: 42,
         indirectChildrenAdolescents: 68,
         youth18To29: 15,
@@ -442,8 +443,8 @@ describe('updateProject persistence', () => {
         update: expect.objectContaining({
           values: {
             deleteMany: {},
-            create: expect.arrayContaining([
-              { value: 0, category: { connect: { key: 'families' } } },
+            create: expect.not.arrayContaining([
+              expect.objectContaining({ category: { connect: { key: 'families' } } }),
             ]),
           },
         }),
@@ -498,7 +499,7 @@ describe('updateProject persistence', () => {
       )
     ).rejects.toThrow('Redirect: /dashboard/projects/10');
 
-    const values = beneficiaryValuesCreate({
+    const values = beneficiaryValues({
       directChildrenAdolescents: 0,
       indirectChildrenAdolescents: 0,
       youth18To29: 0,

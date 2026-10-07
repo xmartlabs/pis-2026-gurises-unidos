@@ -6,20 +6,21 @@ vi.mock('@/lib/prisma', () => ({
   default: {
     metric: { findMany: vi.fn() },
     projectBeneficiary: { findMany: vi.fn() },
-    projectBeneficiaryValue: { aggregate: vi.fn() },
+    projectBeneficiaryValue: { groupBy: vi.fn() },
+    beneficiaryCategory: { findMany: vi.fn() },
   },
 }));
 
-type ValueAggregate = Awaited<ReturnType<typeof prisma.projectBeneficiaryValue.aggregate>>;
-
 function mockBeneficiarySums(sums: Record<string, number>) {
-  vi.mocked(prisma.projectBeneficiaryValue.aggregate).mockImplementation((async ({
-    where,
-  }: {
-    where: { category: { key: { in: string[] } } };
-  }) => ({
-    _sum: { value: where.category.key.in.reduce((total, key) => total + sums[key], 0) },
-  })) as unknown as typeof prisma.projectBeneficiaryValue.aggregate);
+  const keys = Object.keys(sums);
+  vi.mocked(prisma.beneficiaryCategory.findMany).mockResolvedValue(
+    keys.map((key, index) => ({ id: index + 1, key })) as Awaited<
+      ReturnType<typeof prisma.beneficiaryCategory.findMany>
+    >
+  );
+  vi.mocked(prisma.projectBeneficiaryValue.groupBy).mockResolvedValue(
+    keys.map((key, index) => ({ categoryId: index + 1, _sum: { value: sums[key] } })) as never
+  );
 }
 
 describe('getMetricValues', () => {
@@ -49,9 +50,9 @@ describe('getMetricValues', () => {
       departments: 2,
       active_projects: 3,
     });
-    expect(prisma.projectBeneficiaryValue.aggregate).toHaveBeenCalledWith(
+    expect(prisma.projectBeneficiaryValue.groupBy).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ beneficiary: { year, project: { deletedAt: null } } }),
+        where: { beneficiary: { year, project: { deletedAt: null } } },
       })
     );
     expect(prisma.projectBeneficiary.findMany).toHaveBeenCalledWith(
@@ -60,9 +61,7 @@ describe('getMetricValues', () => {
   });
 
   it('returns zeros when the year has no data', async () => {
-    vi.mocked(prisma.projectBeneficiaryValue.aggregate).mockResolvedValue({
-      _sum: { value: null },
-    } as ValueAggregate);
+    mockBeneficiarySums({});
     vi.mocked(prisma.projectBeneficiary.findMany).mockResolvedValue([]);
 
     expect(Object.values(await getMetricValues(2027))).toEqual([0, 0, 0, 0, 0, 0]);

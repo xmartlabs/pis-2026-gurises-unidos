@@ -1,6 +1,8 @@
 import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { updateProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
+import { beneficiaryValues } from '../../prisma/fixtures';
 import { loadSeedData, type SeedData } from '../fixtures';
 import { signInAs } from '../session';
 
@@ -59,7 +61,7 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
           year: BENEFICIARY_YEAR,
           authorId: seed.adminId,
           values: {
-            create: Object.entries({
+            create: beneficiaryValues({
               directChildrenAdolescents: 10,
               indirectChildrenAdolescents: 5,
               youth18To29: 3,
@@ -67,7 +69,7 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
               coordinatedInstitutions: 1,
               communityLeaders: 4,
               basicServiceStaff: 6,
-            }).map(([key, value]) => ({ value, category: { connect: { key } } })),
+            }),
           },
         },
       },
@@ -101,7 +103,7 @@ async function loadProject(id: number) {
     include: {
       projectBeneficiaries: {
         orderBy: { year: 'asc' },
-        include: { values: { select: { value: true, category: { select: { key: true } } } } },
+        include: BENEFICIARY_VALUES_SELECT,
       },
     },
   });
@@ -109,7 +111,7 @@ async function loadProject(id: number) {
     ...project,
     projectBeneficiaries: project.projectBeneficiaries.map(({ values, ...beneficiary }) => ({
       ...beneficiary,
-      ...Object.fromEntries(values.map(({ value, category }) => [category.key, value])),
+      ...toBeneficiaryCounts(values),
     })),
   };
 }

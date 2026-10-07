@@ -44,7 +44,6 @@ ALTER TABLE "ProjectBeneficiaryValue" ADD CONSTRAINT "ProjectBeneficiaryValue_be
 -- AddForeignKey
 ALTER TABLE "ProjectBeneficiaryValue" ADD CONSTRAINT "ProjectBeneficiaryValue_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "BeneficiaryCategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- SeedSystemCategories
 INSERT INTO "BeneficiaryCategory" ("key", "name", "sortOrder", "isSystem")
 VALUES
   ('directChildrenAdolescents', 'NNA directos', 1, true),
@@ -55,7 +54,6 @@ VALUES
   ('communityLeaders', 'Referentes comunitarios', 6, true),
   ('basicServiceStaff', 'Personal de servicios básicos', 7, true);
 
--- MigrateData
 INSERT INTO "ProjectBeneficiaryValue" ("beneficiaryId", "categoryId", "value")
 SELECT b."id", c."id", v."value"
 FROM "ProjectBeneficiary" b

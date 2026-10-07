@@ -42,9 +42,9 @@ async function main() {
           `
         : [];
 
+      await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
       if (mode === 'reset') {
         await tx.user.create({ data: { ...ADMIN, passwordHash } });
-        await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
       }
 
       return failedMigrations.map(({ migration_name }) => migration_name);

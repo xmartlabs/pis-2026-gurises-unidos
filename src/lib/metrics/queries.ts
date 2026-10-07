@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
-import { sumBeneficiaryValues } from '@/lib/projects/beneficiary-values';
+import { sumBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 
 export async function getMetricSettings() {
   const savedMetrics = await prisma.metric.findMany({
@@ -37,11 +37,8 @@ export async function getMetricYears(currentYear: number) {
 
 export async function getMetricValues(year: number) {
   const where = { year, project: { deletedAt: null } };
-  const [childrenReached, families, teachers, institutions, projectRecords] = await Promise.all([
-    sumBeneficiaryValues(where, ['directChildrenAdolescents', 'indirectChildrenAdolescents']),
-    sumBeneficiaryValues(where, ['families']),
-    sumBeneficiaryValues(where, ['basicServiceStaff']),
-    sumBeneficiaryValues(where, ['coordinatedInstitutions']),
+  const [totals, projectRecords] = await Promise.all([
+    sumBeneficiaryCounts(where),
     prisma.projectBeneficiary.findMany({
       where,
       select: {
@@ -52,10 +49,10 @@ export async function getMetricValues(year: number) {
   ]);
 
   return {
-    children_reached: childrenReached,
-    families,
-    teachers,
-    institutions,
+    children_reached: totals.directChildrenAdolescents + totals.indirectChildrenAdolescents,
+    families: totals.families,
+    teachers: totals.basicServiceStaff,
+    institutions: totals.coordinatedInstitutions,
     departments: new Set(projectRecords.map(({ project }) => project.departmentId)).size,
     active_projects: projectRecords.length,
   };
