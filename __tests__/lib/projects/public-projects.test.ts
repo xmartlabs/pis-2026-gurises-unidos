@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { prismaMock } from '../../mocks/prisma';
 import { PUBLIC_PROJECTS_PAGE_SIZE, getPublicProjectsPage } from '@/lib/projects/public-projects';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
 
 const ROW = {
   id: 1,
@@ -11,13 +12,15 @@ const ROW = {
   projectBeneficiaries: [
     {
       year: 2025,
-      directChildrenAdolescents: 10,
-      indirectChildrenAdolescents: 5,
-      youth18To29: 0,
-      families: 0,
-      coordinatedInstitutions: 0,
-      communityLeaders: 0,
-      basicServiceStaff: 0,
+      values: beneficiaryValueRows({
+        directChildrenAdolescents: 10,
+        indirectChildrenAdolescents: 5,
+        youth18To29: 0,
+        families: 0,
+        coordinatedInstitutions: 0,
+        communityLeaders: 0,
+        basicServiceStaff: 0,
+      }),
     },
   ],
 };

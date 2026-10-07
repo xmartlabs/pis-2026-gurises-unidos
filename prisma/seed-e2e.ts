@@ -2,7 +2,7 @@ import { config as loadEnvFiles } from 'dotenv';
 import { execSync } from 'node:child_process';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { TABLES } from './fixtures';
+import { BENEFICIARY_CATEGORIES, TABLES, beneficiaryValues } from './fixtures';
 import {
   E2E_ACTIVE_PROJECT,
   E2E_ADMIN,
@@ -75,6 +75,7 @@ async function main() {
       async (tx) => {
         const tables = TABLES.map((table) => `"${table}"`).join(',');
         await tx.$executeRawUnsafe(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
+        await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
 
         const department = await tx.department.create({ data: { name: E2E_DEPARTMENT } });
         await tx.department.create({ data: { name: E2E_SECONDARY_DEPARTMENT } });
@@ -114,9 +115,8 @@ async function main() {
           data: {
             projectId: activeProject.id,
             year: E2E_BENEFICIARY_YEAR,
-            directChildrenAdolescents: 50,
-            families: 20,
             authorId: coordinator.id,
+            values: { create: beneficiaryValues({ directChildrenAdolescents: 50, families: 20 }) },
           },
         });
       },

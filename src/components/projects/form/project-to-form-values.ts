@@ -1,10 +1,10 @@
-import type { Project, ProjectBeneficiary } from '@/generated/prisma/client';
-import { BENEFICIARY_FIELDS } from '@/lib/project-display';
+import type { Project } from '@/generated/prisma/client';
+import { BENEFICIARY_FIELDS, type BeneficiaryCounts } from '@/lib/project-display';
 import { getDefaultValues } from './get-default-values';
 import type { ProjectFormValues } from './project-form-values';
 
 export function projectToFormValues(
-  project: Project & { projectBeneficiaries: ProjectBeneficiary[] },
+  project: Project & { projectBeneficiaries: (BeneficiaryCounts & { year: number })[] },
   currentYear: number
 ): ProjectFormValues {
   const beneficiary = project.projectBeneficiaries.find(({ year }) => year === currentYear);

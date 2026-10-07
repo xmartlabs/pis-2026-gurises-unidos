@@ -52,6 +52,7 @@ enum AuditEntity {
   user
   project
   beneficiary
+  beneficiaryCategory
   metric
 }
 
@@ -74,15 +75,16 @@ model User {
   updatedAt          DateTime?  @updatedAt
   deletedAt          DateTime?
 
-  creator               User?                @relation("UserCreatedBy", fields: [createdBy], references: [id])
-  createdUsers          User[]               @relation("UserCreatedBy")
-  ledProjects           Project[]            @relation("ProjectLeadCoordinator")
-  createdProjects       Project[]            @relation("ProjectCreatedBy")
-  deletedProjects       Project[]            @relation("ProjectDeletedBy")
+  creator               User?                 @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  createdUsers          User[]                @relation("UserCreatedBy")
+  ledProjects           Project[]             @relation("ProjectLeadCoordinator")
+  createdProjects       Project[]             @relation("ProjectCreatedBy")
+  deletedProjects       Project[]             @relation("ProjectDeletedBy")
   projectCoordinators   ProjectCoordinator[]
   projectBeneficiaries  ProjectBeneficiary[]
   metricsUpdated        Metric[]
   publicSettingsUpdated PublicSettings[]
+  beneficiaryCategories BeneficiaryCategory[]
   reportsGenerated      Report[]
   auditLogs             AuditLog[]
 }
@@ -145,23 +147,44 @@ model ProjectCoordinator {
 }
 
 model ProjectBeneficiary {
-  id                          Int      @id @default(autoincrement())
-  projectId                   Int
-  year                        Int
-  directChildrenAdolescents   Int      @default(0)
-  indirectChildrenAdolescents Int      @default(0)
-  youth18To29                 Int      @default(0)
-  families                    Int      @default(0)
-  coordinatedInstitutions     Int      @default(0)
-  communityLeaders            Int      @default(0)
-  basicServiceStaff           Int      @default(0)
-  recordedAt                  DateTime @default(now())
-  authorId                    Int
+  id         Int      @id @default(autoincrement())
+  projectId  Int
+  year       Int
+  recordedAt DateTime @default(now())
+  authorId   Int
 
-  project Project @relation(fields: [projectId], references: [id])
-  author  User    @relation(fields: [authorId], references: [id])
+  project Project                   @relation(fields: [projectId], references: [id])
+  author  User                      @relation(fields: [authorId], references: [id])
+  values  ProjectBeneficiaryValue[]
 
   @@unique([projectId, year])
+}
+
+model BeneficiaryCategory {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique
+  name         String   @unique
+  defaultValue Int      @default(0)
+  sortOrder    Int      @default(0)
+  isSystem     Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  createdBy    Int?
+
+  creator User?                     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  values  ProjectBeneficiaryValue[]
+}
+
+model ProjectBeneficiaryValue {
+  beneficiaryId Int
+  categoryId    Int
+  value         Int @default(0)
+
+  beneficiary ProjectBeneficiary  @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  category    BeneficiaryCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@id([beneficiaryId, categoryId])
+  @@index([categoryId])
 }
 
 model Metric {

@@ -1,6 +1,7 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { FIRST_PROJECT_YEAR } from '@/lib/project-display';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 
 const PUBLIC_PROJECT_SELECT = {
   id: true,
@@ -17,24 +18,14 @@ const PUBLIC_PROJECT_SELECT = {
   projectBeneficiaries: {
     orderBy: { year: 'desc' },
     take: 1,
-    select: {
-      year: true,
-      directChildrenAdolescents: true,
-      indirectChildrenAdolescents: true,
-      families: true,
-      coordinatedInstitutions: true,
-    },
+    select: { year: true, ...BENEFICIARY_VALUES_SELECT },
   },
 } satisfies Prisma.ProjectSelect;
 
-export type PublicProjectDetail = Prisma.ProjectGetPayload<{
-  select: typeof PUBLIC_PROJECT_SELECT;
-}>;
-
-export function getPublicProjectDetail(projectId: number) {
+export async function getPublicProjectDetail(projectId: number) {
   const currentYear = new Date().getFullYear();
 
-  return prisma.project.findFirst({
+  const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     select: {
       ...PUBLIC_PROJECT_SELECT,
@@ -44,4 +35,14 @@ export function getPublicProjectDetail(projectId: number) {
       },
     },
   });
+
+  if (project === null) return null;
+
+  return {
+    ...project,
+    projectBeneficiaries: project.projectBeneficiaries.map(({ year, values }) => ({
+      year,
+      ...toBeneficiaryCounts(values),
+    })),
+  };
 }

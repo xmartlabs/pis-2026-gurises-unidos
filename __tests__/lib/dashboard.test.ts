@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import prisma from '@/lib/prisma';
 import { getDashboardOverview } from '@/lib/dashboard/queries';
 import { getMetricValues, type MetricValues } from '@/lib/metrics/queries';
+import { beneficiaryValueRows } from '../mocks/beneficiary-values';
 
 vi.mock('@/lib/prisma', () => ({
   default: { project: { findMany: vi.fn() } },
@@ -124,14 +125,28 @@ describe('getDashboardOverview', () => {
         name: 'Playground',
         status: 'active',
         intensity: 'high',
-        projectBeneficiaries: [{ directChildrenAdolescents: 30, indirectChildrenAdolescents: 12 }],
+        projectBeneficiaries: [
+          {
+            values: beneficiaryValueRows({
+              directChildrenAdolescents: 30,
+              indirectChildrenAdolescents: 12,
+            }),
+          },
+        ],
       },
       {
         id: 2,
         name: 'Talleres',
         status: 'paused',
         intensity: 'low',
-        projectBeneficiaries: [{ directChildrenAdolescents: 5, indirectChildrenAdolescents: 0 }],
+        projectBeneficiaries: [
+          {
+            values: beneficiaryValueRows({
+              directChildrenAdolescents: 5,
+              indirectChildrenAdolescents: 0,
+            }),
+          },
+        ],
       },
     ]);
 

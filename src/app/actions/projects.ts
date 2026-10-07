@@ -20,6 +20,11 @@ import {
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
+import {
+  BENEFICIARY_VALUES_SELECT,
+  toBeneficiaryCounts,
+  toBeneficiaryValuesCreate,
+} from '@/lib/projects/beneficiary-values';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 import { PROJECT_LIST_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
 import { listProjects, type ProjectListPage } from '@/lib/projects/list';
@@ -125,7 +130,12 @@ export async function createProject(
           entityId: project.id,
         });
         const beneficiary = await tx.projectBeneficiary.create({
-          data: { ...beneficiaryData, projectId: project.id, authorId: user.id },
+          data: {
+            year: beneficiaryData.year,
+            projectId: project.id,
+            authorId: user.id,
+            values: { create: toBeneficiaryValuesCreate(beneficiaryData) },
+          },
         });
         await logAudit(tx, {
           authorId: user.id,
@@ -222,17 +232,30 @@ export async function updateProject(
           });
         }
         const where = { projectId_year: { projectId, year: beneficiaryData.year } };
-        const existing = await tx.projectBeneficiary.findUnique({ where });
+        const existing = await tx.projectBeneficiary.findUnique({
+          where,
+          select: BENEFICIARY_VALUES_SELECT,
+        });
+        const previousCounts = existing && toBeneficiaryCounts(existing.values);
         const changes = BENEFICIARY_FIELDS.map(({ key }) => ({
           field: key,
-          from: existing?.[key] ?? 0,
+          from: previousCounts?.[key] ?? 0,
           to: beneficiaryData[key],
         })).filter(({ from, to }) => from !== to);
         if (!existing || changes.length) {
           const beneficiary = await tx.projectBeneficiary.upsert({
             where,
-            create: { ...beneficiaryData, projectId, authorId: user.id },
-            update: { ...beneficiaryData, authorId: user.id, recordedAt: new Date() },
+            create: {
+              year: beneficiaryData.year,
+              projectId,
+              authorId: user.id,
+              values: { create: toBeneficiaryValuesCreate(beneficiaryData) },
+            },
+            update: {
+              authorId: user.id,
+              recordedAt: new Date(),
+              values: { deleteMany: {}, create: toBeneficiaryValuesCreate(beneficiaryData) },
+            },
           });
           await logAudit(tx, {
             authorId: user.id,

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
-import { ADMIN } from './fixtures';
+import { ADMIN, BENEFICIARY_CATEGORIES, beneficiaryValues } from './fixtures';
 
 const prisma = new PrismaClient();
 
@@ -82,6 +82,11 @@ async function main() {
 
   await prisma.$transaction(
     async (tx) => {
+      await tx.beneficiaryCategory.createMany({
+        data: BENEFICIARY_CATEGORIES,
+        skipDuplicates: true,
+      });
+
       const departments = new Map<string, number>();
       for (const name of DEPARTMENTS) {
         const department = await tx.department.upsert({
@@ -182,12 +187,17 @@ async function main() {
 
         for (let offset = 0; offset < yearCount; offset += 1) {
           const year = LATEST_BENEFICIARY_YEAR - offset;
-          const counts = { ...beneficiaryCounts(index + offset), authorId: coordinatorIds[0] };
+          const values = beneficiaryValues(beneficiaryCounts(index + offset));
 
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: project.id, year } },
-            update: counts,
-            create: { projectId: project.id, year, ...counts },
+            update: { authorId: coordinatorIds[0], values: { deleteMany: {}, create: values } },
+            create: {
+              projectId: project.id,
+              year,
+              authorId: coordinatorIds[0],
+              values: { create: values },
+            },
           });
         }
       }

@@ -57,14 +57,18 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
       projectBeneficiaries: {
         create: {
           year: BENEFICIARY_YEAR,
-          directChildrenAdolescents: 10,
-          indirectChildrenAdolescents: 5,
-          youth18To29: 3,
-          families: 2,
-          coordinatedInstitutions: 1,
-          communityLeaders: 4,
-          basicServiceStaff: 6,
           authorId: seed.adminId,
+          values: {
+            create: Object.entries({
+              directChildrenAdolescents: 10,
+              indirectChildrenAdolescents: 5,
+              youth18To29: 3,
+              families: 2,
+              coordinatedInstitutions: 1,
+              communityLeaders: 4,
+              basicServiceStaff: 6,
+            }).map(([key, value]) => ({ value, category: { connect: { key } } })),
+          },
         },
       },
     },
@@ -91,13 +95,23 @@ async function deleteProject(id: number) {
   ]);
 }
 
-function loadProject(id: number) {
-  return prisma.project.findUniqueOrThrow({
+async function loadProject(id: number) {
+  const project = await prisma.project.findUniqueOrThrow({
     where: { id },
     include: {
-      projectBeneficiaries: { orderBy: { year: 'asc' } },
+      projectBeneficiaries: {
+        orderBy: { year: 'asc' },
+        include: { values: { select: { value: true, category: { select: { key: true } } } } },
+      },
     },
   });
+  return {
+    ...project,
+    projectBeneficiaries: project.projectBeneficiaries.map(({ values, ...beneficiary }) => ({
+      ...beneficiary,
+      ...Object.fromEntries(values.map(({ value, category }) => [category.key, value])),
+    })),
+  };
 }
 
 async function auditLogsFor(id: number) {

@@ -1,4 +1,3 @@
-import type { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
 import { BENEFICIARY_FIELDS, FIRST_PROJECT_YEAR } from '@/lib/project-display';
@@ -9,17 +8,12 @@ import {
   getPeopleReached,
 } from '@/lib/projects/detail-metrics';
 import { canEditProject } from '@/lib/projects/permissions';
+import {
+  BENEFICIARY_VALUES_SELECT,
+  sumBeneficiaryValues,
+  toBeneficiaryCounts,
+} from '@/lib/projects/beneficiary-values';
 import { parseProjectDetailInput } from '@/lib/validation/project-detail';
-
-const BENEFICIARY_SELECT = {
-  directChildrenAdolescents: true,
-  indirectChildrenAdolescents: true,
-  youth18To29: true,
-  families: true,
-  coordinatedInstitutions: true,
-  communityLeaders: true,
-  basicServiceStaff: true,
-} satisfies Prisma.ProjectBeneficiarySelect;
 
 export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown) {
   const user = await requireUser();
@@ -98,34 +92,35 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     ]),
   ].sort((a, b) => b - a);
 
-  const [current, previous, national, activeProjectCount] = await Promise.all([
-    prisma.projectBeneficiary.findUnique({
-      where: {
-        projectId_year: {
-          projectId,
-          year: selectedYear,
+  const [currentRecord, previousRecord, nationalChildrenReached, activeProjectCount] =
+    await Promise.all([
+      prisma.projectBeneficiary.findUnique({
+        where: {
+          projectId_year: {
+            projectId,
+            year: selectedYear,
+          },
         },
-      },
-      select: BENEFICIARY_SELECT,
-    }),
-    prisma.projectBeneficiary.findUnique({
-      where: {
-        projectId_year: {
-          projectId,
-          year: comparisonYear,
+        select: BENEFICIARY_VALUES_SELECT,
+      }),
+      prisma.projectBeneficiary.findUnique({
+        where: {
+          projectId_year: {
+            projectId,
+            year: comparisonYear,
+          },
         },
-      },
-      select: BENEFICIARY_SELECT,
-    }),
-    prisma.projectBeneficiary.aggregate({
-      where: { year: selectedYear, project: { deletedAt: null } },
-      _sum: {
-        directChildrenAdolescents: true,
-        indirectChildrenAdolescents: true,
-      },
-    }),
-    prisma.project.count({ where: { status: 'active', deletedAt: null } }),
-  ]);
+        select: BENEFICIARY_VALUES_SELECT,
+      }),
+      sumBeneficiaryValues({ year: selectedYear, project: { deletedAt: null } }, [
+        'directChildrenAdolescents',
+        'indirectChildrenAdolescents',
+      ]),
+      prisma.project.count({ where: { status: 'active', deletedAt: null } }),
+    ]);
+
+  const current = currentRecord && toBeneficiaryCounts(currentRecord.values);
+  const previous = previousRecord && toBeneficiaryCounts(previousRecord.values);
 
   const childrenReached = compareMetric(getChildrenReached(current), getChildrenReached(previous));
 
@@ -139,10 +134,6 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     getPeopleReached(current),
     getPeopleReached(previous)
   ).percentageChange;
-
-  const nationalChildrenReached =
-    (national._sum.directChildrenAdolescents ?? 0) +
-    (national._sum.indirectChildrenAdolescents ?? 0);
 
   const { projectBeneficiaries: recordedYears, ...projectData } = project;
   const hasData = current !== null;
