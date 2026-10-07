@@ -9,6 +9,7 @@ import {
 } from '@/lib/validation/project-form';
 import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
 import { beneficiaryValues } from '../../../prisma/fixtures';
+import { BENEFICIARY_VALUES_SELECT } from '@/lib/projects/beneficiary-values';
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -343,7 +344,16 @@ describe('updateProject persistence', () => {
   it.each([true, false])(
     'saves project fields and beneficiary counts with existing record: %s',
     async (exists) => {
-      mocks.findBeneficiary.mockResolvedValue(exists ? { values: [] } : null);
+      mocks.findBeneficiary.mockResolvedValue(
+        exists
+          ? {
+              values: [
+                { value: 1, categoryId: 4, category: { key: 'families' } },
+                { value: 11, categoryId: 9, category: { key: 'customCategory' } },
+              ],
+            }
+          : null
+      );
       await expect(
         updateProject(10, {}, formData({ createdBy: '999', id: '999' }))
       ).rejects.toThrow('Redirect: /dashboard/projects/10');
@@ -380,7 +390,7 @@ describe('updateProject persistence', () => {
         update: {
           authorId: 7,
           recordedAt: expect.any(Date),
-          values: { deleteMany: {}, create: values },
+          values: { deleteMany: { categoryId: { in: exists ? [4] : [] } }, create: values },
         },
       });
       expect(mocks.transaction).toHaveBeenCalledTimes(1);
@@ -390,7 +400,7 @@ describe('updateProject persistence', () => {
       });
       expect(mocks.findBeneficiary).toHaveBeenCalledWith({
         where: { projectId_year: { projectId: 10, year: 2024 } },
-        select: { values: { select: { value: true, category: { select: { key: true } } } } },
+        select: BENEFICIARY_VALUES_SELECT,
       });
       expect(mocks.audit).toHaveBeenCalledTimes(2);
       expect(mocks.audit).toHaveBeenNthCalledWith(1, {
@@ -442,7 +452,7 @@ describe('updateProject persistence', () => {
       expect.objectContaining({
         update: expect.objectContaining({
           values: {
-            deleteMany: {},
+            deleteMany: { categoryId: { in: [] } },
             create: expect.not.arrayContaining([
               expect.objectContaining({ category: { connect: { key: 'families' } } }),
             ]),
@@ -510,7 +520,7 @@ describe('updateProject persistence', () => {
     });
     expect(mocks.findBeneficiary).toHaveBeenCalledWith({
       where: { projectId_year: { projectId: 10, year } },
-      select: { values: { select: { value: true, category: { select: { key: true } } } } },
+      select: BENEFICIARY_VALUES_SELECT,
     });
     expect(mocks.upsertBeneficiary).toHaveBeenCalledWith({
       where: { projectId_year: { projectId: 10, year } },
@@ -518,7 +528,7 @@ describe('updateProject persistence', () => {
       update: {
         authorId: 7,
         recordedAt: expect.any(Date),
-        values: { deleteMany: {}, create: values },
+        values: { deleteMany: { categoryId: { in: [] } }, create: values },
       },
     });
   });

@@ -22,6 +22,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import {
   BENEFICIARY_VALUES_SELECT,
+  fieldCategoryIds,
   toBeneficiaryCounts,
   toBeneficiaryValuesCreate,
 } from '@/lib/projects/beneficiary-values';
@@ -254,7 +255,10 @@ export async function updateProject(
             update: {
               authorId: user.id,
               recordedAt: new Date(),
-              values: { deleteMany: {}, create: toBeneficiaryValuesCreate(beneficiaryData) },
+              values: {
+                deleteMany: { categoryId: { in: fieldCategoryIds(existing?.values ?? []) } },
+                create: toBeneficiaryValuesCreate(beneficiaryData),
+              },
             },
           });
           await logAudit(tx, {

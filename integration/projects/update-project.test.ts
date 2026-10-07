@@ -264,6 +264,40 @@ describe('updateProject (integration)', () => {
     ]);
   });
 
+  test('keeps values of categories outside the form when updating beneficiaries', async () => {
+    const projectId = await createProjectFixture();
+    const category = await prisma.beneficiaryCategory.create({
+      data: { key: `customCategory${projectId}`, name: `Custom category ${projectId}` },
+    });
+    const [beneficiary] = (await loadProject(projectId)).projectBeneficiaries;
+    await prisma.projectBeneficiaryValue.create({
+      data: { beneficiaryId: beneficiary.id, categoryId: category.id, value: 11 },
+    });
+    signInAs(seed.adminId);
+
+    try {
+      await expectRedirectToProject(
+        updateProject(projectId, {}, buildFormData({ families: '7' })),
+        projectId
+      );
+
+      expect(
+        await prisma.projectBeneficiaryValue.findUnique({
+          where: {
+            beneficiaryId_categoryId: { beneficiaryId: beneficiary.id, categoryId: category.id },
+          },
+          select: { value: true },
+        })
+      ).toEqual({ value: 11 });
+      expect((await loadProject(projectId)).projectBeneficiaries).toEqual([
+        expect.objectContaining({ families: 7, youth18To29: 3 }),
+      ]);
+    } finally {
+      await prisma.projectBeneficiaryValue.deleteMany({ where: { categoryId: category.id } });
+      await prisma.beneficiaryCategory.delete({ where: { id: category.id } });
+    }
+  });
+
   test('adds a beneficiary row for a new year and keeps the previous one', async () => {
     const projectId = await createProjectFixture();
     signInAs(seed.adminId);
