@@ -55,6 +55,10 @@ enum AuditEntity {
   metric
 }
 
+enum UserTokenType {
+  passwordReset
+}
+
 // ---------- TABLES ----------
 
 model User {
@@ -85,6 +89,8 @@ model User {
   publicSettingsUpdated PublicSettings[]
   reportsGenerated      Report[]
   auditLogs             AuditLog[]
+
+  tokens UserToken[]
 }
 
 model Topic {
@@ -207,4 +213,18 @@ model AuditLog {
   occurredAt DateTime    @default(now())
 
   author User @relation(fields: [authorId], references: [id])
+}
+
+model UserToken {
+  id        Int           @id @default(autoincrement())
+  userId    Int
+  type      UserTokenType
+  tokenHash String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
 }
