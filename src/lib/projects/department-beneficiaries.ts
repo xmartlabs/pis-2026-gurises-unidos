@@ -19,9 +19,7 @@ export async function getDepartmentBeneficiaries(year: number) {
   for (const { values, project } of records) {
     const department = project.department.name;
     const counts = toBeneficiaryCounts(values);
-    const totals =
-      totalsByDepartment.get(department) ??
-      (Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, 0])) as BeneficiaryCounts);
+    const totals = totalsByDepartment.get(department) ?? toBeneficiaryCounts([]);
     for (const { key } of BENEFICIARY_FIELDS) totals[key] += counts[key];
     totalsByDepartment.set(department, totals);
   }
