@@ -4,7 +4,12 @@ import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { METRIC_DEFINITIONS } from '../src/lib/metrics/constants';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import type { BeneficiaryCounts } from '../src/lib/project-display';
-import { ADMIN, BENEFICIARY_CATEGORIES, beneficiaryValues } from './fixtures';
+import {
+  ADMIN,
+  BENEFICIARY_CATEGORIES,
+  beneficiaryValues,
+  formCategoryValuesWhere,
+} from './fixtures';
 
 const prisma = new PrismaClient();
 
@@ -445,11 +450,14 @@ async function main() {
           : await tx.project.create({ data: fixture });
 
         for (const { year, ...counts } of beneficiaries) {
+          await tx.projectBeneficiaryValue.deleteMany({
+            where: formCategoryValuesWhere(saved.id, year),
+          });
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: saved.id, year } },
             update: {
               authorId: coordinator.id,
-              values: { deleteMany: {}, create: beneficiaryValues(counts) },
+              values: { create: beneficiaryValues(counts) },
             },
             create: {
               projectId: saved.id,

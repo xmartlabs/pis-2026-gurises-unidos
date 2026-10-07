@@ -11,7 +11,7 @@ type BeneficiaryValueRow = { value: number; category: { key: string } };
 export function toBeneficiaryCounts(values: BeneficiaryValueRow[]): BeneficiaryCounts {
   const counts = Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, 0]));
   for (const { value, category } of values) {
-    if (category.key in counts) counts[category.key] = value;
+    if (Object.hasOwn(counts, category.key)) counts[category.key] = value;
   }
   return counts as BeneficiaryCounts;
 }

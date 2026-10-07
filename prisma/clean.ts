@@ -42,7 +42,9 @@ async function main() {
           `
         : [];
 
-      await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
+      if (existingNames.includes('BeneficiaryCategory')) {
+        await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
+      }
       if (mode === 'reset') {
         await tx.user.create({ data: { ...ADMIN, passwordHash } });
       }

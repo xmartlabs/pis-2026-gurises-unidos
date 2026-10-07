@@ -36,3 +36,10 @@ export function beneficiaryValues(counts: Partial<BeneficiaryCounts>) {
     .filter(([, value]) => value > 0)
     .map(([key, value]) => ({ value, category: { connect: { key } } }));
 }
+
+export function formCategoryValuesWhere(projectId: number, year: number) {
+  return {
+    beneficiary: { projectId, year },
+    category: { key: { in: BENEFICIARY_FIELDS.map(({ key }) => key) } },
+  };
+}
