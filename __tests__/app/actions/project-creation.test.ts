@@ -24,7 +24,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 import { createProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
-import { beneficiaryValues } from '../../../prisma/fixtures';
+import { toBeneficiaryValuesCreate } from '@/lib/project-display';
 
 const EMPTY_STATE: ProjectFormState = {};
 
@@ -164,7 +164,7 @@ describe('createProject', () => {
         projectId: 42,
         authorId: 7,
         values: {
-          create: beneficiaryValues({
+          create: toBeneficiaryValuesCreate({
             directChildrenAdolescents: 10,
             indirectChildrenAdolescents: 5,
             youth18To29: 3,
@@ -254,7 +254,7 @@ describe('createProject', () => {
       data: expect.objectContaining({
         year: new Date().getFullYear(),
         values: {
-          create: beneficiaryValues({
+          create: toBeneficiaryValuesCreate({
             directChildrenAdolescents: 0,
             indirectChildrenAdolescents: 0,
             youth18To29: 0,

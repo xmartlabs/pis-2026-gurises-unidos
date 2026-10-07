@@ -8,7 +8,7 @@ import {
   splitProjectFormData,
 } from '@/lib/validation/project-form';
 import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
-import { beneficiaryValues } from '../../../prisma/fixtures';
+import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '@/lib/project-display';
 import { BENEFICIARY_VALUES_SELECT } from '@/lib/projects/beneficiary-values';
 
 const mocks = vi.hoisted(() => ({
@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   findBeneficiary: vi.fn(),
   findLaterBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
+  deleteBeneficiaryValues: vi.fn(),
   audit: vi.fn(),
   queryRaw: vi.fn(),
   revalidatePath: vi.fn(),
@@ -57,6 +58,7 @@ const TX = {
     findUnique: mocks.findBeneficiary,
     upsert: mocks.upsertBeneficiary,
   },
+  projectBeneficiaryValue: { deleteMany: mocks.deleteBeneficiaryValues },
   auditLog: { create: mocks.audit },
 };
 const VALID_DATA = {
@@ -344,16 +346,7 @@ describe('updateProject persistence', () => {
   it.each([true, false])(
     'saves project fields and beneficiary counts with existing record: %s',
     async (exists) => {
-      mocks.findBeneficiary.mockResolvedValue(
-        exists
-          ? {
-              values: [
-                { value: 1, categoryId: 4, category: { key: 'families' } },
-                { value: 11, categoryId: 9, category: { key: 'customCategory' } },
-              ],
-            }
-          : null
-      );
+      mocks.findBeneficiary.mockResolvedValue(exists ? { values: [] } : null);
       await expect(
         updateProject(10, {}, formData({ createdBy: '999', id: '999' }))
       ).rejects.toThrow('Redirect: /dashboard/projects/10');
@@ -375,7 +368,7 @@ describe('updateProject persistence', () => {
           internalNotes: 'Team notes',
         },
       });
-      const values = beneficiaryValues({
+      const values = toBeneficiaryValuesCreate({
         directChildrenAdolescents: 42,
         indirectChildrenAdolescents: 68,
         youth18To29: 15,
@@ -390,9 +383,15 @@ describe('updateProject persistence', () => {
         update: {
           authorId: 7,
           recordedAt: expect.any(Date),
-          values: { deleteMany: { categoryId: { in: exists ? [4] : [] } }, create: values },
+          values: { create: values },
         },
       });
+      expect(mocks.deleteBeneficiaryValues).toHaveBeenCalledWith({
+        where: formCategoryValuesWhere(10, 2024),
+      });
+      expect(mocks.deleteBeneficiaryValues.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.upsertBeneficiary.mock.invocationCallOrder[0]
+      );
       expect(mocks.transaction).toHaveBeenCalledTimes(1);
       expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
         maxWait: 10_000,
@@ -452,7 +451,6 @@ describe('updateProject persistence', () => {
       expect.objectContaining({
         update: expect.objectContaining({
           values: {
-            deleteMany: { categoryId: { in: [] } },
             create: expect.not.arrayContaining([
               expect.objectContaining({ category: { connect: { key: 'families' } } }),
             ]),
@@ -509,7 +507,7 @@ describe('updateProject persistence', () => {
       )
     ).rejects.toThrow('Redirect: /dashboard/projects/10');
 
-    const values = beneficiaryValues({
+    const values = toBeneficiaryValuesCreate({
       directChildrenAdolescents: 0,
       indirectChildrenAdolescents: 0,
       youth18To29: 0,
@@ -528,7 +526,7 @@ describe('updateProject persistence', () => {
       update: {
         authorId: 7,
         recordedAt: expect.any(Date),
-        values: { deleteMany: { categoryId: { in: [] } }, create: values },
+        values: { create: values },
       },
     });
   });

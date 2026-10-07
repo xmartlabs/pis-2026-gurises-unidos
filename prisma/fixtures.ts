@@ -1,4 +1,4 @@
-import { BENEFICIARY_FIELDS, type BeneficiaryCounts } from '../src/lib/project-display';
+import { BENEFICIARY_FIELDS } from '../src/lib/project-display';
 
 export const ADMIN = {
   firstName: 'Ana',
@@ -30,16 +30,3 @@ export const BENEFICIARY_CATEGORIES = BENEFICIARY_FIELDS.map(({ key, label }, in
   sortOrder: index + 1,
   isSystem: true,
 }));
-
-export function beneficiaryValues(counts: Partial<BeneficiaryCounts>) {
-  return Object.entries(counts)
-    .filter(([, value]) => value > 0)
-    .map(([key, value]) => ({ value, category: { connect: { key } } }));
-}
-
-export function formCategoryValuesWhere(projectId: number, year: number) {
-  return {
-    beneficiary: { projectId, year },
-    category: { key: { in: BENEFICIARY_FIELDS.map(({ key }) => key) } },
-  };
-}

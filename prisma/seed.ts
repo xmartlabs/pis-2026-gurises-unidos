@@ -3,13 +3,12 @@ import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { METRIC_DEFINITIONS } from '../src/lib/metrics/constants';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
-import type { BeneficiaryCounts } from '../src/lib/project-display';
 import {
-  ADMIN,
-  BENEFICIARY_CATEGORIES,
-  beneficiaryValues,
   formCategoryValuesWhere,
-} from './fixtures';
+  toBeneficiaryValuesCreate,
+  type BeneficiaryCounts,
+} from '../src/lib/project-display';
+import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
 
 const prisma = new PrismaClient();
 
@@ -457,13 +456,13 @@ async function main() {
             where: { projectId_year: { projectId: saved.id, year } },
             update: {
               authorId: coordinator.id,
-              values: { create: beneficiaryValues(counts) },
+              values: { create: toBeneficiaryValuesCreate(counts) },
             },
             create: {
               projectId: saved.id,
               year,
               authorId: coordinator.id,
-              values: { create: beneficiaryValues(counts) },
+              values: { create: toBeneficiaryValuesCreate(counts) },
             },
           });
         }

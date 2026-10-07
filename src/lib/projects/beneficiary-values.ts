@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { BENEFICIARY_FIELDS, type BeneficiaryCounts } from '@/lib/project-display';
 
 export const BENEFICIARY_VALUES_SELECT = {
-  values: { select: { value: true, categoryId: true, category: { select: { key: true } } } },
+  values: { select: { value: true, category: { select: { key: true } } } },
 } satisfies Prisma.ProjectBeneficiarySelect;
 
 type BeneficiaryValueRow = { value: number; category: { key: string } };
@@ -14,20 +14,6 @@ export function toBeneficiaryCounts(values: BeneficiaryValueRow[]): BeneficiaryC
     if (Object.hasOwn(counts, category.key)) counts[category.key] = value;
   }
   return counts as BeneficiaryCounts;
-}
-
-export function fieldCategoryIds(values: (BeneficiaryValueRow & { categoryId: number })[]) {
-  const keys = new Set<string>(BENEFICIARY_FIELDS.map(({ key }) => key));
-  return values
-    .filter(({ category }) => keys.has(category.key))
-    .map(({ categoryId }) => categoryId);
-}
-
-export function toBeneficiaryValuesCreate(counts: BeneficiaryCounts) {
-  return BENEFICIARY_FIELDS.filter(({ key }) => counts[key] > 0).map(({ key }) => ({
-    value: counts[key],
-    category: { connect: { key } },
-  }));
 }
 
 export async function sumBeneficiaryValues(

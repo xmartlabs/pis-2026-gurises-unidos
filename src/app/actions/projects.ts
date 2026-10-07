@@ -19,13 +19,12 @@ import {
   splitProjectFormData,
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
-import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import {
-  BENEFICIARY_VALUES_SELECT,
-  fieldCategoryIds,
-  toBeneficiaryCounts,
+  BENEFICIARY_FIELDS,
+  formCategoryValuesWhere,
   toBeneficiaryValuesCreate,
-} from '@/lib/projects/beneficiary-values';
+} from '@/lib/project-display';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 import { PROJECT_LIST_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
 import { listProjects, type ProjectListPage } from '@/lib/projects/list';
@@ -244,6 +243,9 @@ export async function updateProject(
           to: beneficiaryData[key],
         })).filter(({ from, to }) => from !== to);
         if (!existing || changes.length) {
+          await tx.projectBeneficiaryValue.deleteMany({
+            where: formCategoryValuesWhere(projectId, beneficiaryData.year),
+          });
           const beneficiary = await tx.projectBeneficiary.upsert({
             where,
             create: {
@@ -255,10 +257,7 @@ export async function updateProject(
             update: {
               authorId: user.id,
               recordedAt: new Date(),
-              values: {
-                deleteMany: { categoryId: { in: fieldCategoryIds(existing?.values ?? []) } },
-                create: toBeneficiaryValuesCreate(beneficiaryData),
-              },
+              values: { create: toBeneficiaryValuesCreate(beneficiaryData) },
             },
           });
           await logAudit(tx, {

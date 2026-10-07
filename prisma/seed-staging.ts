@@ -2,12 +2,8 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
-import {
-  ADMIN,
-  BENEFICIARY_CATEGORIES,
-  beneficiaryValues,
-  formCategoryValuesWhere,
-} from './fixtures';
+import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
+import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '../src/lib/project-display';
 
 const prisma = new PrismaClient();
 
@@ -192,7 +188,7 @@ async function main() {
 
         for (let offset = 0; offset < yearCount; offset += 1) {
           const year = LATEST_BENEFICIARY_YEAR - offset;
-          const values = beneficiaryValues(beneficiaryCounts(index + offset));
+          const values = toBeneficiaryValuesCreate(beneficiaryCounts(index + offset));
 
           await tx.projectBeneficiaryValue.deleteMany({
             where: formCategoryValuesWhere(project.id, year),

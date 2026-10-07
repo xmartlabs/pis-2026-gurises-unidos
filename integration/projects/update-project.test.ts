@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { updateProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
 import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
-import { beneficiaryValues } from '../../prisma/fixtures';
+import { toBeneficiaryValuesCreate } from '@/lib/project-display';
 import { loadSeedData, type SeedData } from '../fixtures';
 import { signInAs } from '../session';
 
@@ -61,7 +61,7 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
           year: BENEFICIARY_YEAR,
           authorId: seed.adminId,
           values: {
-            create: beneficiaryValues({
+            create: toBeneficiaryValuesCreate({
               directChildrenAdolescents: 10,
               indirectChildrenAdolescents: 5,
               youth18To29: 3,

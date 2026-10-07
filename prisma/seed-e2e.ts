@@ -2,7 +2,8 @@ import { config as loadEnvFiles } from 'dotenv';
 import { execSync } from 'node:child_process';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { BENEFICIARY_CATEGORIES, TABLES, beneficiaryValues } from './fixtures';
+import { BENEFICIARY_CATEGORIES, TABLES } from './fixtures';
+import { toBeneficiaryValuesCreate } from '../src/lib/project-display';
 import {
   E2E_ACTIVE_PROJECT,
   E2E_ADMIN,
@@ -116,7 +117,9 @@ async function main() {
             projectId: activeProject.id,
             year: E2E_BENEFICIARY_YEAR,
             authorId: coordinator.id,
-            values: { create: beneficiaryValues({ directChildrenAdolescents: 50, families: 20 }) },
+            values: {
+              create: toBeneficiaryValuesCreate({ directChildrenAdolescents: 50, families: 20 }),
+            },
           },
         });
       },
