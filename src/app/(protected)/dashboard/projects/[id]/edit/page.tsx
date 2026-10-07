@@ -8,6 +8,7 @@ import { updateProject } from '@/app/actions/projects';
 import { ProjectForm } from '@/components/projects/form/project-form';
 import { projectToFormValues } from '@/components/projects/form/project-to-form-values';
 import prisma from '@/lib/prisma';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import { DeleteProjectSection } from '@/components/projects/delete-project-section';
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +23,12 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
-    include: { projectBeneficiaries: { orderBy: { year: 'desc' } } },
+    include: {
+      projectBeneficiaries: {
+        orderBy: { year: 'desc' },
+        select: { id: true, year: true, ...BENEFICIARY_VALUES_SELECT },
+      },
+    },
   });
 
   if (!project) {
@@ -73,6 +79,10 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     }),
   ]);
 
+  const beneficiaryRecords = project.projectBeneficiaries.map(({ year, values }) => ({
+    year,
+    ...toBeneficiaryCounts(values),
+  }));
   const submitAction = updateProject.bind(null, project.id);
 
   return (
@@ -99,8 +109,11 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         <ProjectForm
           key={project.id}
           mode="edit"
-          initialValues={projectToFormValues(project, currentYear)}
-          beneficiaryRecords={project.projectBeneficiaries}
+          initialValues={projectToFormValues(
+            { ...project, projectBeneficiaries: beneficiaryRecords },
+            currentYear
+          )}
+          beneficiaryRecords={beneficiaryRecords}
           topics={topics}
           currentYear={currentYear}
           coordinators={coordinators}

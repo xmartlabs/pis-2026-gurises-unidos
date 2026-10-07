@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
-import { sumBeneficiaries } from '@/lib/project-display';
+import { sumBeneficiaries, type BeneficiaryCounts } from '@/lib/project-display';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import type { ProjectFilters } from '@/lib/validation/project-filters';
 
 const PROJECT_LIST_SELECT = {
@@ -17,23 +18,14 @@ const PROJECT_LIST_SELECT = {
   department: { select: { id: true, name: true } },
   projectBeneficiaries: {
     orderBy: { year: 'desc' },
-    select: {
-      year: true,
-      directChildrenAdolescents: true,
-      indirectChildrenAdolescents: true,
-      youth18To29: true,
-      families: true,
-      coordinatedInstitutions: true,
-      communityLeaders: true,
-      basicServiceStaff: true,
-    },
+    select: { year: true, ...BENEFICIARY_VALUES_SELECT },
   },
 } satisfies Prisma.ProjectSelect;
 
 type ProjectListRow = Prisma.ProjectGetPayload<{ select: typeof PROJECT_LIST_SELECT }>;
 
 export type ProjectListItem = Omit<ProjectListRow, 'projectBeneficiaries'> & {
-  beneficiaries: (ProjectListRow['projectBeneficiaries'][number] & { total: number })[];
+  beneficiaries: (BeneficiaryCounts & { year: number; total: number })[];
 };
 
 export type ProjectListPage = {
@@ -75,10 +67,10 @@ export function buildProjectWhere(filters: ProjectFilters): Prisma.ProjectWhereI
 function toListItem({ projectBeneficiaries, ...project }: ProjectListRow): ProjectListItem {
   return {
     ...project,
-    beneficiaries: projectBeneficiaries.map((record) => ({
-      ...record,
-      total: sumBeneficiaries(record),
-    })),
+    beneficiaries: projectBeneficiaries.map(({ year, values }) => {
+      const counts = toBeneficiaryCounts(values);
+      return { year, ...counts, total: sumBeneficiaries(counts) };
+    }),
   };
 }
 

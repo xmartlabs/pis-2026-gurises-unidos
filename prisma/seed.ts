@@ -3,7 +3,12 @@ import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { METRIC_DEFINITIONS } from '../src/lib/metrics/constants';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
-import { ADMIN } from './fixtures';
+import {
+  formCategoryValuesWhere,
+  toBeneficiaryValuesCreate,
+  type BeneficiaryCounts,
+} from '../src/lib/project-display';
+import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
 
 const prisma = new PrismaClient();
 
@@ -22,17 +27,7 @@ const DEPARTMENTS = [
 
 const TOPICS = ['Education', 'Health', 'Protection', 'Community'];
 
-const EMPTY_BENEFICIARIES = {
-  directChildrenAdolescents: 0,
-  indirectChildrenAdolescents: 0,
-  youth18To29: 0,
-  families: 0,
-  coordinatedInstitutions: 0,
-  communityLeaders: 0,
-  basicServiceStaff: 0,
-};
-
-type BeneficiaryRecord = { year: number } & Partial<typeof EMPTY_BENEFICIARIES>;
+type BeneficiaryRecord = { year: number } & Partial<BeneficiaryCounts>;
 
 type SeedProject = {
   name: string;
@@ -357,6 +352,11 @@ async function main() {
 
   await prisma.$transaction(
     async (tx) => {
+      await tx.beneficiaryCategory.createMany({
+        data: BENEFICIARY_CATEGORIES,
+        skipDuplicates: true,
+      });
+
       const departmentIds = new Map<string, number>();
       for (const name of DEPARTMENTS) {
         const department = await tx.department.upsert({
@@ -449,11 +449,21 @@ async function main() {
           : await tx.project.create({ data: fixture });
 
         for (const { year, ...counts } of beneficiaries) {
-          const data = { ...EMPTY_BENEFICIARIES, ...counts, authorId: coordinator.id };
+          await tx.projectBeneficiaryValue.deleteMany({
+            where: formCategoryValuesWhere(saved.id, year),
+          });
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: saved.id, year } },
-            update: data,
-            create: { projectId: saved.id, year, ...data },
+            update: {
+              authorId: coordinator.id,
+              values: { create: toBeneficiaryValuesCreate(counts) },
+            },
+            create: {
+              projectId: saved.id,
+              year,
+              authorId: coordinator.id,
+              values: { create: toBeneficiaryValuesCreate(counts) },
+            },
           });
         }
       }

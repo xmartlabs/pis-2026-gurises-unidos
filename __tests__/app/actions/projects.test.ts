@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProject, deleteProject, updateProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
+import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import {
   projectFormSchema,
   readProjectFormData,
   splitProjectFormData,
 } from '@/lib/validation/project-form';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
+import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '@/lib/project-display';
+import { BENEFICIARY_VALUES_SELECT } from '@/lib/projects/beneficiary-values';
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -22,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   findBeneficiary: vi.fn(),
   findLaterBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
+  deleteBeneficiaryValues: vi.fn(),
   audit: vi.fn(),
   queryRaw: vi.fn(),
   revalidatePath: vi.fn(),
@@ -53,6 +58,7 @@ const TX = {
     findUnique: mocks.findBeneficiary,
     upsert: mocks.upsertBeneficiary,
   },
+  projectBeneficiaryValue: { deleteMany: mocks.deleteBeneficiaryValues },
   auditLog: { create: mocks.audit },
 };
 const VALID_DATA = {
@@ -110,7 +116,7 @@ beforeEach(() => {
   mocks.createProject.mockResolvedValue({ id: 10 });
   mocks.updateProject.mockResolvedValue({ id: 10 });
   mocks.createBeneficiary.mockResolvedValue({ id: 20 });
-  mocks.findBeneficiary.mockResolvedValue({ id: 20 });
+  mocks.findBeneficiary.mockResolvedValue({ values: [] });
   mocks.findLaterBeneficiary.mockResolvedValue(null);
   mocks.upsertBeneficiary.mockResolvedValue({ id: 20 });
 });
@@ -257,7 +263,14 @@ it('creates the project and beneficiaries with audit entries in one transaction'
     data: expect.objectContaining({ name: 'Updated project', createdBy: 7 }),
   });
   expect(mocks.createBeneficiary).toHaveBeenCalledWith({
-    data: expect.objectContaining({ projectId: 10, year: 2024, authorId: 7, families: 30 }),
+    data: expect.objectContaining({
+      projectId: 10,
+      year: 2024,
+      authorId: 7,
+      values: {
+        create: expect.arrayContaining([{ value: 30, category: { connect: { key: 'families' } } }]),
+      },
+    }),
   });
   expect(mocks.audit).toHaveBeenCalledWith({
     data: { authorId: 7, action: 'creation', entity: 'project', entityId: 10 },
@@ -333,7 +346,7 @@ describe('updateProject persistence', () => {
   it.each([true, false])(
     'saves project fields and beneficiary counts with existing record: %s',
     async (exists) => {
-      mocks.findBeneficiary.mockResolvedValue(exists ? { id: 20 } : null);
+      mocks.findBeneficiary.mockResolvedValue(exists ? { values: [] } : null);
       await expect(
         updateProject(10, {}, formData({ createdBy: '999', id: '999' }))
       ).rejects.toThrow('Redirect: /dashboard/projects/10');
@@ -355,8 +368,7 @@ describe('updateProject persistence', () => {
           internalNotes: 'Team notes',
         },
       });
-      const counts = {
-        year: 2024,
+      const values = toBeneficiaryValuesCreate({
         directChildrenAdolescents: 42,
         indirectChildrenAdolescents: 68,
         youth18To29: 15,
@@ -364,12 +376,22 @@ describe('updateProject persistence', () => {
         coordinatedInstitutions: 6,
         communityLeaders: 12,
         basicServiceStaff: 8,
-      };
+      });
       expect(mocks.upsertBeneficiary).toHaveBeenCalledWith({
         where: { projectId_year: { projectId: 10, year: 2024 } },
-        create: { ...counts, projectId: 10, authorId: 7 },
-        update: { ...counts, authorId: 7, recordedAt: expect.any(Date) },
+        create: { year: 2024, projectId: 10, authorId: 7, values: { create: values } },
+        update: {
+          authorId: 7,
+          recordedAt: expect.any(Date),
+          values: { create: values },
+        },
       });
+      expect(mocks.deleteBeneficiaryValues).toHaveBeenCalledWith({
+        where: formCategoryValuesWhere(10, 2024),
+      });
+      expect(mocks.deleteBeneficiaryValues.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.upsertBeneficiary.mock.invocationCallOrder[0]
+      );
       expect(mocks.transaction).toHaveBeenCalledTimes(1);
       expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
         maxWait: 10_000,
@@ -377,6 +399,7 @@ describe('updateProject persistence', () => {
       });
       expect(mocks.findBeneficiary).toHaveBeenCalledWith({
         where: { projectId_year: { projectId: 10, year: 2024 } },
+        select: BENEFICIARY_VALUES_SELECT,
       });
       expect(mocks.audit).toHaveBeenCalledTimes(2);
       expect(mocks.audit).toHaveBeenNthCalledWith(1, {
@@ -425,7 +448,15 @@ describe('updateProject persistence', () => {
       }),
     });
     expect(mocks.upsertBeneficiary).toHaveBeenCalledWith(
-      expect.objectContaining({ update: expect.objectContaining({ families: 0 }) })
+      expect.objectContaining({
+        update: expect.objectContaining({
+          values: {
+            create: expect.not.arrayContaining([
+              expect.objectContaining({ category: { connect: { key: 'families' } } }),
+            ]),
+          },
+        }),
+      })
     );
   });
 
@@ -476,8 +507,7 @@ describe('updateProject persistence', () => {
       )
     ).rejects.toThrow('Redirect: /dashboard/projects/10');
 
-    const counts = {
-      year,
+    const values = toBeneficiaryValuesCreate({
       directChildrenAdolescents: 0,
       indirectChildrenAdolescents: 0,
       youth18To29: 0,
@@ -485,14 +515,19 @@ describe('updateProject persistence', () => {
       coordinatedInstitutions: 0,
       communityLeaders: 0,
       basicServiceStaff: 0,
-    };
+    });
     expect(mocks.findBeneficiary).toHaveBeenCalledWith({
       where: { projectId_year: { projectId: 10, year } },
+      select: BENEFICIARY_VALUES_SELECT,
     });
     expect(mocks.upsertBeneficiary).toHaveBeenCalledWith({
       where: { projectId_year: { projectId: 10, year } },
-      create: { ...counts, projectId: 10, authorId: 7 },
-      update: { ...counts, authorId: 7, recordedAt: expect.any(Date) },
+      create: { year, projectId: 10, authorId: 7, values: { create: values } },
+      update: {
+        authorId: 7,
+        recordedAt: expect.any(Date),
+        values: { create: values },
+      },
     });
   });
 
@@ -525,7 +560,10 @@ function unchangedRecords() {
     projectFormSchema.parse(readProjectFormData(formData()))
   );
   mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 1 });
-  mocks.findBeneficiary.mockResolvedValue({ id: 20, ...beneficiaryData });
+  const counts = Object.fromEntries(
+    BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
+  );
+  mocks.findBeneficiary.mockResolvedValue({ values: beneficiaryValueRows(counts) });
 }
 
 describe('project review regressions', () => {

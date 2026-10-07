@@ -1,6 +1,8 @@
 import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { updateProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
+import { toBeneficiaryValuesCreate } from '@/lib/project-display';
 import { loadSeedData, type SeedData } from '../fixtures';
 import { signInAs } from '../session';
 
@@ -57,14 +59,18 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
       projectBeneficiaries: {
         create: {
           year: BENEFICIARY_YEAR,
-          directChildrenAdolescents: 10,
-          indirectChildrenAdolescents: 5,
-          youth18To29: 3,
-          families: 2,
-          coordinatedInstitutions: 1,
-          communityLeaders: 4,
-          basicServiceStaff: 6,
           authorId: seed.adminId,
+          values: {
+            create: toBeneficiaryValuesCreate({
+              directChildrenAdolescents: 10,
+              indirectChildrenAdolescents: 5,
+              youth18To29: 3,
+              families: 2,
+              coordinatedInstitutions: 1,
+              communityLeaders: 4,
+              basicServiceStaff: 6,
+            }),
+          },
         },
       },
     },
@@ -91,13 +97,23 @@ async function deleteProject(id: number) {
   ]);
 }
 
-function loadProject(id: number) {
-  return prisma.project.findUniqueOrThrow({
+async function loadProject(id: number) {
+  const project = await prisma.project.findUniqueOrThrow({
     where: { id },
     include: {
-      projectBeneficiaries: { orderBy: { year: 'asc' } },
+      projectBeneficiaries: {
+        orderBy: { year: 'asc' },
+        include: BENEFICIARY_VALUES_SELECT,
+      },
     },
   });
+  return {
+    ...project,
+    projectBeneficiaries: project.projectBeneficiaries.map(({ values, ...beneficiary }) => ({
+      ...beneficiary,
+      ...toBeneficiaryCounts(values),
+    })),
+  };
 }
 
 async function auditLogsFor(id: number) {
@@ -246,6 +262,40 @@ describe('updateProject (integration)', () => {
         },
       }),
     ]);
+  });
+
+  test('keeps values of categories outside the form when updating beneficiaries', async () => {
+    const projectId = await createProjectFixture();
+    const category = await prisma.beneficiaryCategory.create({
+      data: { key: `customCategory${projectId}`, name: `Custom category ${projectId}` },
+    });
+    const [beneficiary] = (await loadProject(projectId)).projectBeneficiaries;
+    await prisma.projectBeneficiaryValue.create({
+      data: { beneficiaryId: beneficiary.id, categoryId: category.id, value: 11 },
+    });
+    signInAs(seed.adminId);
+
+    try {
+      await expectRedirectToProject(
+        updateProject(projectId, {}, buildFormData({ families: '7' })),
+        projectId
+      );
+
+      expect(
+        await prisma.projectBeneficiaryValue.findUnique({
+          where: {
+            beneficiaryId_categoryId: { beneficiaryId: beneficiary.id, categoryId: category.id },
+          },
+          select: { value: true },
+        })
+      ).toEqual({ value: 11 });
+      expect((await loadProject(projectId)).projectBeneficiaries).toEqual([
+        expect.objectContaining({ families: 7, youth18To29: 3 }),
+      ]);
+    } finally {
+      await prisma.projectBeneficiaryValue.deleteMany({ where: { categoryId: category.id } });
+      await prisma.beneficiaryCategory.delete({ where: { id: category.id } });
+    }
   });
 
   test('adds a beneficiary row for a new year and keeps the previous one', async () => {

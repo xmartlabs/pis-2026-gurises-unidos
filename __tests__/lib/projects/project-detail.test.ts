@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { prismaMock } from '../../mocks/prisma';
 import type { BeneficiaryCounts } from '@/lib/project-display';
 import { getProjectDetail } from '@/lib/projects/detail';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
 
 const { authMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
@@ -92,18 +93,13 @@ beforeEach(() => {
   prismaMock.projectBeneficiary.findUnique.mockImplementation(async ({ where }) => {
     const year = where.projectId_year.year;
 
-    if (year === 2026) return CURRENT;
-    if (year === 2025) return PREVIOUS;
+    if (year === 2026) return { values: beneficiaryValueRows(CURRENT) };
+    if (year === 2025) return { values: beneficiaryValueRows(PREVIOUS) };
 
     return null;
   });
 
-  prismaMock.projectBeneficiary.aggregate.mockResolvedValue({
-    _sum: {
-      directChildrenAdolescents: 800,
-      indirectChildrenAdolescents: 200,
-    },
-  });
+  prismaMock.projectBeneficiaryValue.aggregate.mockResolvedValue({ _sum: { value: 1000 } });
 });
 
 afterEach(() => {
@@ -280,8 +276,12 @@ describe('getProjectDetail', () => {
   it('uses the exact requested year for national totals', async () => {
     await getProjectDetail('12', '2025');
 
-    expect(prismaMock.projectBeneficiary.aggregate).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { year: 2025, project: { deletedAt: null } } })
+    expect(prismaMock.projectBeneficiaryValue.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          beneficiary: { year: 2025, project: { deletedAt: null } },
+        }),
+      })
     );
   });
 
@@ -294,8 +294,8 @@ describe('getProjectDetail', () => {
     prismaMock.projectBeneficiary.findUnique.mockImplementation(async ({ where }) => {
       const year = where.projectId_year.year;
 
-      if (year === 2026) return CURRENT;
-      if (year === 2024) return PREVIOUS;
+      if (year === 2026) return { values: beneficiaryValueRows(CURRENT) };
+      if (year === 2024) return { values: beneficiaryValueRows(PREVIOUS) };
 
       return null;
     });
@@ -358,13 +358,10 @@ describe('getProjectDetail', () => {
   });
 
   it('preserves a recorded year containing zeros', async () => {
-    prismaMock.projectBeneficiary.findUnique.mockResolvedValue(createCounts());
-    prismaMock.projectBeneficiary.aggregate.mockResolvedValue({
-      _sum: {
-        directChildrenAdolescents: 0,
-        indirectChildrenAdolescents: 0,
-      },
+    prismaMock.projectBeneficiary.findUnique.mockResolvedValue({
+      values: beneficiaryValueRows(createCounts()),
     });
+    prismaMock.projectBeneficiaryValue.aggregate.mockResolvedValue({ _sum: { value: 0 } });
 
     expect(await getProjectDetail('12', '2026')).toMatchObject({
       status: 'success',
@@ -388,12 +385,7 @@ describe('getProjectDetail', () => {
 
   it('handles a year without national records', async () => {
     prismaMock.projectBeneficiary.findUnique.mockResolvedValue(null);
-    prismaMock.projectBeneficiary.aggregate.mockResolvedValue({
-      _sum: {
-        directChildrenAdolescents: null,
-        indirectChildrenAdolescents: null,
-      },
-    });
+    prismaMock.projectBeneficiaryValue.aggregate.mockResolvedValue({ _sum: { value: null } });
 
     expect(await getProjectDetail('12', '2024')).toMatchObject({
       status: 'success',
@@ -414,7 +406,7 @@ describe('getProjectDetail', () => {
     prismaMock.project.findFirst.mockResolvedValue(null);
 
     expect(await getProjectDetail('12')).toEqual({ status: 'notFound' });
-    expect(prismaMock.projectBeneficiary.aggregate).not.toHaveBeenCalled();
+    expect(prismaMock.projectBeneficiaryValue.aggregate).not.toHaveBeenCalled();
   });
 
   it('returns notFound for a deleted project without querying metrics', async () => {
@@ -425,7 +417,7 @@ describe('getProjectDetail', () => {
       expect.objectContaining({ where: { id: 12, deletedAt: null } })
     );
     expect(prismaMock.projectBeneficiary.findUnique).not.toHaveBeenCalled();
-    expect(prismaMock.projectBeneficiary.aggregate).not.toHaveBeenCalled();
+    expect(prismaMock.projectBeneficiaryValue.aggregate).not.toHaveBeenCalled();
     expect(prismaMock.project.count).not.toHaveBeenCalled();
   });
 

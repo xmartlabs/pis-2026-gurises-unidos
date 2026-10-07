@@ -26,6 +26,8 @@ vi.mock('@/lib/audit-log', async (importOriginal) => {
 import prisma from '@/lib/prisma';
 import { updateProject } from '@/app/actions/projects';
 
+const WITH_VALUES = { values: { orderBy: { categoryId: 'asc' } } } as const;
+
 const TEST_DATABASE_URL = process.env.PROJECT_TEST_DATABASE_URL;
 const database = TEST_DATABASE_URL ? new PrismaClient({ datasourceUrl: TEST_DATABASE_URL }) : null;
 let projectId = 0;
@@ -80,7 +82,12 @@ beforeAll(async () => {
   });
   projectId = project.id;
   await database.projectBeneficiary.create({
-    data: { projectId, year: 2025, families: 20, authorId: user.id },
+    data: {
+      projectId,
+      year: 2025,
+      authorId: user.id,
+      values: { create: [{ value: 20, category: { connect: { key: 'families' } } }] },
+    },
   });
 });
 
@@ -116,6 +123,7 @@ it.skipIf(!TEST_DATABASE_URL)(
     const original = await database!.project.findUniqueOrThrow({ where: { id: projectId } });
     const historical = await database!.projectBeneficiary.findUniqueOrThrow({
       where: { projectId_year: { projectId, year: 2025 } },
+      include: WITH_VALUES,
     });
     state.failAudit = true;
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -140,13 +148,15 @@ it.skipIf(!TEST_DATABASE_URL)(
     expect(
       await database!.projectBeneficiary.findUnique({
         where: { projectId_year: { projectId, year: 2025 } },
+        include: WITH_VALUES,
       })
     ).toEqual(historical);
     expect(
       await database!.projectBeneficiary.findUnique({
         where: { projectId_year: { projectId, year: 2026 } },
+        select: { values: { where: { category: { key: 'families' } }, select: { value: true } } },
       })
-    ).toMatchObject({ families: 35 });
+    ).toEqual({ values: [{ value: 35 }] });
     expect(await database!.auditLog.count({ where: { authorId: state.authorId } })).toBe(2);
     await expect(updateProject(projectId, {}, data)).rejects.toThrow('Redirect:');
     expect(await database!.project.findUnique({ where: { id: projectId } })).toMatchObject({

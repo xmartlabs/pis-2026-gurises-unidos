@@ -24,6 +24,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 import { createProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
+import { toBeneficiaryValuesCreate } from '@/lib/project-display';
 
 const EMPTY_STATE: ProjectFormState = {};
 
@@ -160,15 +161,19 @@ describe('createProject', () => {
     expect(beneficiaryCreate).toHaveBeenCalledWith({
       data: {
         year: 2024,
-        directChildrenAdolescents: 10,
-        indirectChildrenAdolescents: 5,
-        youth18To29: 3,
-        families: 2,
-        coordinatedInstitutions: 1,
-        communityLeaders: 4,
-        basicServiceStaff: 6,
         projectId: 42,
         authorId: 7,
+        values: {
+          create: toBeneficiaryValuesCreate({
+            directChildrenAdolescents: 10,
+            indirectChildrenAdolescents: 5,
+            youth18To29: 3,
+            families: 2,
+            coordinatedInstitutions: 1,
+            communityLeaders: 4,
+            basicServiceStaff: 6,
+          }),
+        },
       },
     });
     expect(transactionMock).toHaveBeenCalledWith(expect.any(Function), {
@@ -248,13 +253,17 @@ describe('createProject', () => {
     expect(beneficiaryCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         year: new Date().getFullYear(),
-        directChildrenAdolescents: 0,
-        indirectChildrenAdolescents: 0,
-        youth18To29: 0,
-        families: 0,
-        coordinatedInstitutions: 0,
-        communityLeaders: 0,
-        basicServiceStaff: 0,
+        values: {
+          create: toBeneficiaryValuesCreate({
+            directChildrenAdolescents: 0,
+            indirectChildrenAdolescents: 0,
+            youth18To29: 0,
+            families: 0,
+            coordinatedInstitutions: 0,
+            communityLeaders: 0,
+            basicServiceStaff: 0,
+          }),
+        },
       }),
     });
   });
@@ -360,7 +369,13 @@ describe('createProject', () => {
     ).rejects.toThrow('NEXT_REDIRECT:/dashboard/projects/42');
 
     expect(beneficiaryCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({ [field]: 2_147_483_647 }),
+      data: expect.objectContaining({
+        values: {
+          create: expect.arrayContaining([
+            { value: 2_147_483_647, category: { connect: { key: field } } },
+          ]),
+        },
+      }),
     });
   });
 

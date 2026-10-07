@@ -8,11 +8,38 @@ import {
   parseProjectFilters,
   type RawProjectFilters,
 } from '@/lib/validation/project-filters';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
 
 const CARLOS = { id: 3, firstName: 'Carlos', lastName: 'Coordinator' };
 const DIANA = { id: 4, firstName: 'Diana', lastName: 'Coordinator' };
 const MONTEVIDEO = { id: 1, name: 'Montevideo' };
 const CANELONES = { id: 2, name: 'Canelones' };
+
+const RECORD_2025 = {
+  year: 2025,
+  directChildrenAdolescents: 10,
+  indirectChildrenAdolescents: 5,
+  youth18To29: 3,
+  families: 2,
+  coordinatedInstitutions: 1,
+  communityLeaders: 4,
+  basicServiceStaff: 6,
+};
+
+const RECORD_2024 = {
+  year: 2024,
+  directChildrenAdolescents: 8,
+  indirectChildrenAdolescents: 0,
+  youth18To29: 0,
+  families: 2,
+  coordinatedInstitutions: 0,
+  communityLeaders: 0,
+  basicServiceStaff: 0,
+};
+
+function toBeneficiaryRow({ year, ...counts }: typeof RECORD_2025) {
+  return { year, values: beneficiaryValueRows(counts) };
+}
 
 const PROJECTS = [
   {
@@ -25,28 +52,7 @@ const PROJECTS = [
     localityNeighborhood: 'Cerro',
     leadCoordinator: CARLOS,
     department: MONTEVIDEO,
-    projectBeneficiaries: [
-      {
-        year: 2025,
-        directChildrenAdolescents: 10,
-        indirectChildrenAdolescents: 5,
-        youth18To29: 3,
-        families: 2,
-        coordinatedInstitutions: 1,
-        communityLeaders: 4,
-        basicServiceStaff: 6,
-      },
-      {
-        year: 2024,
-        directChildrenAdolescents: 8,
-        indirectChildrenAdolescents: 0,
-        youth18To29: 0,
-        families: 2,
-        coordinatedInstitutions: 0,
-        communityLeaders: 0,
-        basicServiceStaff: 0,
-      },
-    ],
+    projectBeneficiaries: [toBeneficiaryRow(RECORD_2025), toBeneficiaryRow(RECORD_2024)],
   },
   {
     id: 2,
@@ -88,8 +94,8 @@ describe('AC1: paginated listing with each project data', () => {
       leadCoordinator: CARLOS,
       department: MONTEVIDEO,
       beneficiaries: [
-        { ...PROJECTS[0].projectBeneficiaries[0], total: 31 },
-        { ...PROJECTS[0].projectBeneficiaries[1], total: 10 },
+        { ...RECORD_2025, total: 31 },
+        { ...RECORD_2024, total: 10 },
       ],
     });
     expect(items[1].beneficiaries).toEqual([]);
