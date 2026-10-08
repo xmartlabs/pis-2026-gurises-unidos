@@ -13,7 +13,7 @@ export function toBeneficiaryCounts(values: BeneficiaryValueRow[]): BeneficiaryC
     SYSTEM_BENEFICIARY_KEYS.map((key) => [key, 0])
   );
   for (const { value, category } of values) {
-    if (category.key) counts[category.key] = value;
+    counts[category.key] = value;
   }
   return counts as BeneficiaryCounts;
 }
