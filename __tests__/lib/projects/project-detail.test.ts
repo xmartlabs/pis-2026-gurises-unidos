@@ -4,8 +4,9 @@ import type { BeneficiaryCounts } from '@/lib/project-display';
 import { getProjectDetail } from '@/lib/projects/detail';
 import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
 
-const { authMock } = vi.hoisted(() => ({
+const { authMock, extraCategories } = vi.hoisted(() => ({
   authMock: vi.fn(),
+  extraCategories: [] as { key: string; name: string }[],
 }));
 
 vi.mock('@/auth', () => ({
@@ -14,7 +15,12 @@ vi.mock('@/auth', () => ({
 
 vi.mock('@/lib/beneficiary-categories', async () => {
   const { BENEFICIARY_CATEGORY_OPTIONS } = await import('../../mocks/beneficiary-values');
-  return { getActiveBeneficiaryCategories: async () => BENEFICIARY_CATEGORY_OPTIONS };
+  return {
+    getActiveBeneficiaryCategories: async () => [
+      ...BENEFICIARY_CATEGORY_OPTIONS,
+      ...extraCategories,
+    ],
+  };
 });
 
 vi.mock('next/navigation', () => ({
@@ -191,6 +197,24 @@ describe('getProjectDetail', () => {
       });
     }
   );
+
+  it('shows zero for a custom category without a stored value in a recorded year', async () => {
+    extraCategories.push({ key: 'customTeachers', name: 'Docentes' });
+    try {
+      const result = await getProjectDetail('12', '2026');
+      if (result.status !== 'success') {
+        throw new Error('Expected success');
+      }
+
+      expect(result.data.distribution).toContainEqual({
+        key: 'customTeachers',
+        label: 'Docentes',
+        value: 0,
+      });
+    } finally {
+      extraCategories.length = 0;
+    }
+  });
 
   it('counts an active project without beneficiary records', async () => {
     prismaMock.project.findFirst.mockResolvedValue({

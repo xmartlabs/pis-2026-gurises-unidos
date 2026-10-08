@@ -132,7 +132,9 @@ function CategoryRow({ category }: { category: Category }) {
           </span>
 
           {category.isSystem ? (
-            <span className="text-muted-foreground text-xs leading-4 font-medium">Sistema</span>
+            <span className="text-muted-foreground inline-flex h-8 items-center px-2.5 text-xs leading-4 font-medium">
+              Sistema
+            </span>
           ) : category.projectCount > 0 ? (
             <AlertDialog>
               <AlertDialogTrigger render={<Button variant="ghost">Eliminar</Button>} />

@@ -159,7 +159,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
       distribution: categories.map(({ key, name }) => ({
         key,
         label: name,
-        value: current?.[key] ?? null,
+        value: current ? (current[key] ?? 0) : null,
       })),
       institutionalContribution: {
         nationalReach: {
