@@ -2,7 +2,6 @@ import { ProjectStatus, Intensity } from '@/generated/prisma/enums';
 
 export const STATUS_LABEL: Record<ProjectStatus, string> = {
   active: 'Activo',
-  paused: 'Pausado',
   closed: 'Cerrado',
 };
 
@@ -14,7 +13,6 @@ export const INTENSITY_LABEL: Record<Intensity, string> = {
 
 export const STATUS_OPTIONS = [
   { value: 'active', label: STATUS_LABEL.active },
-  { value: 'paused', label: STATUS_LABEL.paused },
   { value: 'closed', label: STATUS_LABEL.closed },
 ] as const;
 
