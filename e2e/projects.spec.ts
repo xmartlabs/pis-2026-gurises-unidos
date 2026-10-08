@@ -21,6 +21,7 @@ test('shows active projects of the latest year by default', async ({ page }) => 
   await page.goto('/dashboard/projects');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Proyectos activos' })).toBeVisible();
+  await page.getByRole('button', { name: 'Filtros de proyectos' }).click();
   await expect(page.getByRole('combobox', { name: 'Filtrar por año' })).toContainText(
     String(E2E_BENEFICIARY_YEAR)
   );
