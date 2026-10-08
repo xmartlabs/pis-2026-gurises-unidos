@@ -27,6 +27,7 @@ export const projectFiltersSchema = z
     intensity: z.enum(['high', 'medium', 'low']).optional().catch(undefined),
     leadCoordinatorId: optionalPositiveInt,
     departmentId: optionalPositiveInt,
+    topicId: optionalPositiveInt,
     startYearFrom: optionalYear,
     startYearTo: optionalYear,
     beneficiaryYear: optionalYear,

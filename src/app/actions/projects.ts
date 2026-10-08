@@ -317,7 +317,13 @@ export async function deleteProject(projectId: number): Promise<{ error?: string
 }
 
 export async function loadProjectsPage(
-  filters: { status: string; beneficiaryYear: string; search?: string },
+  filters: {
+    status: string;
+    beneficiaryYear: string;
+    search?: string;
+    departmentId?: string;
+    topicId?: string;
+  },
   page: number
 ): Promise<ProjectListPage> {
   await requireUser();

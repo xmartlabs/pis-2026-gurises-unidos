@@ -15,14 +15,25 @@ const prisma = new PrismaClient();
 const REFERENCE_YEAR = 2025;
 
 const DEPARTMENTS = [
-  'Montevideo',
+  'Artigas',
   'Canelones',
-  'Maldonado',
-  'Salto',
-  'Paysandú',
-  'Rivera',
-  'Tacuarembó',
+  'Cerro Largo',
   'Colonia',
+  'Durazno',
+  'Flores',
+  'Florida',
+  'Lavalleja',
+  'Maldonado',
+  'Montevideo',
+  'Paysandú',
+  'Río Negro',
+  'Rivera',
+  'Rocha',
+  'Salto',
+  'San José',
+  'Soriano',
+  'Tacuarembó',
+  'Treinta y Tres',
 ];
 
 const TOPICS = ['Education', 'Health', 'Protection', 'Community'];
