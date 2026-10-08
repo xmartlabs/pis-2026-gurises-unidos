@@ -301,6 +301,21 @@ describe('createProject (integration)', () => {
     expect(await countRows()).toEqual(before);
   });
 
+  test('rejects beneficiaries after the end year of a closed project', async () => {
+    signInAs(seed.adminId);
+    const before = await countRows();
+
+    const result = await createProject(
+      {},
+      buildFormData({ status: 'closed', endYear: '2023', year: '2024' })
+    );
+
+    expect(result.errors?.year).toEqual([
+      'El año de beneficiarios no puede ser posterior al año de cierre',
+    ]);
+    expect(await countRows()).toEqual(before);
+  });
+
   test('rolls back everything when the department does not exist', async () => {
     signInAs(seed.adminId);
     const before = await countRows();
