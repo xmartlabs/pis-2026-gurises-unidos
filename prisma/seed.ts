@@ -229,6 +229,60 @@ const SEED_PROJECTS: SeedProject[] = [
     ],
   },
   {
+    name: 'Escuela Abierta',
+    status: 'active',
+    intensity: 'low',
+    startYear: 2023,
+    department: 'Rivera',
+    topic: 'Education',
+    zone: 'rural',
+    localityNeighborhood: 'Paraje Cerros Blancos',
+    publicDescription:
+      'Propuestas educativas en escuelas rurales para reducir la desvinculación escolar.',
+    beneficiaries: [
+      {
+        year: 2024,
+        directChildrenAdolescents: 75,
+        families: 35,
+        basicServiceStaff: 9,
+      },
+      {
+        year: 2025,
+        directChildrenAdolescents: 60,
+        families: 28,
+        basicServiceStaff: 7,
+      },
+    ],
+  },
+  {
+    name: 'Nutrición Comunitaria',
+    status: 'active',
+    intensity: 'medium',
+    startYear: 2022,
+    department: 'Tacuarembó',
+    topic: 'Health',
+    zone: 'inland',
+    localityNeighborhood: 'Barrio Ferrocarril',
+    publicDescription:
+      'Huertas y espacios de alimentación saludable con participación de familias del barrio.',
+    beneficiaries: [
+      { year: 2024, directChildrenAdolescents: 110, families: 70, communityLeaders: 5 },
+    ],
+  },
+  {
+    name: 'Primera Infancia',
+    status: 'active',
+    intensity: 'high',
+    startYear: 2024,
+    department: 'Colonia',
+    topic: 'Protection',
+    zone: 'city',
+    localityNeighborhood: 'Barrio Sur',
+    publicDescription:
+      'Acompañamiento a familias con niños y niñas de 0 a 3 años en situación de vulnerabilidad.',
+    beneficiaries: [],
+  },
+  {
     name: 'Mirada Joven',
     status: 'closed',
     intensity: 'low',
