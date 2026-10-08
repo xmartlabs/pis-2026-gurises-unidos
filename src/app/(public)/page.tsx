@@ -87,7 +87,7 @@ export default async function Home() {
             </p>
           </div>
           <div
-            className={`lg:bg-card grid w-full grid-cols-2 gap-3 lg:max-w-328 lg:gap-0 lg:rounded-xl ${getStatsColumnsClass(stats.length)}`}
+            className={`lg:bg-card grid w-full grid-cols-2 gap-3 lg:gap-0 lg:rounded-xl ${getStatsColumnsClass(stats.length)}`}
           >
             {stats.map((stat) => (
               <div
