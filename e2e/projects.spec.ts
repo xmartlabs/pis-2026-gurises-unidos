@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import {
   E2E_ACTIVE_PROJECT,
+  E2E_BENEFICIARY_YEAR,
   E2E_CLOSED_PROJECT,
   E2E_DEPARTMENT,
   E2E_PROJECTS,
@@ -10,16 +11,31 @@ import { COORDINATOR_NAME, DESKTOP } from './helpers';
 
 test.use({ viewport: DESKTOP });
 
+const ALL_PROJECTS_URL = '/dashboard/projects?status=all&beneficiaryYear=all';
+
 function projectCards(page: Page) {
   return page.getByRole('link').filter({ has: page.getByRole('heading', { level: 2 }) });
 }
 
-test.beforeEach(async ({ page }) => {
+test('shows active projects of the latest year by default', async ({ page }) => {
   await page.goto('/dashboard/projects');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Proyectos activos' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Filtrar por año' })).toContainText(
+    String(E2E_BENEFICIARY_YEAR)
+  );
+
+  const cards = projectCards(page);
+  await expect(cards).toHaveCount(1);
+  await expect(cards.getByRole('heading', { level: 2 })).toHaveText(E2E_ACTIVE_PROJECT.name);
 });
 
 test('lists the seeded projects', async ({ page }) => {
-  await expect(page.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeVisible();
+  await page.goto(ALL_PROJECTS_URL);
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Proyectos', exact: true })
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nuevo proyecto' })).toBeVisible();
 
   const cards = projectCards(page);
@@ -33,6 +49,7 @@ test('lists the seeded projects', async ({ page }) => {
 });
 
 test('filters projects by status', async ({ page }) => {
+  await page.goto(ALL_PROJECTS_URL);
   const tabs = page.getByRole('tablist', { name: 'Filtrar por estado' });
   const cards = projectCards(page);
 
@@ -47,21 +64,39 @@ test('filters projects by status', async ({ page }) => {
   await expect(cards.getByRole('heading', { level: 2 })).toHaveText(E2E_CLOSED_PROJECT.name);
 });
 
+test('searches projects by name', async ({ page }) => {
+  await page.goto(ALL_PROJECTS_URL);
+
+  await page.getByRole('textbox', { name: 'Buscar proyectos por nombre' }).fill('closed');
+
+  await expect(page).toHaveURL(/search=closed/);
+  const cards = projectCards(page);
+  await expect(cards).toHaveCount(1);
+  await expect(cards.getByRole('heading', { level: 2 })).toHaveText(E2E_CLOSED_PROJECT.name);
+});
+
 test('shows the end year on a closed project detail', async ({ page }) => {
+  await page.goto('/dashboard/projects?status=closed&beneficiaryYear=all');
+
   await projectCards(page).filter({ hasText: E2E_CLOSED_PROJECT.name }).click();
 
   await expect(
     page.getByRole('heading', { level: 1, name: E2E_CLOSED_PROJECT.name })
   ).toBeVisible();
-  await expect(page.getByText(`Hasta ${E2E_CLOSED_PROJECT.endYear}`)).toBeVisible();
+  await expect(
+    page.getByText(`${E2E_CLOSED_PROJECT.startYear}–${E2E_CLOSED_PROJECT.endYear}`)
+  ).toBeVisible();
 });
 
 test('opens the project detail from the list', async ({ page }) => {
+  await page.goto('/dashboard/projects');
+
   await projectCards(page).filter({ hasText: E2E_ACTIVE_PROJECT.name }).click();
 
   await expect(page).toHaveURL(/\/dashboard\/projects\/\d+$/);
   await expect(
     page.getByRole('heading', { level: 1, name: E2E_ACTIVE_PROJECT.name })
   ).toBeVisible();
-  await expect(page.getByText(`Coordinador/a: ${COORDINATOR_NAME}`)).toBeVisible();
+  await expect(page.getByText('Coordinador/a:')).toBeVisible();
+  await expect(page.getByText(COORDINATOR_NAME)).toBeVisible();
 });

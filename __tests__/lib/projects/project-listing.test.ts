@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { prismaMock } from '../../mocks/prisma';
-import { listProjectFilterOptions, listProjects } from '@/lib/projects/list';
+import { listBeneficiaryYears, listProjectFilterOptions, listProjects } from '@/lib/projects/list';
 import {
   PROJECT_LIST_MAX_PAGE_SIZE,
   PROJECT_LIST_PAGE_SIZE,
@@ -8,11 +8,38 @@ import {
   parseProjectFilters,
   type RawProjectFilters,
 } from '@/lib/validation/project-filters';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
 
 const CARLOS = { id: 3, firstName: 'Carlos', lastName: 'Coordinator' };
 const DIANA = { id: 4, firstName: 'Diana', lastName: 'Coordinator' };
 const MONTEVIDEO = { id: 1, name: 'Montevideo' };
 const CANELONES = { id: 2, name: 'Canelones' };
+
+const RECORD_2025 = {
+  year: 2025,
+  directChildrenAdolescents: 10,
+  indirectChildrenAdolescents: 5,
+  youth18To29: 3,
+  families: 2,
+  coordinatedInstitutions: 1,
+  communityLeaders: 4,
+  basicServiceStaff: 6,
+};
+
+const RECORD_2024 = {
+  year: 2024,
+  directChildrenAdolescents: 8,
+  indirectChildrenAdolescents: 0,
+  youth18To29: 0,
+  families: 2,
+  coordinatedInstitutions: 0,
+  communityLeaders: 0,
+  basicServiceStaff: 0,
+};
+
+function toBeneficiaryRow({ year, ...counts }: typeof RECORD_2025) {
+  return { year, values: beneficiaryValueRows(counts) };
+}
 
 const PROJECTS = [
   {
@@ -25,28 +52,7 @@ const PROJECTS = [
     localityNeighborhood: 'Cerro',
     leadCoordinator: CARLOS,
     department: MONTEVIDEO,
-    projectBeneficiaries: [
-      {
-        year: 2025,
-        directChildrenAdolescents: 10,
-        indirectChildrenAdolescents: 5,
-        youth18To29: 3,
-        families: 2,
-        coordinatedInstitutions: 1,
-        communityLeaders: 4,
-        basicServiceStaff: 6,
-      },
-      {
-        year: 2024,
-        directChildrenAdolescents: 8,
-        indirectChildrenAdolescents: 0,
-        youth18To29: 0,
-        families: 2,
-        coordinatedInstitutions: 0,
-        communityLeaders: 0,
-        basicServiceStaff: 0,
-      },
-    ],
+    projectBeneficiaries: [toBeneficiaryRow(RECORD_2025), toBeneficiaryRow(RECORD_2024)],
   },
   {
     id: 2,
@@ -88,20 +94,20 @@ describe('AC1: paginated listing with each project data', () => {
       leadCoordinator: CARLOS,
       department: MONTEVIDEO,
       beneficiaries: [
-        { ...PROJECTS[0].projectBeneficiaries[0], total: 31 },
-        { ...PROJECTS[0].projectBeneficiaries[1], total: 10 },
+        { ...RECORD_2025, total: 31 },
+        { ...RECORD_2024, total: 10 },
       ],
     });
     expect(items[1].beneficiaries).toEqual([]);
   });
 
-  test('requests every beneficiary year, newest first', async () => {
+  test('requests only the latest beneficiary year', async () => {
     await listWith({});
 
     const { projectBeneficiaries } = findManyArgs().select;
 
     expect(projectBeneficiaries.orderBy).toEqual({ year: 'desc' });
-    expect(projectBeneficiaries).not.toHaveProperty('take');
+    expect(projectBeneficiaries.take).toBe(1);
     expect(projectBeneficiaries.where).toStrictEqual({ year: undefined });
   });
 
@@ -153,43 +159,47 @@ describe('AC2: filters', () => {
   test('by status', async () => {
     await listWith({ status: 'closed' });
 
-    expect(findManyArgs().where).toEqual({ status: 'closed' });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, status: 'closed' });
   });
 
   test('by lead coordinator', async () => {
     await listWith({ leadCoordinatorId: '4' });
 
-    expect(findManyArgs().where).toEqual({ leadCoordinatorId: 4 });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, leadCoordinatorId: 4 });
   });
 
   test('by start year range', async () => {
     await listWith({ startYearFrom: '2019', startYearTo: '2022' });
 
-    expect(findManyArgs().where).toEqual({ startYear: { gte: 2019, lte: 2022 } });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, startYear: { gte: 2019, lte: 2022 } });
   });
 
   test('by start year range with only one bound', async () => {
     await listWith({ startYearTo: '2020' });
 
-    expect(findManyArgs().where).toEqual({ startYear: { gte: undefined, lte: 2020 } });
+    expect(findManyArgs().where).toEqual({
+      deletedAt: null,
+      startYear: { gte: undefined, lte: 2020 },
+    });
   });
 
   test('by intensity', async () => {
     await listWith({ intensity: 'high' });
 
-    expect(findManyArgs().where).toEqual({ intensity: 'high' });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, intensity: 'high' });
   });
 
   test('by department', async () => {
     await listWith({ departmentId: '2' });
 
-    expect(findManyArgs().where).toEqual({ departmentId: 2 });
+    expect(findManyArgs().where).toEqual({ deletedAt: null, departmentId: 2 });
   });
 
   test('by name, case-insensitive', async () => {
     await listWith({ search: 'CENTRO' });
 
     expect(findManyArgs().where).toEqual({
+      deletedAt: null,
       name: { contains: 'CENTRO', mode: 'insensitive' },
     });
   });
@@ -198,6 +208,7 @@ describe('AC2: filters', () => {
     await listWith({ status: 'active', leadCoordinatorId: '3', startYearFrom: '2015' });
 
     expect(findManyArgs().where).toEqual({
+      deletedAt: null,
       status: 'active',
       leadCoordinatorId: 3,
       startYear: { gte: 2015, lte: undefined },
@@ -208,7 +219,12 @@ describe('AC2: filters', () => {
     await listWith({ status: 'active', departmentId: '1', beneficiaryYear: '2025' });
 
     expect(prismaMock.project.count).toHaveBeenCalledWith({
-      where: { status: 'active', departmentId: 1, projectBeneficiaries: { some: { year: 2025 } } },
+      where: {
+        deletedAt: null,
+        status: 'active',
+        departmentId: 1,
+        projectBeneficiaries: { some: { year: 2025 } },
+      },
     });
   });
 
@@ -223,7 +239,7 @@ describe('AC2: filters', () => {
       beneficiaryYear: '3000',
     });
 
-    expect(findManyArgs().where).toEqual({});
+    expect(findManyArgs().where).toEqual({ deletedAt: null });
   });
 
   test('resets to the first page when the page is beyond the filtered results', async () => {
@@ -239,7 +255,10 @@ describe('AC2: filters', () => {
   test('by beneficiary year', async () => {
     await listWith({ beneficiaryYear: '2025' });
 
-    expect(findManyArgs().where).toEqual({ projectBeneficiaries: { some: { year: 2025 } } });
+    expect(findManyArgs().where).toEqual({
+      deletedAt: null,
+      projectBeneficiaries: { some: { year: 2025 } },
+    });
   });
 
   test('requests only the selected beneficiary year', async () => {
@@ -315,27 +334,34 @@ describe('parseProjectFilters', () => {
   });
 });
 
-describe('listProjectFilterOptions', () => {
-  test('returns coordinators and departments that lead or host projects and beneficiaries years', async () => {
-    prismaMock.user.findMany.mockResolvedValue([CARLOS]);
-    prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
-    prismaMock.projectBeneficiary.findMany.mockResolvedValue([{ year: 2025 }, { year: 2024 }]);
+describe('listBeneficiaryYears', () => {
+  test('returns the distinct beneficiary years of non deleted projects, newest first', async () => {
+    prismaMock.projectBeneficiary.findMany.mockResolvedValue([{ year: 2026 }, { year: 2024 }]);
 
-    expect(await listProjectFilterOptions()).toEqual({
-      coordinators: [CARLOS],
-      departments: [MONTEVIDEO],
-      years: [2025, 2024],
-    });
-    expect(prismaMock.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { ledProjects: { some: {} } } })
-    );
-    expect(prismaMock.department.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { projects: { some: {} } } })
-    );
+    expect(await listBeneficiaryYears()).toEqual([2026, 2024]);
     expect(prismaMock.projectBeneficiary.findMany).toHaveBeenCalledWith({
+      where: { project: { deletedAt: null } },
       distinct: ['year'],
       select: { year: true },
       orderBy: { year: 'desc' },
     });
+  });
+});
+
+describe('listProjectFilterOptions', () => {
+  test('returns coordinators and departments that lead or host projects', async () => {
+    prismaMock.user.findMany.mockResolvedValue([CARLOS]);
+    prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
+
+    expect(await listProjectFilterOptions()).toEqual({
+      coordinators: [CARLOS],
+      departments: [MONTEVIDEO],
+    });
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { ledProjects: { some: { deletedAt: null } } } })
+    );
+    expect(prismaMock.department.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { projects: { some: { deletedAt: null } } } })
+    );
   });
 });

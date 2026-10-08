@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { AuthError, CredentialsSignin } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { login, logout } from '@/app/actions/auth';
-import { signIn, signOut } from '@/auth';
+import { auth, signIn, signOut } from '@/auth';
 import {
   SESSION_EXPIRATION_COOKIE,
   SESSION_EXPIRATION_COOKIE_OPTIONS,
@@ -16,6 +16,7 @@ const cookieStore = vi.hoisted(() => ({
 vi.mock('next-auth', () => import('@auth/core/errors'));
 
 vi.mock('@/auth', () => ({
+  auth: vi.fn(),
   signIn: vi.fn(),
   signOut: vi.fn(),
 }));
@@ -41,11 +42,15 @@ function makeFormData(documentId: string, password: string, remember = false) {
 describe('login', () => {
   beforeEach(() => {
     vi.mocked(signIn).mockReset();
+    vi.mocked(auth).mockReset();
     vi.mocked(redirect).mockReset();
     cookieStore.set.mockReset();
     vi.mocked(redirect).mockImplementation(() => {
       throw new Error('NEXT_REDIRECT');
     });
+    vi.mocked(auth).mockResolvedValue({
+      user: { mustChangePassword: false },
+    } as never);
   });
 
   test('signs in with the normalized document id and redirects to the dashboard', async () => {
@@ -68,6 +73,24 @@ describe('login', () => {
     );
     expect(Number(cookieStore.set.mock.calls[0][1])).toBeGreaterThan(Date.now());
     expect(redirect).toHaveBeenCalledWith('/dashboard/projects');
+  });
+
+  test('redirects to password reset when mustChangePassword is true', async () => {
+    vi.mocked(signIn).mockResolvedValue(undefined);
+    vi.mocked(auth).mockResolvedValue({
+      user: { mustChangePassword: true },
+    } as never);
+
+    await expect(login({}, makeFormData('1.111.111-1', 'password'))).rejects.toThrow(
+      'NEXT_REDIRECT'
+    );
+
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      SESSION_EXPIRATION_COOKIE,
+      expect.any(String),
+      SESSION_EXPIRATION_COOKIE_OPTIONS
+    );
+    expect(redirect).toHaveBeenCalledWith('/password-reset');
   });
 
   test('passes remember: "true" when the checkbox is checked', async () => {

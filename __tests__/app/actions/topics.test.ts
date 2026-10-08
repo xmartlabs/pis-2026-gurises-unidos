@@ -79,12 +79,28 @@ describe('deleteTopic', () => {
   test('deactivates a topic only when it has no associated projects', async () => {
     await expect(deleteTopic(4)).resolves.toEqual({ success: true });
 
-    expect(mocks.countProjects).toHaveBeenCalledWith({ where: { topicId: 4 } });
+    expect(mocks.countProjects).toHaveBeenCalledWith({
+      where: { topicId: 4, deletedAt: null },
+    });
     expect(mocks.updateTopic).toHaveBeenCalledWith({
       where: { id: 4 },
       data: { isActive: false },
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith('/management/topics');
+  });
+
+  test('deactivates a topic associated only with deleted projects', async () => {
+    mocks.countProjects.mockResolvedValue(0);
+
+    await expect(deleteTopic(4)).resolves.toEqual({ success: true });
+
+    expect(mocks.countProjects).toHaveBeenCalledWith({
+      where: { topicId: 4, deletedAt: null },
+    });
+    expect(mocks.updateTopic).toHaveBeenCalledWith({
+      where: { id: 4 },
+      data: { isActive: false },
+    });
   });
 
   test('does not deactivate a topic associated with projects', async () => {

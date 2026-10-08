@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createProject, updateProject } from '@/app/actions/projects';
+import { createProject, deleteProject, updateProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
+import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import {
   projectFormSchema,
   readProjectFormData,
   splitProjectFormData,
 } from '@/lib/validation/project-form';
+import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
+import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '@/lib/project-display';
+import { BENEFICIARY_VALUES_SELECT } from '@/lib/projects/beneficiary-values';
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -17,9 +21,12 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   createProject: vi.fn(),
   updateProject: vi.fn(),
+  softDeleteProject: vi.fn(),
   createBeneficiary: vi.fn(),
   findBeneficiary: vi.fn(),
+  findLaterBeneficiary: vi.fn(),
   upsertBeneficiary: vi.fn(),
+  deleteBeneficiaryValues: vi.fn(),
   audit: vi.fn(),
   queryRaw: vi.fn(),
   revalidatePath: vi.fn(),
@@ -38,20 +45,25 @@ const TX = {
   project: {
     create: mocks.createProject,
     update: mocks.updateProject,
-    findUnique: mocks.findProject,
-    findFirst: mocks.findDuplicateProject,
+    updateMany: mocks.softDeleteProject,
+    findFirst: vi.fn((args: { where: object }) =>
+      'name' in args.where ? mocks.findDuplicateProject(args) : mocks.findProject(args)
+    ),
   },
   user: { findFirst: mocks.findCoordinator },
   topic: { findFirst: mocks.findTopic },
   projectBeneficiary: {
+    findFirst: mocks.findLaterBeneficiary,
     create: mocks.createBeneficiary,
     findUnique: mocks.findBeneficiary,
     upsert: mocks.upsertBeneficiary,
   },
+  projectBeneficiaryValue: { deleteMany: mocks.deleteBeneficiaryValues },
   auditLog: { create: mocks.audit },
 };
 const VALID_DATA = {
   name: '  Updated project  ',
+  topicId: '1',
   status: 'paused',
   intensity: 'medium',
   startYear: '2019',
@@ -93,7 +105,7 @@ beforeEach(() => {
   mocks.auth.mockResolvedValue({ user: { id: '7', role: 'admin' } });
   mocks.findUser.mockResolvedValue({ id: 7, role: 'admin', status: 'active', deletedAt: null });
   mocks.findCoordinator.mockResolvedValue({ id: 2 });
-  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: null });
+  mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: 1 });
   mocks.findTopic.mockResolvedValue({ id: 2 });
   mocks.findDuplicateProject.mockResolvedValue(null);
   mocks.queryRaw.mockResolvedValue([]);
@@ -104,7 +116,8 @@ beforeEach(() => {
   mocks.createProject.mockResolvedValue({ id: 10 });
   mocks.updateProject.mockResolvedValue({ id: 10 });
   mocks.createBeneficiary.mockResolvedValue({ id: 20 });
-  mocks.findBeneficiary.mockResolvedValue({ id: 20 });
+  mocks.findBeneficiary.mockResolvedValue({ values: [] });
+  mocks.findLaterBeneficiary.mockResolvedValue(null);
   mocks.upsertBeneficiary.mockResolvedValue({ id: 20 });
 });
 
@@ -121,6 +134,7 @@ describe.each([
     expect(mocks.findDuplicateProject.mock.calls[0][0].where).toMatchObject({
       name: { equals: 'Updated project', mode: 'insensitive' },
       startYear: 2019,
+      deletedAt: null,
     });
     expect(mocks.createProject).not.toHaveBeenCalled();
     expect(mocks.updateProject).not.toHaveBeenCalled();
@@ -193,11 +207,34 @@ describe.each([
   });
 
   it('accepts an end year equal to the start year on a closed project', async () => {
-    await expect(submit(formData({ status: 'closed', endYear: '2019' }))).rejects.toThrow(
-      'Redirect: /dashboard/projects/10'
-    );
+    await expect(
+      submit(formData({ status: 'closed', endYear: '2019', year: '2019' }))
+    ).rejects.toThrow('Redirect: /dashboard/projects/10');
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['2023', '2024'])(
+    'rejects beneficiary year %s after project closure before writing',
+    async (year) => {
+      const result = await submit(formData({ status: 'closed', endYear: '2022', year }));
+      expect(result).toEqual({
+        errors: { year: ['El año de beneficiarios no puede ser posterior al año de cierre'] },
+      });
+      expect(mocks.transaction).not.toHaveBeenCalled();
+      expect(mocks.redirect).not.toHaveBeenCalled();
+      expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(['2019', '2021', '2022'])(
+    'accepts beneficiary year %s within the closed project period',
+    async (year) => {
+      await expect(submit(formData({ status: 'closed', endYear: '2022', year }))).rejects.toThrow(
+        'Redirect: /dashboard/projects/10'
+      );
+      expect(mocks.transaction).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it('handles stale session references', async () => {
     mocks.transaction.mockRejectedValue(databaseError('P2003', { constraint: 'authorId' }));
@@ -226,7 +263,14 @@ it('creates the project and beneficiaries with audit entries in one transaction'
     data: expect.objectContaining({ name: 'Updated project', createdBy: 7 }),
   });
   expect(mocks.createBeneficiary).toHaveBeenCalledWith({
-    data: expect.objectContaining({ projectId: 10, year: 2024, authorId: 7, families: 30 }),
+    data: expect.objectContaining({
+      projectId: 10,
+      year: 2024,
+      authorId: 7,
+      values: {
+        create: expect.arrayContaining([{ value: 30, category: { connect: { key: 'families' } } }]),
+      },
+    }),
   });
   expect(mocks.audit).toHaveBeenCalledWith({
     data: { authorId: 7, action: 'creation', entity: 'project', entityId: 10 },
@@ -254,6 +298,32 @@ it('creates the project and beneficiaries with audit entries in one transaction'
 });
 
 describe('updateProject persistence', () => {
+  it('rejects closing before an existing beneficiary year without writing', async () => {
+    mocks.findLaterBeneficiary.mockResolvedValue({ year: 2024 });
+    const result = await updateProject(
+      10,
+      {},
+      formData({ status: 'closed', endYear: '2022', year: '2022' })
+    );
+    expect(result).toEqual({
+      errors: {
+        endYear: [
+          'El año de cierre no puede ser anterior a 2024, que tiene beneficiarios registrados',
+        ],
+      },
+    });
+    expect(mocks.findLaterBeneficiary).toHaveBeenCalledWith({
+      where: { projectId: 10, year: { gt: 2022 } },
+      orderBy: { year: 'desc' },
+      select: { year: true },
+    });
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
   it.each([0, -1, 1.5, NaN, Infinity, 2_147_483_648])(
     'rejects invalid project id %s',
     async (id) => {
@@ -276,7 +346,7 @@ describe('updateProject persistence', () => {
   it.each([true, false])(
     'saves project fields and beneficiary counts with existing record: %s',
     async (exists) => {
-      mocks.findBeneficiary.mockResolvedValue(exists ? { id: 20 } : null);
+      mocks.findBeneficiary.mockResolvedValue(exists ? { values: [] } : null);
       await expect(
         updateProject(10, {}, formData({ createdBy: '999', id: '999' }))
       ).rejects.toThrow('Redirect: /dashboard/projects/10');
@@ -290,7 +360,7 @@ describe('updateProject persistence', () => {
           endYear: null,
           leadCoordinatorId: 2,
           departmentId: 3,
-          topicId: null,
+          topicId: 1,
           zone: 'city',
           localityNeighborhood: 'Neighborhood',
           generalObjective: 'Objective',
@@ -298,8 +368,7 @@ describe('updateProject persistence', () => {
           internalNotes: 'Team notes',
         },
       });
-      const counts = {
-        year: 2024,
+      const values = toBeneficiaryValuesCreate({
         directChildrenAdolescents: 42,
         indirectChildrenAdolescents: 68,
         youth18To29: 15,
@@ -307,12 +376,22 @@ describe('updateProject persistence', () => {
         coordinatedInstitutions: 6,
         communityLeaders: 12,
         basicServiceStaff: 8,
-      };
+      });
       expect(mocks.upsertBeneficiary).toHaveBeenCalledWith({
         where: { projectId_year: { projectId: 10, year: 2024 } },
-        create: { ...counts, projectId: 10, authorId: 7 },
-        update: { ...counts, authorId: 7, recordedAt: expect.any(Date) },
+        create: { year: 2024, projectId: 10, authorId: 7, values: { create: values } },
+        update: {
+          authorId: 7,
+          recordedAt: expect.any(Date),
+          values: { create: values },
+        },
       });
+      expect(mocks.deleteBeneficiaryValues).toHaveBeenCalledWith({
+        where: formCategoryValuesWhere(10, 2024),
+      });
+      expect(mocks.deleteBeneficiaryValues.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.upsertBeneficiary.mock.invocationCallOrder[0]
+      );
       expect(mocks.transaction).toHaveBeenCalledTimes(1);
       expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
         maxWait: 10_000,
@@ -320,6 +399,7 @@ describe('updateProject persistence', () => {
       });
       expect(mocks.findBeneficiary).toHaveBeenCalledWith({
         where: { projectId_year: { projectId: 10, year: 2024 } },
+        select: BENEFICIARY_VALUES_SELECT,
       });
       expect(mocks.audit).toHaveBeenCalledTimes(2);
       expect(mocks.audit).toHaveBeenNthCalledWith(1, {
@@ -368,7 +448,15 @@ describe('updateProject persistence', () => {
       }),
     });
     expect(mocks.upsertBeneficiary).toHaveBeenCalledWith(
-      expect.objectContaining({ update: expect.objectContaining({ families: 0 }) })
+      expect.objectContaining({
+        update: expect.objectContaining({
+          values: {
+            create: expect.not.arrayContaining([
+              expect.objectContaining({ category: { connect: { key: 'families' } } }),
+            ]),
+          },
+        }),
+      })
     );
   });
 
@@ -419,8 +507,7 @@ describe('updateProject persistence', () => {
       )
     ).rejects.toThrow('Redirect: /dashboard/projects/10');
 
-    const counts = {
-      year,
+    const values = toBeneficiaryValuesCreate({
       directChildrenAdolescents: 0,
       indirectChildrenAdolescents: 0,
       youth18To29: 0,
@@ -428,14 +515,19 @@ describe('updateProject persistence', () => {
       coordinatedInstitutions: 0,
       communityLeaders: 0,
       basicServiceStaff: 0,
-    };
+    });
     expect(mocks.findBeneficiary).toHaveBeenCalledWith({
       where: { projectId_year: { projectId: 10, year } },
+      select: BENEFICIARY_VALUES_SELECT,
     });
     expect(mocks.upsertBeneficiary).toHaveBeenCalledWith({
       where: { projectId_year: { projectId: 10, year } },
-      create: { ...counts, projectId: 10, authorId: 7 },
-      update: { ...counts, authorId: 7, recordedAt: expect.any(Date) },
+      create: { year, projectId: 10, authorId: 7, values: { create: values } },
+      update: {
+        authorId: 7,
+        recordedAt: expect.any(Date),
+        values: { create: values },
+      },
     });
   });
 
@@ -467,8 +559,11 @@ function unchangedRecords() {
   const { projectData, beneficiaryData } = splitProjectFormData(
     projectFormSchema.parse(readProjectFormData(formData()))
   );
-  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: null });
-  mocks.findBeneficiary.mockResolvedValue({ id: 20, ...beneficiaryData });
+  mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 1 });
+  const counts = Object.fromEntries(
+    BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
+  );
+  mocks.findBeneficiary.mockResolvedValue({ values: beneficiaryValueRows(counts) });
 }
 
 describe('project review regressions', () => {
@@ -514,6 +609,13 @@ describe('project review regressions', () => {
       'El proyecto no existe o fue eliminado.'
     );
     expect(mocks.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('only looks up projects that were not deleted', async () => {
+    await expect(updateProject(10, {}, formData())).rejects.toThrow('Redirect:');
+    expect(mocks.findProject).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 10, deletedAt: null } })
+    );
   });
 
   it('preserves the current coordinator without requiring its previous role', async () => {
@@ -621,25 +723,28 @@ describe('project review regressions', () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it('clears the topic when none is selected', async () => {
-    unchangedRecords();
-    const { projectData } = splitProjectFormData(
-      projectFormSchema.parse(readProjectFormData(formData()))
-    );
-    mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
-    await expect(updateProject(10, {}, formData({ topicId: 'none' }))).rejects.toThrow('Redirect:');
-    expect(mocks.updateProject).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ topicId: null }) })
-    );
-  });
+  it.each(['', 'none', undefined])(
+    'rejects an empty topic (%s) in create and edit',
+    async (topicId) => {
+      for (const action of [
+        () => createProject({}, formData({ topicId })),
+        () => updateProject(10, {}, formData({ topicId })),
+      ]) {
+        const result = await action();
+        expect(result.errors?.topicId).toBeDefined();
+      }
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    }
+  );
 
-  it('preserves an unchanged topic without audit', async () => {
+  it('preserves an unchanged topic without requiring it to be active or auditing', async () => {
     unchangedRecords();
     const { projectData } = splitProjectFormData(
       projectFormSchema.parse(readProjectFormData(formData()))
     );
     mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
     await expect(updateProject(10, {}, formData({ topicId: '2' }))).rejects.toThrow('Redirect:');
+    expect(mocks.findTopic).toHaveBeenCalledWith({ where: { id: 2 }, select: { id: true } });
     expect(mocks.updateProject).not.toHaveBeenCalled();
     expect(mocks.audit).not.toHaveBeenCalled();
   });
@@ -649,5 +754,96 @@ describe('project review regressions', () => {
       updateProject(10, {}, formData({ coverPhoto: 'https://invalid.test/photo.png' }))
     ).rejects.toThrow('Redirect:');
     expect(mocks.updateProject.mock.calls[0][0].data).not.toHaveProperty('coverPhoto');
+  });
+});
+
+describe('deleteProject', () => {
+  beforeEach(() => {
+    mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2 });
+    mocks.softDeleteProject.mockResolvedValue({ count: 1 });
+  });
+
+  it('marks the project as deleted by the user and audits it in one transaction', async () => {
+    expect(await deleteProject(10)).toEqual({});
+    expect(mocks.findProject).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 10, deletedAt: null } })
+    );
+    expect(mocks.softDeleteProject).toHaveBeenCalledWith({
+      where: { id: 10, deletedAt: null },
+      data: { deletedAt: expect.any(Date), deletedBy: 7 },
+    });
+    expect(mocks.audit).toHaveBeenCalledWith({
+      data: { authorId: 7, action: 'deletion', entity: 'project', entityId: 10 },
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('allows the lead coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 2,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    expect(await deleteProject(10)).toEqual({});
+    expect(mocks.softDeleteProject).toHaveBeenCalled();
+  });
+
+  it('rejects an unrelated coordinator', async () => {
+    mocks.findUser.mockResolvedValue({
+      id: 3,
+      role: 'coordinator',
+      status: 'active',
+      deletedAt: null,
+    });
+    expect(await deleteProject(10)).toEqual({
+      error: 'No tenés permiso para eliminar este proyecto.',
+    });
+    expect(mocks.softDeleteProject).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it('reports a missing or already deleted project', async () => {
+    mocks.findProject.mockResolvedValue(null);
+    expect(await deleteProject(10)).toEqual({
+      error: 'El proyecto no existe o ya fue eliminado.',
+    });
+    expect(mocks.softDeleteProject).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('does not audit when a concurrent request already deleted the project', async () => {
+    mocks.softDeleteProject.mockResolvedValue({ count: 0 });
+    expect(await deleteProject(10)).toEqual({
+      error: 'El proyecto no existe o ya fue eliminado.',
+    });
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid id before accessing the database', async () => {
+    expect(await deleteProject(0)).toEqual({ error: 'El proyecto no es válido.' });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('redirects unauthenticated users before accessing the database', async () => {
+    mocks.auth.mockResolvedValue(null);
+    await expect(deleteProject(10)).rejects.toThrow('Redirect: /login');
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('returns an error without redirecting or revalidating when the transaction fails', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.audit.mockRejectedValue(new Error('Audit unavailable'));
+    try {
+      expect(await deleteProject(10)).toEqual({
+        error: 'No se pudo eliminar el proyecto. Intentá de nuevo.',
+      });
+      expect(mocks.redirect).not.toHaveBeenCalled();
+      expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

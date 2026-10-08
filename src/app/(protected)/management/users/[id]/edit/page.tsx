@@ -23,6 +23,10 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
     notFound();
   }
 
+  if (userId === Number(session.user.id)) {
+    redirect('/management/profile');
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId, deletedAt: null },
     select: {
@@ -73,6 +77,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
             key={user.id}
             mode="edit"
             initialValues={{
+              id: user.id,
               firstName: user.firstName,
               lastName: user.lastName,
               documentId: user.documentId,

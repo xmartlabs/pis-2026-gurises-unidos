@@ -66,3 +66,17 @@ export const PREVIEW_LOCATION_FALLBACK = 'Montevideo';
 export function sumBeneficiaries(counts: BeneficiaryCounts) {
   return BENEFICIARY_FIELDS.reduce((sum, field) => sum + counts[field.key], 0);
 }
+
+export function toBeneficiaryValuesCreate(counts: Partial<BeneficiaryCounts>) {
+  return BENEFICIARY_FIELDS.map(({ key }) => ({
+    value: counts[key] ?? 0,
+    category: { connect: { key } },
+  })).filter(({ value }) => value > 0);
+}
+
+export function formCategoryValuesWhere(projectId: number, year: number) {
+  return {
+    beneficiary: { projectId, year },
+    category: { key: { in: BENEFICIARY_FIELDS.map(({ key }) => key) } },
+  };
+}

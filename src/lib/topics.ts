@@ -13,7 +13,9 @@ export async function getTopics() {
       name: true,
       _count: {
         select: {
-          projects: true,
+          projects: {
+            where: { deletedAt: null },
+          },
         },
       },
     },

@@ -6,18 +6,22 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { logAudit } from '@/lib/audit-log';
 import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
+import { getMetricYears } from '@/lib/metrics/queries';
 
-const METRIC_SETTINGS_SCHEMA = z
-  .array(
-    z.object({
-      key: z.string().refine((key) => METRIC_DEFINITIONS.some((metric) => metric.key === key)),
-      showPublicly: z.boolean(),
-    })
-  )
-  .length(METRIC_DEFINITIONS.length)
-  .refine(
-    (metrics) => new Set(metrics.map((metric) => metric.key)).size === METRIC_DEFINITIONS.length
-  );
+const METRIC_SETTINGS_SCHEMA = z.object({
+  year: z.number().int(),
+  metrics: z
+    .array(
+      z.object({
+        key: z.string().refine((key) => METRIC_DEFINITIONS.some((metric) => metric.key === key)),
+        showPublicly: z.boolean(),
+      })
+    )
+    .length(METRIC_DEFINITIONS.length)
+    .refine(
+      (metrics) => new Set(metrics.map((metric) => metric.key)).size === METRIC_DEFINITIONS.length
+    ),
+});
 
 export async function saveMetricSettings(input: unknown) {
   const session = await auth();
@@ -30,12 +34,21 @@ export async function saveMetricSettings(input: unknown) {
     return { success: false, message: 'La selección de métricas no es válida.' };
   }
 
+  const { year, metrics } = result.data;
+  const availableYears = await getMetricYears(new Date().getFullYear());
+  if (!availableYears.includes(year)) {
+    return { success: false, message: 'El año de referencia no es válido.' };
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
+      await tx.publicSettings.upsert({
+        where: { id: 1 },
+        create: { id: 1, referenceYear: year, updatedBy: Number(session.user.id) },
+        update: { referenceYear: year, updatedBy: Number(session.user.id) },
+      });
       for (const [index, definition] of METRIC_DEFINITIONS.entries()) {
-        const showPublicly = result.data.find(
-          (metric) => metric.key === definition.key
-        )!.showPublicly;
+        const showPublicly = metrics.find((metric) => metric.key === definition.key)!.showPublicly;
         const metric = await tx.metric.upsert({
           where: { key: definition.key },
           create: {
@@ -60,5 +73,6 @@ export async function saveMetricSettings(input: unknown) {
   }
 
   revalidatePath('/management/metrics');
+  revalidatePath('/');
   return { success: true, message: 'Cambios guardados.' };
 }

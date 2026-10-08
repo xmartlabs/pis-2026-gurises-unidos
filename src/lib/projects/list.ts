@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
-import { sumBeneficiaries } from '@/lib/project-display';
+import { sumBeneficiaries, type BeneficiaryCounts } from '@/lib/project-display';
+import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import type { ProjectFilters } from '@/lib/validation/project-filters';
 
 const PROJECT_LIST_SELECT = {
@@ -11,27 +12,20 @@ const PROJECT_LIST_SELECT = {
   startYear: true,
   zone: true,
   localityNeighborhood: true,
+  publicDescription: true,
+  coverPhoto: true,
   leadCoordinator: { select: { id: true, firstName: true, lastName: true } },
   department: { select: { id: true, name: true } },
   projectBeneficiaries: {
     orderBy: { year: 'desc' },
-    select: {
-      year: true,
-      directChildrenAdolescents: true,
-      indirectChildrenAdolescents: true,
-      youth18To29: true,
-      families: true,
-      coordinatedInstitutions: true,
-      communityLeaders: true,
-      basicServiceStaff: true,
-    },
+    select: { year: true, ...BENEFICIARY_VALUES_SELECT },
   },
 } satisfies Prisma.ProjectSelect;
 
 type ProjectListRow = Prisma.ProjectGetPayload<{ select: typeof PROJECT_LIST_SELECT }>;
 
 export type ProjectListItem = Omit<ProjectListRow, 'projectBeneficiaries'> & {
-  beneficiaries: (ProjectListRow['projectBeneficiaries'][number] & { total: number })[];
+  beneficiaries: (BeneficiaryCounts & { year: number; total: number })[];
 };
 
 export type ProjectListPage = {
@@ -43,7 +37,7 @@ export type ProjectListPage = {
 };
 
 export function buildProjectWhere(filters: ProjectFilters): Prisma.ProjectWhereInput {
-  const where: Prisma.ProjectWhereInput = {};
+  const where: Prisma.ProjectWhereInput = { deletedAt: null };
 
   if (filters.search) {
     where.name = { contains: filters.search, mode: 'insensitive' };
@@ -73,10 +67,10 @@ export function buildProjectWhere(filters: ProjectFilters): Prisma.ProjectWhereI
 function toListItem({ projectBeneficiaries, ...project }: ProjectListRow): ProjectListItem {
   return {
     ...project,
-    beneficiaries: projectBeneficiaries.map((record) => ({
-      ...record,
-      total: sumBeneficiaries(record),
-    })),
+    beneficiaries: projectBeneficiaries.map(({ year, values }) => {
+      const counts = toBeneficiaryCounts(values);
+      return { year, ...counts, total: sumBeneficiaries(counts) };
+    }),
   };
 }
 
@@ -96,6 +90,7 @@ export async function listProjects(filters: ProjectFilters): Promise<ProjectList
             projectBeneficiaries: {
               ...PROJECT_LIST_SELECT.projectBeneficiaries,
               where: { year: filters.beneficiaryYear },
+              take: 1,
             },
           },
           orderBy: [{ name: 'asc' }, { id: 'asc' }],
@@ -112,24 +107,30 @@ export async function listProjects(filters: ProjectFilters): Promise<ProjectList
   };
 }
 
+export async function listBeneficiaryYears(): Promise<number[]> {
+  const rows = await prisma.projectBeneficiary.findMany({
+    where: { project: { deletedAt: null } },
+    distinct: ['year'],
+    select: { year: true },
+    orderBy: { year: 'desc' },
+  });
+
+  return rows.map(({ year }) => year);
+}
+
 export async function listProjectFilterOptions() {
-  const [coordinators, departments, years] = await Promise.all([
+  const [coordinators, departments] = await Promise.all([
     prisma.user.findMany({
-      where: { ledProjects: { some: {} } },
+      where: { ledProjects: { some: { deletedAt: null } } },
       select: { id: true, firstName: true, lastName: true },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     }),
     prisma.department.findMany({
-      where: { projects: { some: {} } },
+      where: { projects: { some: { deletedAt: null } } },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
-    prisma.projectBeneficiary.findMany({
-      distinct: ['year'],
-      select: { year: true },
-      orderBy: { year: 'desc' },
-    }),
   ]);
 
-  return { coordinators, departments, years: years.map(({ year }) => year) };
+  return { coordinators, departments };
 }

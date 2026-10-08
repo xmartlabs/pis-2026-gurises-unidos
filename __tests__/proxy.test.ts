@@ -12,7 +12,10 @@ type AuthRequest = NextRequest & { auth: unknown };
 
 const runProxy = proxy as unknown as (request: AuthRequest) => NextResponse;
 
-function makeRequest(path: string, options?: { authenticated?: boolean; expiration?: string }) {
+function makeRequest(
+  path: string,
+  options?: { authenticated?: boolean; mustChangePassword?: boolean; expiration?: string }
+) {
   const headers = new Headers();
 
   if (options?.expiration) {
@@ -20,7 +23,9 @@ function makeRequest(path: string, options?: { authenticated?: boolean; expirati
   }
 
   const request = new NextRequest(`https://example.com${path}`, { headers }) as AuthRequest;
-  request.auth = options?.authenticated ? { user: { id: '1' } } : null;
+  request.auth = options?.authenticated
+    ? { user: { id: '1', mustChangePassword: options.mustChangePassword === true } }
+    : null;
   return request;
 }
 
@@ -76,5 +81,47 @@ describe('proxy', () => {
 
     expect(response.headers.get('x-middleware-next')).toBe('1');
     expect(response.cookies.get(SESSION_EXPIRATION_COOKIE)).toBeUndefined();
+  });
+
+  test('redirects users who must change password away from protected routes', () => {
+    const response = runProxy(
+      makeRequest('/dashboard/projects', { authenticated: true, mustChangePassword: true })
+    );
+
+    expect(response.headers.get('location')).toBe('https://example.com/password-reset');
+  });
+
+  test('redirects users who must change password away from login', () => {
+    const response = runProxy(
+      makeRequest('/login', { authenticated: true, mustChangePassword: true })
+    );
+
+    expect(response.headers.get('location')).toBe('https://example.com/password-reset');
+  });
+
+  test('allows the password reset route when the user must change password', () => {
+    const response = runProxy(
+      makeRequest('/password-reset', { authenticated: true, mustChangePassword: true })
+    );
+
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+  });
+
+  test('redirects authenticated users away from password reset when no change is required', () => {
+    const response = runProxy(makeRequest('/password-reset', { authenticated: true }));
+
+    expect(response.headers.get('location')).toBe('https://example.com/dashboard/projects');
+  });
+
+  test('allows unauthenticated access to a public project', () => {
+    const response = runProxy(makeRequest('/projects/42'));
+
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+  });
+
+  test('does not make nested project administration routes public', () => {
+    const response = runProxy(makeRequest('/projects/42/edit'));
+
+    expect(response.headers.get('location')).toBe('https://example.com/login');
   });
 });

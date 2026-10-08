@@ -2,7 +2,8 @@ import { config as loadEnvFiles } from 'dotenv';
 import { execSync } from 'node:child_process';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { TABLES } from './fixtures';
+import { BENEFICIARY_CATEGORIES, TABLES } from './fixtures';
+import { toBeneficiaryValuesCreate } from '../src/lib/project-display';
 import {
   E2E_ACTIVE_PROJECT,
   E2E_ADMIN,
@@ -75,10 +76,13 @@ async function main() {
       async (tx) => {
         const tables = TABLES.map((table) => `"${table}"`).join(',');
         await tx.$executeRawUnsafe(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
+        await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
 
         const department = await tx.department.create({ data: { name: E2E_DEPARTMENT } });
         await tx.department.create({ data: { name: E2E_SECONDARY_DEPARTMENT } });
         await tx.topic.createMany({ data: E2E_TOPICS.map((name) => ({ name })) });
+
+        const topic = await tx.topic.findUniqueOrThrow({ where: { name: E2E_TOPICS[0] } });
 
         const admin = await tx.user.create({ data: { ...E2E_ADMIN, passwordHash } });
         const coordinator = await tx.user.create({
@@ -93,6 +97,7 @@ async function main() {
             ...E2E_ACTIVE_PROJECT,
             leadCoordinatorId: coordinator.id,
             departmentId: department.id,
+            topicId: topic.id,
             createdBy: admin.id,
           },
         });
@@ -102,6 +107,7 @@ async function main() {
             ...E2E_CLOSED_PROJECT,
             leadCoordinatorId: coordinator.id,
             departmentId: department.id,
+            topicId: topic.id,
             createdBy: admin.id,
           },
         });
@@ -110,9 +116,10 @@ async function main() {
           data: {
             projectId: activeProject.id,
             year: E2E_BENEFICIARY_YEAR,
-            directChildrenAdolescents: 50,
-            families: 20,
             authorId: coordinator.id,
+            values: {
+              create: toBeneficiaryValuesCreate({ directChildrenAdolescents: 50, families: 20 }),
+            },
           },
         });
       },

@@ -6,15 +6,15 @@ import { Card } from '@/components/ui/card';
 import type { ProjectFormValues } from './project-form-values';
 
 export function ProjectPreview({
-  variant = 'default',
   values,
   locationLabel,
   beneficiaryTotal,
+  isEditing,
 }: {
-  variant?: 'default' | 'detailed';
   values: ProjectFormValues;
   locationLabel: string;
   beneficiaryTotal: number;
+  isEditing: boolean;
 }) {
   return (
     <aside
@@ -62,7 +62,7 @@ export function ProjectPreview({
           Así se verá en el listado público
         </p>
 
-        {variant === 'detailed' && (
+        {isEditing && (
           <Button
             type="button"
             variant="ghost"

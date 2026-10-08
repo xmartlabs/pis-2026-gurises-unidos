@@ -12,10 +12,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DeleteUserDialog } from '@/components/users/delete-user-dialog';
+import { ResetPasswordDialog } from '@/components/users/reset-password-dialog';
+import { UserStatusDialog } from '@/components/users/user-status-dialog';
 import { fullName, type User } from '@/lib/users/format';
 
-export function UserActionsMenu({ user, canDelete }: { user: User; canDelete: boolean }) {
+export function UserActionsMenu({ user, isCurrentUser }: { user: User; isCurrentUser: boolean }) {
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const showStatusAction = !isCurrentUser && user.status !== 'pendingInvitation';
 
   return (
     <>
@@ -34,13 +39,23 @@ export function UserActionsMenu({ user, canDelete }: { user: User; canDelete: bo
           >
             Editar
           </DropdownMenuItem>
-          {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-            Restablecer contraseña
-          </DropdownMenuItem> */}
-          {/* <DropdownMenuItem className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal">
-            Desactivar
-          </DropdownMenuItem> */}
-          {canDelete && (
+          {!isCurrentUser && (
+            <DropdownMenuItem
+              className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
+              onClick={() => setIsResetPasswordDialogOpen(true)}
+            >
+              Restablecer contraseña
+            </DropdownMenuItem>
+          )}
+          {showStatusAction && (
+            <DropdownMenuItem
+              className="text-popover-foreground font-sans text-sm leading-5 font-medium tracking-normal"
+              onClick={() => setIsStatusDialogOpen(true)}
+            >
+              {user.status === 'disabled' ? 'Habilitar' : 'Deshabilitar'}
+            </DropdownMenuItem>
+          )}
+          {!isCurrentUser && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -54,7 +69,22 @@ export function UserActionsMenu({ user, canDelete }: { user: User; canDelete: bo
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {canDelete && (
+      {!isCurrentUser && (
+        <ResetPasswordDialog
+          userId={user.id}
+          userName={fullName(user)}
+          open={isResetPasswordDialogOpen}
+          onOpenChange={setIsResetPasswordDialogOpen}
+        />
+      )}
+      {showStatusAction && (
+        <UserStatusDialog
+          user={user}
+          open={isStatusDialogOpen}
+          onOpenChange={setIsStatusDialogOpen}
+        />
+      )}
+      {!isCurrentUser && (
         <DeleteUserDialog
           user={user}
           open={isDeleteDialogOpen}

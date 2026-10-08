@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@/generated/prisma/client';
+import type { UserStatus } from '@/generated/prisma/enums';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
@@ -50,6 +51,7 @@ export async function createUser(
             role: userData.role,
             status: 'active',
             passwordHash,
+            mustChangePassword: true,
             createdBy: Number(session.user.id),
           },
         });
@@ -94,6 +96,99 @@ export async function createUser(
   }
 
   return {};
+}
+
+export type ToggleableUserStatus = Extract<UserStatus, 'active' | 'disabled'>;
+
+export type UpdateUserStatusResult = { error?: string; success?: boolean };
+
+export async function updateUserStatus(
+  userId: number,
+  status: ToggleableUserStatus
+): Promise<UpdateUserStatusResult> {
+  const actor = await requireUser();
+
+  if (actor.role !== 'admin') {
+    return { error: 'No tenés permisos para realizar esta acción.' };
+  }
+
+  const targetId = parseId(userId);
+
+  if (!targetId || (status !== 'active' && status !== 'disabled')) {
+    return { error: 'El usuario no es válido.' };
+  }
+
+  if (targetId === actor.id) {
+    return { error: 'No podés cambiar tu propio estado.' };
+  }
+
+  try {
+    const error = await prisma.$transaction(
+      async (tx): Promise<string | null> => {
+        const target = await tx.user.findUnique({
+          where: { id: targetId, deletedAt: null },
+          select: { role: true, status: true },
+        });
+
+        if (!target) {
+          return 'El usuario no existe.';
+        }
+
+        if (status === 'disabled' && target.status === 'disabled') {
+          return 'El usuario ya está deshabilitado.';
+        }
+
+        if (status === 'disabled' && target.status === 'pendingInvitation') {
+          return 'No se puede deshabilitar a un usuario con invitación pendiente.';
+        }
+
+        if (status === 'active' && target.status !== 'disabled') {
+          return 'El usuario ya está habilitado.';
+        }
+
+        if (status === 'disabled' && target.role === 'admin') {
+          const remainingAdmins = await tx.user.count({
+            where: { role: 'admin', status: 'active', deletedAt: null, id: { not: targetId } },
+          });
+
+          if (remainingAdmins === 0) {
+            return 'No se puede deshabilitar al último administrador activo.';
+          }
+        }
+
+        await tx.user.update({ where: { id: targetId }, data: { status } });
+        await logAudit(tx, {
+          authorId: actor.id,
+          action: 'update',
+          entity: 'user',
+          entityId: targetId,
+          details: { changes: [{ field: 'status', from: target.status, to: status }] },
+        });
+
+        return null;
+      },
+      // Serializable so two admins disabling each other at once can't leave zero active admins
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        maxWait: 10_000,
+        timeout: 30_000,
+      }
+    );
+
+    if (error) {
+      return { error };
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+      return { error: 'Otra operación modificó los usuarios al mismo tiempo. Intentá de nuevo.' };
+    }
+
+    console.error('Failed to update user status', error);
+    return { error: 'No se pudo cambiar el estado del usuario. Intentá de nuevo.' };
+  }
+
+  revalidatePath('/management/users');
+  return { success: true };
 }
 
 export type DeleteUserResult = { error?: string; success?: boolean };

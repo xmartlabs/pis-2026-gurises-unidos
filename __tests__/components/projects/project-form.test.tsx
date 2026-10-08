@@ -1,6 +1,7 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
+import { notify } from '@/lib/notify';
 
 const { routerPushMock, routerRefreshMock } = vi.hoisted(() => ({
   routerPushMock: vi.fn(),
@@ -11,18 +12,30 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: routerPushMock, refresh: routerRefreshMock }),
 }));
 
+vi.mock('@/lib/notify', () => ({
+  notify: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    promise: vi.fn(),
+  },
+}));
+
 it('submits prefilled values and the recorded year, preserves edits on failure, and allows retry', async () => {
   routerPushMock.mockClear();
+  vi.mocked(notify.error).mockClear();
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
-      topics={[]}
+      topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       mode="edit"
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Existing project',
+        topicId: '1',
         status: 'paused',
         leadCoordinatorId: '2',
         departmentId: '3',
@@ -46,7 +59,9 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   await act(async () => {
     fireEvent.submit(container.querySelector('form')!);
   });
-  await screen.findByRole('alert');
+  await waitFor(() => {
+    expect(notify.error).toHaveBeenCalledWith({ title: 'No se pudo guardar' });
+  });
   expect(submitAction).toHaveBeenCalledTimes(1);
   const submitted = submitAction.mock.calls[0][1] as FormData;
   expect(submitted.get('name')).toBe('Edited project');
@@ -147,11 +162,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
   expect(submitAction.mock.calls[1][1].getAll('topicId')).toEqual(['2']);
   expect(screen.getByLabelText('Temática').textContent).toContain('Health');
   fireEvent.click(screen.getByLabelText('Temática'));
-  fireEvent.keyDown(await screen.findByRole('option', { name: 'Sin temática' }), { key: 'Enter' });
-  await act(async () => {
-    fireEvent.submit(container.querySelector('form')!);
-  });
-  expect(submitAction.mock.calls[2][1].getAll('topicId')).toEqual(['none']);
+  expect(screen.queryByRole('option', { name: 'Sin temática' })).toBeNull();
 });
 
 function renderFormWith(initialValues: Record<string, string>) {
@@ -186,7 +197,7 @@ it('submits the end year of a closed project', async () => {
   const submitAction = vi.fn().mockResolvedValue({});
   const { container } = render(
     <ProjectForm
-      topics={[]}
+      topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
@@ -197,6 +208,7 @@ it('submits the end year of a closed project', async () => {
         status: 'closed',
         startYear: '2020',
         endYear: '2022',
+        topicId: '1',
       }}
       submitAction={submitAction}
     />
@@ -231,4 +243,68 @@ it('refreshes the topic list after a selected topic becomes invalid', async () =
   });
 
   expect(routerRefreshMock).toHaveBeenCalledOnce();
+});
+
+it('limits the start year to the closing year and restores later years when reopened', async () => {
+  renderFormWith({ status: 'closed', startYear: '2020', endYear: '2022', year: '2020' });
+  fireEvent.click(screen.getByLabelText('Año de inicio'));
+  expect(await screen.findByRole('option', { name: '2022' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: '2023' })).toBeNull();
+  expect(screen.getByRole('option', { name: '2020' })).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('option', { name: '2020' }), { key: 'Enter' });
+
+  fireEvent.click(screen.getByLabelText('Estado'));
+  fireEvent.keyDown(await screen.findByRole('option', { name: 'Activo' }), { key: 'Enter' });
+  fireEvent.click(screen.getByLabelText('Año de inicio'));
+  expect(await screen.findByRole('option', { name: '2026' })).toBeTruthy();
+});
+
+it('limits the closing year to years at or after the start year', async () => {
+  renderFormWith({ status: 'closed', startYear: '2020', endYear: '2022' });
+  fireEvent.click(screen.getByLabelText('Año de fin'));
+  expect(await screen.findByRole('option', { name: '2020' })).toBeTruthy();
+  expect(screen.getByRole('option', { name: '2026' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: '2019' })).toBeNull();
+});
+
+it('clears an invalid closing year and advances beneficiaries to the start year', async () => {
+  render(
+    <ProjectForm
+      topics={[]}
+      currentYear={2026}
+      coordinators={[]}
+      departments={[]}
+      initialValues={{ status: 'closed', startYear: '2024', endYear: '2022', year: '2020' }}
+      beneficiaryRecords={[
+        {
+          year: 2024,
+          directChildrenAdolescents: 0,
+          indirectChildrenAdolescents: 0,
+          youth18To29: 0,
+          families: 7,
+          coordinatedInstitutions: 0,
+          communityLeaders: 0,
+          basicServiceStaff: 0,
+        },
+      ]}
+      submitAction={vi.fn()}
+    />
+  );
+  await waitFor(() => {
+    expect(screen.getByLabelText('Año de fin').textContent).toContain('Seleccionar...');
+    expect(screen.getByLabelText('Año de beneficiarios').textContent).toContain('2024');
+    expect((screen.getByLabelText('Familias') as HTMLInputElement).value).toBe('7');
+  });
+  expect(
+    await screen.findByText('El año de fin es obligatorio para proyectos cerrados')
+  ).toBeTruthy();
+  expect(
+    screen.queryByText('El año de beneficiarios no puede ser anterior al año de inicio')
+  ).toBeNull();
+  expect(
+    screen.queryByText('El año de beneficiarios no puede ser posterior al año de cierre')
+  ).toBeNull();
+  fireEvent.click(screen.getByLabelText('Año de beneficiarios'));
+  expect(await screen.findByRole('option', { name: '2024' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: '2022' })).toBeNull();
 });

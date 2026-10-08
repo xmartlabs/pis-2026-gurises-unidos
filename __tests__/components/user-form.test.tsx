@@ -6,18 +6,18 @@ vi.mock('@/app/actions/users', () => ({
   createUser: vi.fn(async () => ({})),
 }));
 
+vi.mock('@/app/actions/password', () => ({
+  resetPassword: vi.fn(async () => ({})),
+}));
+
 test('disables or hides unavailable user editing actions', () => {
   render(<UserForm mode="edit" />);
 
   const saveButton = screen.getByRole('button', {
     name: 'Guardar usuario (próximamente)',
   }) as HTMLButtonElement;
-  const resetPasswordButton = screen.getByRole('button', {
-    name: 'Restablecer contraseña',
-  }) as HTMLButtonElement;
 
   expect(saveButton.disabled).toBe(true);
-  expect(resetPasswordButton.disabled).toBe(true);
   expect(screen.queryByRole('button', { name: 'Guardar borrador' })).toBeNull();
 });
 
@@ -26,6 +26,7 @@ test('prefills the user edit form and information', () => {
     <UserForm
       mode="edit"
       initialValues={{
+        id: 7,
         firstName: 'Ana',
         lastName: 'García',
         documentId: '77777777',
@@ -56,4 +57,7 @@ test('prefills the user edit form and information', () => {
   expect(screen.getByText('05/03/2026')).toBeDefined();
   expect(screen.getByText('Mario Pérez')).toBeDefined();
   expect(screen.getByText('18/09/2026')).toBeDefined();
+  expect(
+    (screen.getByRole('button', { name: 'Restablecer contraseña' }) as HTMLButtonElement).disabled
+  ).toBe(false);
 });

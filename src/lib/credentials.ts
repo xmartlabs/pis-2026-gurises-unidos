@@ -32,6 +32,7 @@ export function toAuthUser(user: User) {
     name: `${user.firstName} ${user.lastName}`,
     role: user.role,
     avatarColorIndex: getAvatarColorIndex(user.documentId),
+    mustChangePassword: user.mustChangePassword,
   };
 }
 

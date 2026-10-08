@@ -9,8 +9,25 @@ import {
 } from '@/lib/auth/session-expiration';
 
 const PUBLIC_ROUTES = ['/', '/login'];
+const PASSWORD_RESET_ROUTE = '/password-reset';
+const PUBLIC_PROJECT_ROUTE = /^\/projects\/[1-9]\d*$/;
+
+function isPublicRoute(pathname: string) {
+  return PUBLIC_ROUTES.includes(pathname) || PUBLIC_PROJECT_ROUTE.test(pathname);
+}
 
 export const proxy = auth((request) => {
+  const { pathname } = request.nextUrl;
+  const mustChangePassword = request.auth?.user?.mustChangePassword === true;
+
+  if (mustChangePassword && pathname !== PASSWORD_RESET_ROUTE) {
+    return NextResponse.redirect(new URL(PASSWORD_RESET_ROUTE, request.nextUrl));
+  }
+
+  if (request.auth && !mustChangePassword && pathname === PASSWORD_RESET_ROUTE) {
+    return NextResponse.redirect(new URL('/dashboard/projects', request.nextUrl));
+  }
+
   if (request.auth) {
     const response = NextResponse.next();
     response.cookies.set(
@@ -21,7 +38,7 @@ export const proxy = auth((request) => {
     return response;
   }
 
-  if (PUBLIC_ROUTES.includes(request.nextUrl.pathname)) {
+  if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 

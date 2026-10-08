@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { METRIC_DEFINITIONS } from '@/lib/metrics/constants';
+import { sumBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 
 export async function getMetricSettings() {
   const savedMetrics = await prisma.metric.findMany({
@@ -12,10 +13,19 @@ export async function getMetricSettings() {
   }));
 }
 
+export async function getReferenceYear(currentYear = new Date().getFullYear()) {
+  const settings = await prisma.publicSettings.findUnique({
+    where: { id: 1 },
+    select: { referenceYear: true },
+  });
+  return settings?.referenceYear ?? currentYear - 1;
+}
+
 export type MetricSetting = Awaited<ReturnType<typeof getMetricSettings>>[number];
 
 export async function getMetricYears(currentYear: number) {
   const beneficiaries = await prisma.projectBeneficiary.findMany({
+    where: { project: { deletedAt: null } },
     select: { year: true },
     distinct: ['year'],
   });
@@ -26,19 +36,11 @@ export async function getMetricYears(currentYear: number) {
 }
 
 export async function getMetricValues(year: number) {
-  const [beneficiaries, projectRecords] = await Promise.all([
-    prisma.projectBeneficiary.aggregate({
-      where: { year },
-      _sum: {
-        directChildrenAdolescents: true,
-        indirectChildrenAdolescents: true,
-        families: true,
-        basicServiceStaff: true,
-        coordinatedInstitutions: true,
-      },
-    }),
+  const where = { year, project: { deletedAt: null } };
+  const [totals, projectRecords] = await Promise.all([
+    sumBeneficiaryCounts(where),
     prisma.projectBeneficiary.findMany({
-      where: { year },
+      where,
       select: {
         projectId: true,
         project: { select: { departmentId: true } },
@@ -47,12 +49,10 @@ export async function getMetricValues(year: number) {
   ]);
 
   return {
-    children_reached:
-      (beneficiaries._sum.directChildrenAdolescents ?? 0) +
-      (beneficiaries._sum.indirectChildrenAdolescents ?? 0),
-    families: beneficiaries._sum.families ?? 0,
-    teachers: beneficiaries._sum.basicServiceStaff ?? 0,
-    institutions: beneficiaries._sum.coordinatedInstitutions ?? 0,
+    children_reached: totals.directChildrenAdolescents + totals.indirectChildrenAdolescents,
+    families: totals.families,
+    teachers: totals.basicServiceStaff,
+    institutions: totals.coordinatedInstitutions,
     departments: new Set(projectRecords.map(({ project }) => project.departmentId)).size,
     active_projects: projectRecords.length,
   };
