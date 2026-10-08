@@ -22,6 +22,12 @@ export const INTENSITY_OPTIONS = [
   { value: 'low', label: INTENSITY_LABEL.low },
 ] as const;
 
+export const COUNTERPARTY_OPTIONS = [
+  { value: 'publicSector', label: 'Sector Público' },
+  { value: 'privateSector', label: 'Sector Privado' },
+  { value: 'internationalCooperation', label: 'Cooperación Internacional' },
+] as const;
+
 export const SYSTEM_BENEFICIARY_KEYS = [
   'directChildrenAdolescents',
   'indirectChildrenAdolescents',

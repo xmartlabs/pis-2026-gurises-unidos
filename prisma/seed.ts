@@ -37,6 +37,8 @@ const DEPARTMENTS = [
   'Treinta y Tres',
 ];
 
+const COUNTERPARTY_TYPES = ['publicSector', 'privateSector', 'internationalCooperation'] as const;
+
 const TOPICS = ['Education', 'Health', 'Protection', 'Community'];
 
 type BeneficiaryRecord = { year: number } & Partial<BeneficiaryCounts>;
@@ -449,6 +451,7 @@ async function main() {
         const { department, topic, beneficiaries, endYear, ...fields } = project;
         const fixture: ProjectFixture = {
           ...fields,
+          counterpartyType: COUNTERPARTY_TYPES[index % COUNTERPARTY_TYPES.length],
           endYear: endYear ?? null,
           leadCoordinatorId: coordinator.id,
           departmentId: departmentIds.get(department)!,
