@@ -101,7 +101,7 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
       },
       {
         id: 'beneficiary-categories',
-        title: 'Beneficiarios',
+        title: 'Categorías de beneficiarios',
         href: '/management/beneficiary-categories',
         icon: UsersRound,
         roles: ['admin'],

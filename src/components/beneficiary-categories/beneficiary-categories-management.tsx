@@ -72,7 +72,7 @@ export function BeneficiaryCategoriesManagement({
     <Card className="border-border flex w-full max-w-190 flex-col gap-4 rounded-[14px] border bg-white p-6 ring-0">
       <CardHeader className="px-0">
         <CardTitle className="font-sans text-base leading-6 font-semibold tracking-normal">
-          Categorías de beneficiarios
+          Categorías
         </CardTitle>
       </CardHeader>
       <div className="flex w-full max-w-178 flex-col gap-1.5">

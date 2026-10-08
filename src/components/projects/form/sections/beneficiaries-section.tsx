@@ -1,12 +1,33 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFormContext, useFormState, useWatch } from 'react-hook-form';
+import { ChevronDown } from 'lucide-react';
+import { cn } from 'cn';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import type { BeneficiaryCategoryOption } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
 import { FormSection } from '@/components/ui/forms/form-section';
 import type { ProjectFormValues } from '../project-form-values';
 import type { SectionProps } from './section-props';
+
+const VISIBLE_BENEFICIARY_FIELDS = 10;
+
+function BeneficiaryFields({ categories }: { categories: BeneficiaryCategoryOption[] }) {
+  return categories.map((field, index) => (
+    <TextInputField
+      key={field.key}
+      id={field.key}
+      name={field.key}
+      label={field.name}
+      type="text"
+      inputMode="numeric"
+      className={index === categories.length - 1 && index % 2 === 0 ? 'sm:col-span-2' : undefined}
+    />
+  ));
+}
 
 export function BeneficiariesSection({
   isEditing,
@@ -24,6 +45,16 @@ export function BeneficiariesSection({
   const status = useWatch({ name: 'status' });
   const endYear = useWatch({ name: 'endYear' });
   const year = useWatch({ name: 'year' });
+
+  const visibleCategories = beneficiaryCategories.slice(0, VISIBLE_BENEFICIARY_FIELDS);
+  const extraCategories = beneficiaryCategories.slice(VISIBLE_BENEFICIARY_FIELDS);
+  const extraKeys = extraCategories.map(({ key }) => key);
+  const extraValues: (string | null | undefined)[] = useWatch({ name: extraKeys });
+  const { errors } = useFormState({ name: extraKeys });
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const hasExtraValues = extraValues.some((value) => Number(value) > 0);
+  const hasExtraErrors = extraKeys.some((key) => errors[key]);
+  const open = hasExtraErrors || (userOpen ?? hasExtraValues);
 
   // TODO: Implement multiple years support on the backend
   // right now we only support one year
@@ -82,21 +113,26 @@ export function BeneficiariesSection({
           se guardarán al salir.
         </p>
       </div>
-      {beneficiaryCategories.map((field, index) => (
-        <TextInputField
-          key={field.key}
-          id={field.key}
-          name={field.key}
-          label={field.name}
-          type="text"
-          inputMode="numeric"
-          className={
-            index === beneficiaryCategories.length - 1 && index % 2 === 0
-              ? 'sm:col-span-2'
-              : undefined
-          }
-        />
-      ))}
+      <BeneficiaryFields categories={visibleCategories} />
+      {extraCategories.length > 0 && (
+        <Collapsible open={open} onOpenChange={setUserOpen} className="sm:col-span-2">
+          <CollapsibleContent keepMounted>
+            <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2">
+              <BeneficiaryFields categories={extraCategories} />
+            </div>
+          </CollapsibleContent>
+          <CollapsibleTrigger
+            render={
+              <Button type="button" variant="ghost" className="text-muted-foreground w-full" />
+            }
+          >
+            {open
+              ? 'Mostrar menos'
+              : `Mostrar ${extraCategories.length} ${extraCategories.length === 1 ? 'categoría' : 'categorías'} más`}
+            <ChevronDown className={cn('transition-transform', open && 'rotate-180')} />
+          </CollapsibleTrigger>
+        </Collapsible>
+      )}
     </FormSection>
   );
 }

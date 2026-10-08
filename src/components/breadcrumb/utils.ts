@@ -18,7 +18,7 @@ export const BREADCRUMB_SEGMENT_LABELS: Record<string, string> = {
   projects: 'Proyectos',
   users: 'Usuarios',
   topics: 'Temáticas',
-  'beneficiary-categories': 'Beneficiarios',
+  'beneficiary-categories': 'Categorías de beneficiarios',
   new: 'Nuevo',
   edit: 'Editar',
 };

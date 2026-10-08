@@ -21,7 +21,7 @@ export default async function BeneficiaryCategoriesPage() {
           </p>
 
           <h1 className="text-popover-foreground text-3xl leading-9 font-bold tracking-normal">
-            Beneficiarios
+            Categorías de beneficiarios
           </h1>
 
           <p className="text-muted-foreground text-sm leading-4.5 font-normal tracking-normal">

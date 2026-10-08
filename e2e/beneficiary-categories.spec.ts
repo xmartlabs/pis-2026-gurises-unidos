@@ -10,7 +10,9 @@ const CATEGORY_NAME = 'Docentes e2e';
 test('lists the system categories without a delete action', async ({ page }) => {
   await page.goto('/management/beneficiary-categories');
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Beneficiarios' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Categorías de beneficiarios' })
+  ).toBeVisible();
   await expect(page.getByText(`${BENEFICIARY_CATEGORIES.length} categorías`)).toBeVisible();
   for (const { name } of BENEFICIARY_CATEGORIES) {
     const row = page.getByRole('listitem').filter({ hasText: name });
