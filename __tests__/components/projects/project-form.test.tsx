@@ -321,7 +321,7 @@ it('clears an invalid closing year and advances beneficiaries to the start year'
 const MANY_CATEGORIES = [
   ...BENEFICIARY_CATEGORY_OPTIONS,
   ...['Docentes', 'Voluntarios', 'Adultos mayores', 'Personas con discapacidad', 'Vecinos'].map(
-    (name, index) => ({ key: `custom${index}`, name })
+    (name, index) => ({ key: `custom${index}` as const, name })
   ),
 ];
 

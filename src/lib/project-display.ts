@@ -42,7 +42,9 @@ export function isSystemBeneficiaryKey(key: string): key is SystemBeneficiaryKey
 
 export type BeneficiaryCounts = Record<SystemBeneficiaryKey, number> & Record<string, number>;
 
-export type BeneficiaryCategoryOption = { key: string; name: string };
+export type BeneficiaryFieldName = SystemBeneficiaryKey | `custom${string}`;
+
+export type BeneficiaryCategoryOption = { key: BeneficiaryFieldName; name: string };
 
 export const TOPIC_OPTIONS = [
   { value: 'education', label: 'Educación' },

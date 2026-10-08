@@ -34,7 +34,7 @@ type Category = {
   projectCount: number;
 };
 
-const initialState: BeneficiaryCategoryActionState = {};
+const INITIAL_STATE: BeneficiaryCategoryActionState = {};
 
 export function BeneficiaryCategoriesManagement({
   categories,
@@ -50,7 +50,7 @@ export function BeneficiaryCategoriesManagement({
       }
       return result;
     },
-    initialState
+    INITIAL_STATE
   );
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
@@ -118,7 +118,7 @@ export function BeneficiaryCategoriesManagement({
 function CategoryRow({ category }: { category: Category }) {
   const [state, formAction, pending] = useActionState(
     deleteBeneficiaryCategory.bind(null, category.id),
-    initialState
+    INITIAL_STATE
   );
 
   return (

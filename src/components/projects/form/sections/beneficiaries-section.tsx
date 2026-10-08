@@ -49,10 +49,10 @@ export function BeneficiariesSection({
   const visibleCategories = beneficiaryCategories.slice(0, VISIBLE_BENEFICIARY_FIELDS);
   const extraCategories = beneficiaryCategories.slice(VISIBLE_BENEFICIARY_FIELDS);
   const extraKeys = extraCategories.map(({ key }) => key);
-  const extraValues: (string | null | undefined)[] = useWatch({ name: extraKeys });
-  const { errors } = useFormState({ name: extraKeys });
+  const formValues = useWatch<ProjectFormValues>();
+  const { errors } = useFormState<ProjectFormValues>();
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
-  const hasExtraValues = extraValues.some((value) => Number(value) > 0);
+  const hasExtraValues = extraKeys.some((key) => Number(formValues[key]) > 0);
   const hasExtraErrors = extraKeys.some((key) => errors[key]);
   const open = hasExtraErrors || (userOpen ?? hasExtraValues);
 
@@ -68,7 +68,10 @@ export function BeneficiariesSection({
       const counts = Object.fromEntries(
         beneficiaryCategories.map(({ key }) => [key, String(record?.[key] ?? 0)])
       );
-      const nextCounts = { ...counts, ...beneficiaryDrafts.current[beneficiaryYear] };
+      const nextCounts: Partial<Record<string, string | null>> = {
+        ...counts,
+        ...beneficiaryDrafts.current[beneficiaryYear],
+      };
       for (const { key } of beneficiaryCategories) {
         setValue(key, String(nextCounts[key] ?? '0'), { shouldValidate: true });
       }

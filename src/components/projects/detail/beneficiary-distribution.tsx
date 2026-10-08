@@ -9,8 +9,6 @@ const DISTRIBUTION_ROWS = [
   { key: 'coordinatedInstitutions', label: 'Instituciones', color: 'bg-beneficiary-institutions' },
 ];
 
-const CUSTOM_ROW_COLORS = DISTRIBUTION_ROWS.map(({ color }) => color);
-
 export function BeneficiaryDistribution({
   data,
   year,
@@ -18,16 +16,12 @@ export function BeneficiaryDistribution({
   data: ProjectDetail['distribution'];
   year: number;
 }) {
-  const values = new Map(data.map(({ key, value }) => [key, value]));
+  const values = new Map<string, number | null>(data.map(({ key, value }) => [key, value]));
   const rows = [
     ...DISTRIBUTION_ROWS,
     ...data
       .filter(({ key }) => !isSystemBeneficiaryKey(key))
-      .map(({ key, label }, index) => ({
-        key,
-        label,
-        color: CUSTOM_ROW_COLORS[index % CUSTOM_ROW_COLORS.length],
-      })),
+      .map(({ key, label }) => ({ key, label, color: 'bg-beneficiary-custom' })),
   ];
   const maximum = Math.max(...rows.map(({ key }) => values.get(key) ?? 0), 1);
 

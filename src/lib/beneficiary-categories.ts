@@ -1,19 +1,21 @@
 import prisma from '@/lib/prisma';
 import type { Prisma } from '@/generated/prisma/client';
+import type { BeneficiaryCategoryOption } from '@/lib/project-display';
 
 const CATEGORY_ORDER = [
   { sortOrder: 'asc' },
   { id: 'asc' },
 ] satisfies Prisma.BeneficiaryCategoryOrderByWithRelationInput[];
 
-export function getActiveBeneficiaryCategories(
+export async function getActiveBeneficiaryCategories(
   client: Prisma.TransactionClient | typeof prisma = prisma
 ) {
-  return client.beneficiaryCategory.findMany({
+  const categories = await client.beneficiaryCategory.findMany({
     where: { isActive: true },
     orderBy: CATEGORY_ORDER,
     select: { key: true, name: true },
   });
+  return categories as BeneficiaryCategoryOption[];
 }
 
 export async function getBeneficiaryCategoryLabels() {

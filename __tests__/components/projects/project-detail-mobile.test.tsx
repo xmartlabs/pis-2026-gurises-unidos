@@ -5,8 +5,9 @@ import { InstitutionalContribution } from '@/components/projects/detail/institut
 import { ProjectMetrics } from '@/components/projects/detail/project-metrics';
 import { ProjectPublicCard } from '@/components/projects/detail/project-public-card';
 import { ProjectRecentActivity } from '@/components/projects/detail/project-recent-activity';
+import type { ProjectDetail } from '@/lib/projects/detail';
 
-const BENEFICIARIES = [
+const BENEFICIARIES: ProjectDetail['distribution'] = [
   { key: 'directChildrenAdolescents', label: 'NNA directos', value: 80 },
   { key: 'indirectChildrenAdolescents', label: 'NNA indirectos', value: 20 },
   { key: 'youth18To29', label: 'Jóvenes (18 a 29)', value: 10 },
@@ -60,7 +61,10 @@ test('shows distribution values without bar tracks on mobile', () => {
 test('shows custom beneficiary categories after the system rows', () => {
   render(
     <BeneficiaryDistribution
-      data={[...BENEFICIARIES, { key: 'customVolunteers', label: 'Voluntarios', value: 7 }]}
+      data={[
+        ...BENEFICIARIES,
+        { key: 'customVolunteers' as const, label: 'Voluntarios', value: 7 },
+      ]}
       year={2026}
     />
   );
