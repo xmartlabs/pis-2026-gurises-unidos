@@ -1,6 +1,6 @@
 import type { ProjectStatus } from '@/generated/prisma/enums';
 
-export const STATUS_BADGE_VARIANT: Record<ProjectStatus, 'active' | 'pending' | 'neutral'> = {
+export const STATUS_BADGE_VARIANT: Record<ProjectStatus, 'active' | 'neutral'> = {
   active: 'active',
   closed: 'neutral',
 };

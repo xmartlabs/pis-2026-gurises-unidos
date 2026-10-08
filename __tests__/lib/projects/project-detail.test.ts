@@ -181,22 +181,19 @@ describe('getProjectDetail', () => {
     });
   });
 
-  it.each(['closed'])(
-    'does not count a %s project with beneficiary data as active',
-    async (status) => {
-      prismaMock.project.findFirst.mockResolvedValue({ ...PROJECT, status });
+  it('does not count a closed project with beneficiary data as active', async () => {
+    prismaMock.project.findFirst.mockResolvedValue({ ...PROJECT, status: 'closed' });
 
-      expect(await getProjectDetail('12', '2026')).toMatchObject({
-        status: 'success',
-        data: {
-          hasData: true,
-          institutionalContribution: {
-            activeProjects: { projectCount: 0, totalCount: 10 },
-          },
+    expect(await getProjectDetail('12', '2026')).toMatchObject({
+      status: 'success',
+      data: {
+        hasData: true,
+        institutionalContribution: {
+          activeProjects: { projectCount: 0, totalCount: 10 },
         },
-      });
-    }
-  );
+      },
+    });
+  });
 
   it('shows zero for a custom category without a stored value in a recorded year', async () => {
     extraCategories.push({ key: 'customTeachers', name: 'Docentes' });
