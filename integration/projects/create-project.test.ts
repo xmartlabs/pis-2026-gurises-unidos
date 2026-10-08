@@ -1,5 +1,6 @@
-import { afterEach, beforeAll, describe, expect, test } from 'vitest';
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createProject } from '@/app/actions/projects';
+import { logAudit } from '@/lib/audit-log';
 import prisma from '@/lib/prisma';
 import { PROJECT_PLACEHOLDERS } from '@/lib/projects/project-placeholders';
 import { loadSeedData, type SeedData } from '../fixtures';
@@ -7,6 +8,11 @@ import { signInAs } from '../session';
 import { auditLogsFor, deleteProject, loadProject } from './project-helpers';
 
 const BENEFICIARY_YEAR = 2024;
+
+vi.mock('@/lib/audit-log', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/audit-log')>();
+  return { logAudit: vi.fn(actual.logAudit) };
+});
 
 let seed: SeedData;
 let createdProjectIds: number[] = [];
@@ -89,6 +95,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   const ids = createdProjectIds;
   createdProjectIds = [];
   for (const id of ids) await deleteProject(id);
@@ -316,13 +323,30 @@ describe('createProject (integration)', () => {
     expect(await countRows()).toEqual(before);
   });
 
-  test('rolls back everything when the department does not exist', async () => {
+  test('returns a form error when the department does not exist', async () => {
     signInAs(seed.adminId);
     const before = await countRows();
 
     const result = await createProject({}, buildFormData({ departmentId: '999999' }));
 
     expect(result.formError).toBe('El coordinador o el departamento seleccionado no existe.');
+    expect(await countRows()).toEqual(before);
+  });
+
+  test('rolls back the project when a later step of the creation fails', async () => {
+    signInAs(seed.adminId);
+    const before = await countRows();
+    const realLogAudit = vi.mocked(logAudit).getMockImplementation()!;
+    vi.mocked(logAudit)
+      .mockClear()
+      .mockImplementationOnce(realLogAudit)
+      .mockRejectedValueOnce(new Error('Audit failure'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await createProject({}, buildFormData({ name: 'Rolled back project' }));
+
+    expect(result.formError).toBe('No se pudo crear el proyecto. Intentá de nuevo.');
+    expect(vi.mocked(logAudit)).toHaveBeenCalledTimes(2);
     expect(await countRows()).toEqual(before);
   });
 

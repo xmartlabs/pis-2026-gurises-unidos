@@ -12,7 +12,7 @@ import type { User } from '@/generated/prisma/client';
 
 const SESSION_COOKIE = '__Secure-authjs.session-token';
 const PASSWORD = 'integration-login-password';
-const DOCUMENT_IDS = ['65432105', '65432111', '65432127', '65432133'];
+const DOCUMENT_IDS = ['65432105', '65432111', '65432127', '65432133', '65432149'];
 
 type StoredCookie = { value: string; options?: Record<string, unknown> };
 
@@ -20,7 +20,12 @@ const cookieJar = vi.hoisted(() => new Map<string, StoredCookie>());
 
 vi.unmock('@/auth');
 vi.mock('next/headers', () => ({
-  headers: async () => new Headers({ host: 'localhost:3000', 'x-forwarded-proto': 'https' }),
+  headers: async () =>
+    new Headers({
+      host: 'localhost:3000',
+      'x-forwarded-proto': 'https',
+      cookie: [...cookieJar].map(([name, { value }]) => `${name}=${value}`).join('; '),
+    }),
   cookies: async () => ({
     get: (name: string) => {
       const cookie = cookieJar.get(name);
@@ -139,6 +144,16 @@ describe('login (integration)', () => {
     expect((await decodeSessionCookie())?.sub).toBe(String(user.id));
   });
 
+  test('redirects to password reset when the user must change the password', async () => {
+    const user = await createUser({ mustChangePassword: true });
+
+    await expect(login({}, buildFormData(user.documentId))).rejects.toThrow(
+      /^NEXT_REDIRECT:\/password-reset$/
+    );
+
+    expect((await decodeSessionCookie())?.sub).toBe(String(user.id));
+  });
+
   test('rejects a wrong password without signing in', async () => {
     const user = await createUser();
 
@@ -179,9 +194,9 @@ describe('login (integration)', () => {
   });
 
   test('rejects a document id that does not belong to any user', async () => {
-    const result = await login({}, buildFormData(DOCUMENT_IDS[3]));
+    const result = await login({}, buildFormData(DOCUMENT_IDS[4]));
 
-    expect(result).toEqual({ formError: 'Invalid credentials', documentId: DOCUMENT_IDS[3] });
+    expect(result).toEqual({ formError: 'Invalid credentials', documentId: DOCUMENT_IDS[4] });
     expect(cookieJar.size).toBe(0);
   });
 
