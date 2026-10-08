@@ -57,7 +57,7 @@ const PROJECT_BASE_NAMES = [
 
 const PROJECT_DEPARTMENTS = ['Montevideo', 'Canelones', 'Salto', 'Rivera', 'Maldonado'];
 
-const STATUSES = ['active', 'paused', 'closed'] as const;
+const STATUSES = ['active', 'closed'] as const;
 const INTENSITIES = ['high', 'medium', 'low'] as const;
 const ZONES = ['city', 'inland', 'border', 'rural'] as const;
 
