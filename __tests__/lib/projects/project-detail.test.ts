@@ -12,6 +12,11 @@ vi.mock('@/auth', () => ({
   auth: authMock,
 }));
 
+vi.mock('@/lib/beneficiary-categories', async () => {
+  const { BENEFICIARY_CATEGORY_OPTIONS } = await import('../../mocks/beneficiary-values');
+  return { getActiveBeneficiaryCategories: async () => BENEFICIARY_CATEGORY_OPTIONS };
+});
+
 vi.mock('next/navigation', () => ({
   redirect: (url: string) => {
     throw new Error(`Redirect: ${url}`);
@@ -165,6 +170,7 @@ describe('getProjectDetail', () => {
     expect(result.data.metrics.annualGrowth).toBeCloseTo(30);
     expect(result.data.distribution).toContainEqual({
       key: 'directChildrenAdolescents',
+      label: 'NNA directos',
       value: 100,
     });
   });

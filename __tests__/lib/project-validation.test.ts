@@ -1,8 +1,9 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { projectSchema } from '@/lib/validation/project';
-import { projectBeneficiarySchema } from '@/lib/validation/project-beneficiary';
-import { projectFormSchema } from '@/lib/validation/project-form';
+import { beneficiaryYear, buildBeneficiaryCountsShape } from '@/lib/validation/project-beneficiary';
+import { buildProjectFormSchema, splitProjectFormData } from '@/lib/validation/project-form';
 import { parseId, MAX_INT32 } from '@/lib/validation/ids';
+import { BENEFICIARY_CATEGORY_KEYS } from '../mocks/beneficiary-values';
 
 afterEach(() => vi.useRealTimers());
 
@@ -31,10 +32,10 @@ it('validates years and defaults after midnight without reimporting the module',
   vi.useFakeTimers();
   vi.setSystemTime(new Date(2026, 11, 31, 23, 59));
   expect(projectSchema.shape.startYear.safeParse(2027).success).toBe(false);
-  expect(projectBeneficiarySchema.parse({}).year).toBe(2026);
+  expect(beneficiaryYear.parse(undefined)).toBe(2026);
   vi.setSystemTime(new Date(2027, 0, 1, 0, 1));
   expect(projectSchema.shape.startYear.safeParse(2027).success).toBe(true);
-  expect(projectBeneficiarySchema.parse({}).year).toBe(2027);
+  expect(beneficiaryYear.parse(undefined)).toBe(2027);
 });
 it.each([
   'directChildrenAdolescents',
@@ -45,8 +46,9 @@ it.each([
   'communityLeaders',
   'basicServiceStaff',
 ] as const)('bounds %s to a Postgres integer', (field) => {
-  expect(projectBeneficiarySchema.shape[field].safeParse(MAX_INT32).success).toBe(true);
-  expect(projectBeneficiarySchema.shape[field].safeParse(MAX_INT32 + 1).success).toBe(false);
+  const counts = buildBeneficiaryCountsShape(BENEFICIARY_CATEGORY_KEYS);
+  expect(counts[field].safeParse(MAX_INT32).success).toBe(true);
+  expect(counts[field].safeParse(MAX_INT32 + 1).success).toBe(false);
 });
 it.each([
   ['name', 100],
@@ -59,7 +61,7 @@ it.each([
   expect(projectSchema.shape[field].safeParse('a'.repeat(limit + 1)).success).toBe(false);
 });
 it('requires one valid topic', () => {
-  const schema = projectFormSchema.shape.topicId;
+  const schema = buildProjectFormSchema(BENEFICIARY_CATEGORY_KEYS).shape.topicId;
   expect(schema.parse('2')).toBe(2);
   for (const value of ['', 'none', undefined, null, 'invalid', '0', ['1', '2']])
     expect(schema.safeParse(value).success).toBe(false);
@@ -113,4 +115,33 @@ it('projectSchema accepts an end year equal to or after the start year, or none 
   expect(projectSchema.safeParse({ ...BASE_PROJECT, status: 'active', endYear: '' }).success).toBe(
     true
   );
+});
+
+it('validates a custom beneficiary category and splits it into the counts', () => {
+  const keys = [...BENEFICIARY_CATEGORY_KEYS, 'customVolunteers'];
+  const schema = buildProjectFormSchema(keys);
+  const input = { ...BASE_PROJECT, topicId: '1', year: '2021', customVolunteers: '12' };
+
+  const negative = schema.safeParse({ ...input, customVolunteers: '-1' });
+  expect(negative.error?.flatten().fieldErrors).toEqual({
+    customVolunteers: ['No puede ser negativo'],
+  });
+
+  const { projectData, beneficiaryData } = splitProjectFormData(schema.parse(input), keys);
+  expect(beneficiaryData).toEqual({
+    year: 2021,
+    counts: {
+      directChildrenAdolescents: 0,
+      indirectChildrenAdolescents: 0,
+      youth18To29: 0,
+      families: 0,
+      coordinatedInstitutions: 0,
+      communityLeaders: 0,
+      basicServiceStaff: 0,
+      customVolunteers: 12,
+    },
+  });
+  expect(projectData).not.toHaveProperty('customVolunteers');
+  expect(projectData).not.toHaveProperty('families');
+  expect(projectData).toMatchObject({ name: 'Project', topicId: 1 });
 });

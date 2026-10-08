@@ -1,12 +1,15 @@
 import { formatNumber } from '@/lib/format';
 import type { ProjectDetail } from '@/lib/projects/detail';
+import { isSystemBeneficiaryKey } from '@/lib/project-display';
 
 const DISTRIBUTION_ROWS = [
   { key: 'directChildrenAdolescents', label: 'NNA directos', color: 'bg-beneficiary-children' },
   { key: 'families', label: 'Familias', color: 'bg-beneficiary-families' },
   { key: 'basicServiceStaff', label: 'Docentes y educadores', color: 'bg-beneficiary-staff' },
   { key: 'coordinatedInstitutions', label: 'Instituciones', color: 'bg-beneficiary-institutions' },
-] as const;
+];
+
+const CUSTOM_ROW_COLORS = DISTRIBUTION_ROWS.map(({ color }) => color);
 
 export function BeneficiaryDistribution({
   data,
@@ -16,7 +19,17 @@ export function BeneficiaryDistribution({
   year: number;
 }) {
   const values = new Map(data.map(({ key, value }) => [key, value]));
-  const maximum = Math.max(...DISTRIBUTION_ROWS.map(({ key }) => values.get(key) ?? 0), 1);
+  const rows = [
+    ...DISTRIBUTION_ROWS,
+    ...data
+      .filter(({ key }) => !isSystemBeneficiaryKey(key))
+      .map(({ key, label }, index) => ({
+        key,
+        label,
+        color: CUSTOM_ROW_COLORS[index % CUSTOM_ROW_COLORS.length],
+      })),
+  ];
+  const maximum = Math.max(...rows.map(({ key }) => values.get(key) ?? 0), 1);
 
   return (
     <section className="border-border bg-card rounded-[14px] border p-4 sm:p-5">
@@ -24,7 +37,7 @@ export function BeneficiaryDistribution({
       <p className="text-muted-foreground mt-4 text-xs">Conteo por categoría · {year}</p>
 
       <ul className="mt-4 space-y-3.5 sm:space-y-4">
-        {DISTRIBUTION_ROWS.map(({ key, label, color }) => {
+        {rows.map(({ key, label, color }) => {
           const value = values.get(key) ?? null;
 
           return (

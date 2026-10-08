@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ProjectForm } from '@/components/projects/form/project-form';
+import { BENEFICIARY_CATEGORY_OPTIONS } from '../../mocks/beneficiary-values';
 import { notify } from '@/lib/notify';
 
 const { routerPushMock, routerRefreshMock } = vi.hoisted(() => ({
@@ -28,6 +29,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       mode="edit"
@@ -86,6 +88,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
 it('keeps the original creation appearance separate from edit styling', () => {
   const { container } = render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       topics={[]}
       currentYear={2026}
       coordinators={[]}
@@ -112,6 +115,7 @@ it('keeps the original creation appearance separate from edit styling', () => {
 it('shows and submits the selected project placeholder during creation', () => {
   const { container } = render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       topics={[]}
       currentYear={2026}
       coordinators={[]}
@@ -133,6 +137,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
   const submitAction = vi.fn().mockResolvedValue({ formError: 'No se pudo guardar' });
   const { container } = render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       currentYear={2026}
       topics={[
         { id: 1, name: 'Education' },
@@ -168,6 +173,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
 function renderFormWith(initialValues: Record<string, string>) {
   return render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       topics={[]}
       currentYear={2026}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
@@ -197,6 +203,7 @@ it('submits the end year of a closed project', async () => {
   const submitAction = vi.fn().mockResolvedValue({});
   const { container } = render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
@@ -225,6 +232,7 @@ it('refreshes the topic list after a selected topic becomes invalid', async () =
   });
   const { container } = render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       currentYear={2026}
       topics={[{ id: 1, name: 'Education' }]}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
@@ -270,6 +278,7 @@ it('limits the closing year to years at or after the start year', async () => {
 it('clears an invalid closing year and advances beneficiaries to the start year', async () => {
   render(
     <ProjectForm
+      beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
       topics={[]}
       currentYear={2026}
       coordinators={[]}

@@ -1,6 +1,6 @@
 import type { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
-import { BENEFICIARY_FIELDS, type BeneficiaryCounts } from '@/lib/project-display';
+import { SYSTEM_BENEFICIARY_KEYS, type BeneficiaryCounts } from '@/lib/project-display';
 
 export const BENEFICIARY_VALUES_SELECT = {
   values: { select: { value: true, category: { select: { key: true } } } },
@@ -9,19 +9,21 @@ export const BENEFICIARY_VALUES_SELECT = {
 type BeneficiaryValueRow = { value: number; category: { key: string } };
 
 export function toBeneficiaryCounts(values: BeneficiaryValueRow[]): BeneficiaryCounts {
-  const counts = Object.fromEntries(BENEFICIARY_FIELDS.map(({ key }) => [key, 0]));
+  const counts: Record<string, number> = Object.fromEntries(
+    SYSTEM_BENEFICIARY_KEYS.map((key) => [key, 0])
+  );
   for (const { value, category } of values) {
-    if (Object.hasOwn(counts, category.key)) counts[category.key] = value;
+    if (category.key) counts[category.key] = value;
   }
   return counts as BeneficiaryCounts;
 }
 
 export async function sumBeneficiaryValues(
   where: Prisma.ProjectBeneficiaryWhereInput,
-  keys: (keyof BeneficiaryCounts)[]
+  keys?: string[]
 ) {
   const { _sum } = await prisma.projectBeneficiaryValue.aggregate({
-    where: { beneficiary: where, category: { key: { in: keys } } },
+    where: { beneficiary: where, ...(keys && { category: { key: { in: keys } } }) },
     _sum: { value: true },
   });
   return _sum.value ?? 0;

@@ -5,6 +5,7 @@ import { METRIC_DEFINITIONS } from '../src/lib/metrics/constants';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import {
   formCategoryValuesWhere,
+  SYSTEM_BENEFICIARY_KEYS,
   toBeneficiaryValuesCreate,
   type BeneficiaryCounts,
 } from '../src/lib/project-display';
@@ -450,7 +451,7 @@ async function main() {
 
         for (const { year, ...counts } of beneficiaries) {
           await tx.projectBeneficiaryValue.deleteMany({
-            where: formCategoryValuesWhere(saved.id, year),
+            where: formCategoryValuesWhere(saved.id, year, SYSTEM_BENEFICIARY_KEYS),
           });
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: saved.id, year } },

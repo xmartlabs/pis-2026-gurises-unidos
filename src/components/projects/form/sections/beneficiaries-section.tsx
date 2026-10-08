@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { TextInputField } from '@/components/ui/forms/text-input-field';
 import { SelectField } from '@/components/ui/forms/select-field';
 import { FormSection } from '@/components/ui/forms/form-section';
@@ -13,7 +12,11 @@ export function BeneficiariesSection({
   isEditing,
   yearOptions,
   beneficiaryRecords,
-}: Pick<SectionProps, 'isEditing' | 'yearOptions' | 'beneficiaryRecords'>) {
+  beneficiaryCategories,
+}: Pick<
+  SectionProps,
+  'isEditing' | 'yearOptions' | 'beneficiaryRecords' | 'beneficiaryCategories'
+>) {
   const { getValues, setValue } = useFormContext<ProjectFormValues>();
   const beneficiaryDrafts = useRef<Record<string, Partial<ProjectFormValues>>>({});
 
@@ -28,19 +31,19 @@ export function BeneficiariesSection({
     (beneficiaryYear: string) => {
       const current = getValues();
       beneficiaryDrafts.current[current.year] = Object.fromEntries(
-        BENEFICIARY_FIELDS.map(({ key }) => [key, current[key]])
+        beneficiaryCategories.map(({ key }) => [key, current[key]])
       );
       const record = beneficiaryRecords.find((item) => String(item.year) === beneficiaryYear);
       const counts = Object.fromEntries(
-        BENEFICIARY_FIELDS.map(({ key }) => [key, String(record?.[key] ?? 0)])
+        beneficiaryCategories.map(({ key }) => [key, String(record?.[key] ?? 0)])
       );
       const nextCounts = { ...counts, ...beneficiaryDrafts.current[beneficiaryYear] };
-      for (const { key } of BENEFICIARY_FIELDS) {
+      for (const { key } of beneficiaryCategories) {
         setValue(key, String(nextCounts[key] ?? '0'), { shouldValidate: true });
       }
       setValue('year', beneficiaryYear);
     },
-    [getValues, setValue, beneficiaryRecords]
+    [getValues, setValue, beneficiaryRecords, beneficiaryCategories]
   );
 
   useEffect(() => {
@@ -79,15 +82,19 @@ export function BeneficiariesSection({
           se guardarán al salir.
         </p>
       </div>
-      {BENEFICIARY_FIELDS.map((field, index) => (
+      {beneficiaryCategories.map((field, index) => (
         <TextInputField
           key={field.key}
           id={field.key}
           name={field.key}
-          label={field.label}
+          label={field.name}
           type="text"
           inputMode="numeric"
-          className={index === BENEFICIARY_FIELDS.length - 1 ? 'sm:col-span-2' : undefined}
+          className={
+            index === beneficiaryCategories.length - 1 && index % 2 === 0
+              ? 'sm:col-span-2'
+              : undefined
+          }
         />
       ))}
     </FormSection>

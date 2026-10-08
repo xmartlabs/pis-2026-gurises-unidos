@@ -24,25 +24,25 @@ export const INTENSITY_OPTIONS = [
   { value: 'low', label: INTENSITY_LABEL.low },
 ] as const;
 
-export type BeneficiaryCounts = {
-  directChildrenAdolescents: number;
-  indirectChildrenAdolescents: number;
-  youth18To29: number;
-  families: number;
-  coordinatedInstitutions: number;
-  communityLeaders: number;
-  basicServiceStaff: number;
-};
+export const SYSTEM_BENEFICIARY_KEYS = [
+  'directChildrenAdolescents',
+  'indirectChildrenAdolescents',
+  'youth18To29',
+  'families',
+  'coordinatedInstitutions',
+  'communityLeaders',
+  'basicServiceStaff',
+] as const;
 
-export const BENEFICIARY_FIELDS: { key: keyof BeneficiaryCounts; label: string }[] = [
-  { key: 'directChildrenAdolescents', label: 'NNA directos' },
-  { key: 'indirectChildrenAdolescents', label: 'NNA indirectos' },
-  { key: 'youth18To29', label: 'Jóvenes (18 a 29)' },
-  { key: 'families', label: 'Familias' },
-  { key: 'coordinatedInstitutions', label: 'Instituciones coordinadas' },
-  { key: 'communityLeaders', label: 'Referentes comunitarios' },
-  { key: 'basicServiceStaff', label: 'Personal de servicios básicos' },
-];
+export type SystemBeneficiaryKey = (typeof SYSTEM_BENEFICIARY_KEYS)[number];
+
+export function isSystemBeneficiaryKey(key: string): key is SystemBeneficiaryKey {
+  return (SYSTEM_BENEFICIARY_KEYS as readonly string[]).includes(key);
+}
+
+export type BeneficiaryCounts = Record<SystemBeneficiaryKey, number> & Record<string, number>;
+
+export type BeneficiaryCategoryOption = { key: string; name: string };
 
 export const TOPIC_OPTIONS = [
   { value: 'education', label: 'Educación' },
@@ -63,20 +63,19 @@ export const FIRST_PROJECT_YEAR = 1989;
 export const PREVIEW_TOPIC_FALLBACK = 'Educación';
 export const PREVIEW_LOCATION_FALLBACK = 'Montevideo';
 
-export function sumBeneficiaries(counts: BeneficiaryCounts) {
-  return BENEFICIARY_FIELDS.reduce((sum, field) => sum + counts[field.key], 0);
+export function sumBeneficiaries(counts: Record<string, number>) {
+  return Object.values(counts).reduce((sum, value) => sum + value, 0);
 }
 
-export function toBeneficiaryValuesCreate(counts: Partial<BeneficiaryCounts>) {
-  return BENEFICIARY_FIELDS.map(({ key }) => ({
-    value: counts[key] ?? 0,
-    category: { connect: { key } },
-  })).filter(({ value }) => value > 0);
+export function toBeneficiaryValuesCreate(counts: Partial<Record<string, number>>) {
+  return Object.entries(counts).flatMap(([key, value]) =>
+    value ? [{ value, category: { connect: { key } } }] : []
+  );
 }
 
-export function formCategoryValuesWhere(projectId: number, year: number) {
+export function formCategoryValuesWhere(projectId: number, year: number, keys: readonly string[]) {
   return {
     beneficiary: { projectId, year },
-    category: { key: { in: BENEFICIARY_FIELDS.map(({ key }) => key) } },
+    category: { key: { in: [...keys] } },
   };
 }
