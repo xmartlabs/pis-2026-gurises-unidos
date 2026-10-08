@@ -103,12 +103,24 @@ export function ProjectsCardList({
     const params = new URLSearchParams(requestedParams.current);
     if (value) params.set(key, value);
     else params.delete(key);
+    replaceFilters(params);
+  }
+
+  function replaceFilters(params: URLSearchParams) {
     params.delete('page');
     const queryString = params.toString();
     requestedParams.current = queryString;
     startTransition(() =>
       router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false })
     );
+  }
+
+  function clearFilters() {
+    const params = new URLSearchParams(requestedParams.current);
+    params.set('beneficiaryYear', ALL_YEARS);
+    params.delete('departmentId');
+    params.delete('topicId');
+    replaceFilters(params);
   }
 
   function handleSearchChange(value: string) {
@@ -206,6 +218,14 @@ export function ProjectsCardList({
             </Select>
           </div>
         ))}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={clearFilters}
+        >
+          Limpiar filtros
+        </Button>
       </PopoverContent>
     </Popover>
   );
