@@ -20,6 +20,7 @@ export type BeneficiaryCategoryActionState = {
 };
 
 const FORBIDDEN_MESSAGE = 'No tenés permisos para realizar esta acción.';
+const DUPLICATE_NAME_MESSAGE = 'Ya existe una categoría con ese nombre.';
 
 function revalidateBeneficiaryCategories() {
   revalidatePath('/', 'layout');
@@ -46,16 +47,17 @@ export async function createBeneficiaryCategory(
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
-      const inactive = await tx.beneficiaryCategory.findFirst({
-        where: { name: parsed.data.name, isActive: false, isSystem: false },
-        select: { id: true },
+    const duplicate = await prisma.$transaction(async (tx) => {
+      const existing = await tx.beneficiaryCategory.findFirst({
+        where: { name: { equals: parsed.data.name, mode: 'insensitive' } },
+        select: { id: true, isActive: true, isSystem: true },
       });
+      if (existing && (existing.isActive || existing.isSystem)) return true;
       const { _max } = await tx.beneficiaryCategory.aggregate({ _max: { sortOrder: true } });
       const sortOrder = (_max.sortOrder ?? 0) + 1;
-      const category = inactive
+      const category = existing
         ? await tx.beneficiaryCategory.update({
-            where: { id: inactive.id },
+            where: { id: existing.id },
             data: { isActive: true, sortOrder },
           })
         : await tx.beneficiaryCategory.create({
@@ -73,11 +75,16 @@ export async function createBeneficiaryCategory(
         entityId: category.id,
         details: { name: category.name },
       });
+      return false;
     });
+
+    if (duplicate) {
+      return { formError: DUPLICATE_NAME_MESSAGE, values: { name } };
+    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return {
-        formError: 'Ya existe una categoría con ese nombre.',
+        formError: DUPLICATE_NAME_MESSAGE,
         values: { name },
       };
     }

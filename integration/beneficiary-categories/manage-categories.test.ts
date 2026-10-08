@@ -149,6 +149,27 @@ describe('beneficiary categories (integration)', () => {
     expect(await prisma.beneficiaryCategory.count({ where: { name: CATEGORY_NAME } })).toBe(1);
   });
 
+  test('names are compared without case', async () => {
+    signInAs(seed.adminId);
+    const category = await createCategory();
+
+    expect(await createBeneficiaryCategory({}, nameFormData(CATEGORY_NAME.toUpperCase()))).toEqual({
+      formError: 'Ya existe una categoría con ese nombre.',
+      values: { name: CATEGORY_NAME.toUpperCase() },
+    });
+
+    expect(await deleteBeneficiaryCategory(category.id)).toEqual({ success: true });
+    expect(await createBeneficiaryCategory({}, nameFormData(CATEGORY_NAME.toLowerCase()))).toEqual({
+      success: true,
+    });
+    expect(
+      await prisma.beneficiaryCategory.findMany({
+        where: { name: { equals: CATEGORY_NAME, mode: 'insensitive' } },
+        select: { id: true, isActive: true },
+      })
+    ).toEqual([{ id: category.id, isActive: true }]);
+  });
+
   test('system categories cannot be deleted', async () => {
     signInAs(seed.adminId);
     const families = await prisma.beneficiaryCategory.findUniqueOrThrow({

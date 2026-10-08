@@ -85,8 +85,8 @@ describe('createBeneficiaryCategory', () => {
     ).resolves.toEqual({ success: true });
 
     expect(mocks.findCategory).toHaveBeenCalledWith({
-      where: { name: 'Volunteers', isActive: false, isSystem: false },
-      select: { id: true },
+      where: { name: { equals: 'Volunteers', mode: 'insensitive' } },
+      select: { id: true, isActive: true, isSystem: true },
     });
     expect(mocks.createCategory).toHaveBeenCalledWith({
       data: {
@@ -119,11 +119,11 @@ describe('createBeneficiaryCategory', () => {
     });
   });
 
-  test('reactivates an inactive custom category with the same name', async () => {
-    mocks.findCategory.mockResolvedValue({ id: 5 });
+  test('reactivates an inactive custom category with the same name in any case', async () => {
+    mocks.findCategory.mockResolvedValue({ id: 5, isActive: false, isSystem: false });
 
     await expect(
-      createBeneficiaryCategory(EMPTY_STATE, nameFormData('Volunteers'))
+      createBeneficiaryCategory(EMPTY_STATE, nameFormData('volunteers'))
     ).resolves.toEqual({ success: true });
 
     expect(mocks.updateCategory).toHaveBeenCalledWith({
@@ -141,6 +141,25 @@ describe('createBeneficiaryCategory', () => {
       },
     });
     expect(mocks.revalidatePath).toHaveBeenCalled();
+  });
+
+  test.each([
+    { isActive: true, isSystem: false },
+    { isActive: true, isSystem: true },
+  ])('rejects a name that only differs in case from an existing category %o', async (found) => {
+    mocks.findCategory.mockResolvedValue({ id: 4, ...found });
+
+    await expect(createBeneficiaryCategory(EMPTY_STATE, nameFormData('familias'))).resolves.toEqual(
+      {
+        formError: 'Ya existe una categoría con ese nombre.',
+        values: { name: 'familias' },
+      }
+    );
+
+    expect(mocks.createCategory).not.toHaveBeenCalled();
+    expect(mocks.updateCategory).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
   test('reports a duplicate name without revalidating', async () => {
