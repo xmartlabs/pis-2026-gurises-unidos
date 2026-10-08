@@ -282,7 +282,7 @@ describe('AC3: no projects', () => {
   });
 
   test('returns an empty page when no project matches the filters', async () => {
-    const result = await listWith({ status: 'paused', leadCoordinatorId: '3' }, []);
+    const result = await listWith({ status: 'closed', leadCoordinatorId: '3' }, []);
 
     expect(result.items).toEqual([]);
     expect(result.total).toBe(0);

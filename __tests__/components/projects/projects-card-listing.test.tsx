@@ -152,9 +152,9 @@ afterEach(() => {
 });
 
 test('marks the status received from the server as selected', () => {
-  renderList({ status: 'paused' });
+  renderList({ status: 'closed' });
 
-  expect(screen.getByRole('tab', { name: 'Pausados' }).getAttribute('aria-selected')).toBe('true');
+  expect(screen.getByRole('tab', { name: 'Cerrados' }).getAttribute('aria-selected')).toBe('true');
 });
 
 test('stores the selected status in the URL keeping the other filters', () => {
@@ -208,11 +208,11 @@ test('loads the next page with the current filters when the end of the list is r
     buildPage([buildProject(2, 'Second page project')], 2, 2)
   );
 
-  renderList({ totalPages: 2, status: 'paused', beneficiaryYear: 2024 });
+  renderList({ totalPages: 2, status: 'closed', beneficiaryYear: 2024 });
   await revealSentinel();
 
   expect(mocks.loadProjectsPage).toHaveBeenCalledWith(
-    { status: 'paused', beneficiaryYear: '2024' },
+    { status: 'closed', beneficiaryYear: '2024' },
     2
   );
   expect(screen.getByText('Active project')).toBeTruthy();

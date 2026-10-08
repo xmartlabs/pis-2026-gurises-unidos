@@ -181,7 +181,7 @@ describe('getProjectDetail', () => {
     });
   });
 
-  it.each(['paused', 'closed'])(
+  it.each(['closed'])(
     'does not count a %s project with beneficiary data as active',
     async (status) => {
       prismaMock.project.findFirst.mockResolvedValue({ ...PROJECT, status });
