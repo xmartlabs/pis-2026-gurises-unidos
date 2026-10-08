@@ -97,11 +97,11 @@ export async function deleteStrategicLine(id: number): Promise<StrategicLineActi
       const projectCount = await tx.project.count({
         where: { deletedAt: null, strategicLines: { some: { id } } },
       });
-      if (projectCount > 0) return false;
+      if (projectCount > 0) return 'associated';
       await tx.strategicLine.update({ where: { id }, data: { isActive: false } });
-      return true;
+      return 'deleted';
     });
-    if (!result) {
+    if (result === 'associated') {
       return {
         formError: 'No se puede eliminar una línea estratégica asociada a proyectos.',
       };

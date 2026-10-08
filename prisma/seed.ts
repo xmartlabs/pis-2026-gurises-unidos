@@ -9,7 +9,7 @@ import {
   toBeneficiaryValuesCreate,
   type BeneficiaryCounts,
 } from '../src/lib/project-display';
-import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
+import { ADMIN, BENEFICIARY_CATEGORIES, STRATEGIC_LINES } from './fixtures';
 
 const prisma = new PrismaClient();
 
@@ -388,6 +388,10 @@ async function main() {
       for (const name of TOPICS) {
         const topic = await tx.topic.upsert({ where: { name }, update: {}, create: { name } });
         topicIds.set(name, topic.id);
+      }
+
+      for (const name of STRATEGIC_LINES) {
+        await tx.strategicLine.upsert({ where: { name }, update: {}, create: { name } });
       }
 
       const admin = await tx.user.upsert({
