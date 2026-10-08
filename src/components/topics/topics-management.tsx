@@ -64,13 +64,13 @@ export function TopicsManagement({ topics }: TopicsManagementProps) {
   }
 
   return (
-    <Card className="border-border flex w-full max-w-190 flex-col gap-4 rounded-[14px] border bg-white p-6 ring-0">
+    <Card className="border-border flex w-full flex-col gap-4 rounded-[14px] border bg-white p-6 ring-0">
       <CardHeader className="px-0">
         <CardTitle className="font-sans text-base leading-6 font-semibold tracking-normal">
           Temáticas de proyectos
         </CardTitle>
       </CardHeader>
-      <div className="flex w-full max-w-178 flex-col gap-1.5">
+      <div className="flex w-full flex-col gap-1.5">
         <form
           action={formAction}
           onSubmit={handleSubmit}
@@ -97,7 +97,7 @@ export function TopicsManagement({ topics }: TopicsManagementProps) {
 
         {state.formError && <p className="text-destructive text-xs">{state.formError}</p>}
       </div>
-      <Separator className="w-full max-w-178" />
+      <Separator className="w-full" />
       <p className="text-muted-foreground font-sans text-xs leading-4 font-normal">
         {topics.length === 1 ? '1 temática' : `${topics.length} temáticas`}
       </p>
