@@ -5,7 +5,7 @@ const STATS_COLUMNS_CLASSES: Record<number, string> = {
   4: 'lg:grid-cols-4 lg:max-w-328',
 };
 
-const WIDE_THREE_COLUMNS_CLASS = 'lg:grid-cols-3 lg:max-w-328';
+export const WIDE_THREE_COLUMNS_CLASS = 'lg:grid-cols-3 lg:max-w-328';
 
 export function getStatsColumnsClass(count: number) {
   if (count <= 4) return STATS_COLUMNS_CLASSES[Math.max(count, 1)];
