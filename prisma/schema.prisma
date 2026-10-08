@@ -97,6 +97,14 @@ model Topic {
   projects Project[]
 }
 
+model StrategicLine {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  isActive Boolean @default(true)
+
+  projects Project[]
+}
+
 model Department {
   id   Int    @id @default(autoincrement())
   name String @unique
@@ -126,11 +134,12 @@ model Project {
   deletedBy            Int?
   topicId              Int
 
-  leadCoordinator User       @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
-  department      Department @relation(fields: [departmentId], references: [id])
-  creator         User?      @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
-  deleter         User?      @relation("ProjectDeletedBy", fields: [deletedBy], references: [id])
-  topic           Topic      @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  leadCoordinator User            @relation("ProjectLeadCoordinator", fields: [leadCoordinatorId], references: [id])
+  department      Department      @relation(fields: [departmentId], references: [id])
+  creator         User?           @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+  deleter         User?           @relation("ProjectDeletedBy", fields: [deletedBy], references: [id])
+  topic           Topic           @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  strategicLines  StrategicLine[]
 
   projectCoordinators  ProjectCoordinator[]
   projectBeneficiaries ProjectBeneficiary[]

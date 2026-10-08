@@ -350,7 +350,12 @@ const SEED_PROJECTS: SeedProject[] = [
 type ProjectFixture = Required<
   Omit<
     Prisma.ProjectUncheckedCreateInput,
-    'id' | 'createdAt' | 'updatedAt' | 'projectCoordinators' | 'projectBeneficiaries'
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'projectCoordinators'
+    | 'projectBeneficiaries'
+    | 'strategicLines'
   >
 >;
 
