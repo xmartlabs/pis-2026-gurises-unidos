@@ -1,6 +1,6 @@
 import { ProjectHistory } from '@/components/projects/form/project-history';
 import { STATUS_LABEL, INTENSITY_LABEL } from '@/lib/project-display';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/require-user';
 import { canEditProject } from '@/lib/projects/permissions';
 import { parseId } from '@/lib/validation/ids';
@@ -14,6 +14,7 @@ import {
 } from '@/lib/beneficiary-categories';
 import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import { DeleteProjectSection } from '@/components/projects/delete-project-section';
+import { ErrorScreen } from '@/components/error-screen';
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -39,7 +40,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  if (!canEditProject(user, project)) redirect(`/dashboard/projects/${project.id}`);
+  if (!canEditProject(user, project)) return <ErrorScreen code={403} />;
   const currentYear = new Date().getFullYear();
 
   const [coordinators, departments, history, topics, beneficiaryCategories, fieldLabels] =
