@@ -17,6 +17,7 @@ export const TABLES = [
   'Metric',
   'PublicSettings',
   'Project',
+  'StrategicLine',
   'User',
   'Topic',
   'Department',
@@ -31,3 +32,12 @@ export const BENEFICIARY_CATEGORIES = [
   { key: 'communityLeaders', name: 'Referentes comunitarios' },
   { key: 'basicServiceStaff', name: 'Personal de servicios básicos' },
 ].map((category, index) => ({ ...category, sortOrder: index + 1, isSystem: true }));
+
+export const STRATEGIC_LINES = [
+  'Atención Directa',
+  'Incidencia en Políticas Públicas',
+  'Redes Interinstitucionales',
+  'Difusión y Sensibilización',
+  'Investigación y Sistematización',
+  'Formación',
+] as const;

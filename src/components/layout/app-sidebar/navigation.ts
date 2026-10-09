@@ -4,6 +4,7 @@ import {
   FolderKanban,
   HomeIcon,
   Tags,
+  Waypoints,
   type LucideIcon,
   // Newspaper,
   Users,
@@ -104,6 +105,13 @@ export const NAV_GROUPS: readonly NavigationGroup[] = [
         title: 'Categorías de beneficiarios',
         href: '/management/beneficiary-categories',
         icon: UsersRound,
+        roles: ['admin'],
+      },
+      {
+        id: 'strategicLines',
+        title: 'Líneas estratégicas',
+        href: '/management/strategic-lines',
+        icon: Waypoints,
         roles: ['admin'],
       },
       {

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
-import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
+import { ADMIN, BENEFICIARY_CATEGORIES, STRATEGIC_LINES } from './fixtures';
 import {
   formCategoryValuesWhere,
   SYSTEM_BENEFICIARY_KEYS,
@@ -106,6 +106,10 @@ async function main() {
       for (const name of TOPICS) {
         const topic = await tx.topic.upsert({ where: { name }, update: {}, create: { name } });
         topicIds.push(topic.id);
+      }
+
+      for (const name of STRATEGIC_LINES) {
+        await tx.strategicLine.upsert({ where: { name }, update: {}, create: { name } });
       }
 
       const admin = await tx.user.upsert({
