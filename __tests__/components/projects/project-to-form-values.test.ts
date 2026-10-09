@@ -71,7 +71,11 @@ it('maps all counts from the requested year without mutating the project', () =>
 it.each(['publicSector', 'privateSector', 'internationalCooperation'] as const)(
   'loads the stored counterparty into form values: %s',
   (counterpartyType) => {
-    const values = projectToFormValues({ ...PROJECT, counterpartyType }, 2026);
+    const values = projectToFormValues(
+      { ...PROJECT, counterpartyType },
+      2026,
+      BENEFICIARY_CATEGORY_OPTIONS
+    );
     expect(values.counterpartyType).toBe(counterpartyType);
   }
 );
