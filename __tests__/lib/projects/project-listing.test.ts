@@ -349,7 +349,7 @@ describe('listBeneficiaryYears', () => {
 });
 
 describe('listProjectFilterOptions', () => {
-  test('returns all departments and topics, including those without projects', async () => {
+  test('returns all departments and only active topics, including those without projects', async () => {
     prismaMock.user.findMany.mockResolvedValue([CARLOS]);
     prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
     prismaMock.topic.findMany.mockResolvedValue([{ id: 1, name: 'Education' }]);
@@ -363,6 +363,11 @@ describe('listProjectFilterOptions', () => {
       expect.objectContaining({ where: { ledProjects: { some: { deletedAt: null } } } })
     );
     expect(prismaMock.department.findMany).toHaveBeenCalledWith({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    expect(prismaMock.topic.findMany).toHaveBeenCalledWith({
+      where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });

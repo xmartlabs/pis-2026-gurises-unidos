@@ -133,6 +133,7 @@ export async function listProjectFilterOptions() {
       orderBy: { name: 'asc' },
     }),
     prisma.topic.findMany({
+      where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
