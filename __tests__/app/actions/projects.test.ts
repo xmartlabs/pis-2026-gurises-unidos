@@ -72,7 +72,7 @@ const TX = {
 const VALID_DATA = {
   name: '  Updated project  ',
   topicId: '1',
-  status: 'paused',
+  status: 'active',
   intensity: 'medium',
   startYear: '2019',
   leadCoordinatorId: '2',
@@ -205,7 +205,7 @@ describe.each([
 
   it.each([
     ['is before the start year', { status: 'closed', endYear: '2018' }],
-    ['is set on a project that is not closed', { status: 'paused', endYear: '2020' }],
+    ['is set on a project that is not closed', { status: 'active', endYear: '2020' }],
     ['is before the first project year', { status: 'closed', endYear: '1988' }],
     ['is missing on a closed project', { status: 'closed', endYear: '' }],
   ])('rejects an end year that %s before writing', async (_case, overrides) => {
@@ -380,7 +380,7 @@ describe('updateProject persistence', () => {
         where: { id: 10 },
         data: {
           name: 'Updated project',
-          status: 'paused',
+          status: 'active',
           intensity: 'medium',
           startYear: 2019,
           endYear: null,
