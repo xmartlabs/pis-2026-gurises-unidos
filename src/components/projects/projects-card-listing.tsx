@@ -78,9 +78,16 @@ export function ProjectsCardList({
   }, [searchParams]);
 
   const year: YearFilterValue = beneficiaryYear ?? ALL_YEARS;
+  const activeFilterCount =
+    Number(year !== (years[0] ?? ALL_YEARS)) +
+    Number(departmentId !== undefined) +
+    Number(topicId !== undefined);
   const yearOptions: { value: YearFilterValue; label: string }[] = [
     { value: ALL_YEARS, label: 'Todos' },
-    ...years.map((y) => ({ value: y, label: String(y) })),
+    ...years.map((y) => ({
+      value: y,
+      label: y === years[0] ? `${y} (por defecto)` : String(y),
+    })),
   ];
 
   const current = STATUS_FILTERS.find((f) => f.value === status) ?? STATUS_FILTERS[0];
@@ -117,7 +124,7 @@ export function ProjectsCardList({
 
   function clearFilters() {
     const params = new URLSearchParams(requestedParams.current);
-    params.set('beneficiaryYear', ALL_YEARS);
+    params.delete('beneficiaryYear');
     params.delete('departmentId');
     params.delete('topicId');
     replaceFilters(params);
@@ -170,10 +177,19 @@ export function ProjectsCardList({
   const filterMenu = (
     <Popover>
       <PopoverTrigger
-        render={<Button variant="outline" size="icon" className="h-9 w-9" />}
+        render={<Button variant="outline" size="icon" className="relative h-9 w-9" />}
         aria-label="Filtros de proyectos"
+        aria-description={`${activeFilterCount} filtros activos`}
       >
         <ListFilter />
+        {activeFilterCount > 0 && (
+          <span
+            aria-hidden="true"
+            className="bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full text-[10px] font-semibold"
+          >
+            {activeFilterCount}
+          </span>
+        )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 gap-4 p-4">
         <div className="flex flex-col gap-2">
@@ -185,39 +201,51 @@ export function ProjectsCardList({
             {
               key: 'departmentId',
               label: 'Departamento',
+              allLabel: 'Todos',
               options: departments,
               value: departmentId,
             },
-            { key: 'topicId', label: 'Temática', options: topics, value: topicId },
+            {
+              key: 'topicId',
+              label: 'Temática',
+              allLabel: 'Todas',
+              options: topics,
+              value: topicId,
+            },
           ] as const
-        ).map(({ key, label, options, value }) => (
-          <div key={key} className="flex flex-col gap-2">
-            <span>{label}</span>
-            <Select
-              items={[
-                { value: 'all', label: 'Todos' },
-                ...options.map((option) => ({ value: String(option.id), label: option.name })),
-              ]}
-              value={value?.toString() ?? 'all'}
-              onValueChange={(selected) => updateFilter(key, selected === 'all' ? null : selected)}
-            >
-              <SelectTrigger aria-label={`Filtrar por ${label.toLowerCase()}`} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent
-                alignItemWithTrigger={false}
-                className="max-h-[min(15rem,var(--available-height))]"
+        ).map(({ key, label, allLabel, options, value }) => {
+          const filterOptions = [
+            { value: 'all', label: allLabel },
+            ...options.map((option) => ({ value: String(option.id), label: option.name })),
+          ];
+
+          return (
+            <div key={key} className="flex flex-col gap-2">
+              <span>{label}</span>
+              <Select
+                items={filterOptions}
+                value={value?.toString() ?? 'all'}
+                onValueChange={(selected) =>
+                  updateFilter(key, selected === 'all' ? null : selected)
+                }
               >
-                <SelectItem value="all">Todos</SelectItem>
-                {options.map((option) => (
-                  <SelectItem key={option.id} value={String(option.id)}>
-                    {option.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ))}
+                <SelectTrigger aria-label={`Filtrar por ${label.toLowerCase()}`} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  alignItemWithTrigger={false}
+                  className="max-h-[min(15rem,var(--available-height))]"
+                >
+                  {filterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        })}
         <Button
           variant="ghost"
           size="sm"

@@ -122,12 +122,7 @@ export async function listBeneficiaryYears(): Promise<number[]> {
 }
 
 export async function listProjectFilterOptions() {
-  const [coordinators, departments, topics] = await Promise.all([
-    prisma.user.findMany({
-      where: { ledProjects: { some: { deletedAt: null } } },
-      select: { id: true, firstName: true, lastName: true },
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
-    }),
+  const [departments, topics] = await Promise.all([
     prisma.department.findMany({
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
@@ -139,5 +134,5 @@ export async function listProjectFilterOptions() {
     }),
   ]);
 
-  return { coordinators, departments, topics };
+  return { departments, topics };
 }

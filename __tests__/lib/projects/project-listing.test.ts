@@ -350,18 +350,13 @@ describe('listBeneficiaryYears', () => {
 
 describe('listProjectFilterOptions', () => {
   test('returns all departments and only active topics, including those without projects', async () => {
-    prismaMock.user.findMany.mockResolvedValue([CARLOS]);
     prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
     prismaMock.topic.findMany.mockResolvedValue([{ id: 1, name: 'Education' }]);
 
     expect(await listProjectFilterOptions()).toEqual({
-      coordinators: [CARLOS],
       departments: [MONTEVIDEO],
       topics: [{ id: 1, name: 'Education' }],
     });
-    expect(prismaMock.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { ledProjects: { some: { deletedAt: null } } } })
-    );
     expect(prismaMock.department.findMany).toHaveBeenCalledWith({
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
