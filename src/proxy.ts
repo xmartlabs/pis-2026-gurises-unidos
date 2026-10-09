@@ -25,7 +25,7 @@ export const proxy = auth((request) => {
   }
 
   if (request.auth && !mustChangePassword && pathname === PASSWORD_RESET_ROUTE) {
-    return NextResponse.redirect(new URL('/dashboard/projects', request.nextUrl));
+    return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
   }
 
   if (request.auth) {

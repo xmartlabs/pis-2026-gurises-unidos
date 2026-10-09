@@ -110,7 +110,7 @@ describe('proxy', () => {
   test('redirects authenticated users away from password reset when no change is required', () => {
     const response = runProxy(makeRequest('/password-reset', { authenticated: true }));
 
-    expect(response.headers.get('location')).toBe('https://example.com/dashboard/projects');
+    expect(response.headers.get('location')).toBe('https://example.com/dashboard');
   });
 
   test('allows unauthenticated access to a public project', () => {

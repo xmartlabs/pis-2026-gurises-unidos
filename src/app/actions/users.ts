@@ -24,7 +24,7 @@ export async function createUser(
   }
 
   if (session.user.role !== 'admin') {
-    redirect('/dashboard/projects');
+    redirect('/dashboard');
   }
 
   if (formData.get('intent') === 'submit') {
