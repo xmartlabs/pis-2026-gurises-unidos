@@ -10,6 +10,7 @@ import { projectToFormValues } from '@/components/projects/form/project-to-form-
 import prisma from '@/lib/prisma';
 import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import { DeleteProjectSection } from '@/components/projects/delete-project-section';
+import { BreadcrumbResourceLabel } from '@/components/layout/topbar-context';
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -87,6 +88,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
   return (
     <div className="bg-surface-page flex min-h-0 flex-1 flex-col">
+      <BreadcrumbResourceLabel label={project.name} />
       <div className="mx-auto flex min-h-0 w-[1185px] max-w-full min-w-0 flex-1 flex-col">
         <div className="flex flex-col items-start gap-1.5 px-4 pt-6 pb-2.5 sm:px-6">
           <p className="text-muted-foreground text-sm">Editar proyecto</p>
