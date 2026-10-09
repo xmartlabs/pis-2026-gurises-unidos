@@ -439,12 +439,12 @@ test('keeps the department and topic when loading more projects', async () => {
 
 test('clears the menu filters and restores the default year while preserving status and search', async () => {
   mocks.searchParams = new URLSearchParams(
-    'departmentId=2&topicId=1&beneficiaryYear=2025&status=paused&search=Centro&page=3'
+    'departmentId=2&topicId=1&beneficiaryYear=2025&status=closed&search=Centro&page=3'
   );
-  renderList({ departmentId: 2, topicId: 1, status: 'paused', search: 'Centro' });
+  renderList({ departmentId: 2, topicId: 1, status: 'closed', search: 'Centro' });
   fireEvent.click(screen.getAllByRole('button', { name: 'Filtros de proyectos' })[0]);
   fireEvent.click(await screen.findByRole('button', { name: 'Limpiar filtros' }));
-  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects?status=paused&search=Centro', {
+  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects?status=closed&search=Centro', {
     scroll: false,
   });
 });
