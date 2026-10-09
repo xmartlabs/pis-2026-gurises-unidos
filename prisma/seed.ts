@@ -43,7 +43,7 @@ type BeneficiaryRecord = { year: number } & Partial<BeneficiaryCounts>;
 
 type SeedProject = {
   name: string;
-  status: 'active' | 'paused' | 'closed';
+  status: 'active' | 'closed';
   intensity: 'high' | 'medium' | 'low';
   startYear: number;
   endYear?: number;
@@ -230,7 +230,7 @@ const SEED_PROJECTS: SeedProject[] = [
   },
   {
     name: 'Escuela Abierta',
-    status: 'paused',
+    status: 'active',
     intensity: 'low',
     startYear: 2023,
     department: 'Rivera',
@@ -256,7 +256,7 @@ const SEED_PROJECTS: SeedProject[] = [
   },
   {
     name: 'Nutrición Comunitaria',
-    status: 'paused',
+    status: 'active',
     intensity: 'medium',
     startYear: 2022,
     department: 'Tacuarembó',
@@ -271,7 +271,7 @@ const SEED_PROJECTS: SeedProject[] = [
   },
   {
     name: 'Primera Infancia',
-    status: 'paused',
+    status: 'active',
     intensity: 'high',
     startYear: 2024,
     department: 'Colonia',

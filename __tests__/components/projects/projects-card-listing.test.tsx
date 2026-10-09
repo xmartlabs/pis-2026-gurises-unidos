@@ -152,9 +152,9 @@ afterEach(() => {
 });
 
 test('marks the status received from the server as selected', () => {
-  renderList({ status: 'paused' });
+  renderList({ status: 'closed' });
 
-  expect(screen.getByRole('tab', { name: 'Pausados' }).getAttribute('aria-selected')).toBe('true');
+  expect(screen.getByRole('tab', { name: 'Cerrados' }).getAttribute('aria-selected')).toBe('true');
 });
 
 test('stores the selected status in the URL keeping the other filters', () => {
@@ -208,11 +208,11 @@ test('loads the next page with the current filters when the end of the list is r
     buildPage([buildProject(2, 'Second page project')], 2, 2)
   );
 
-  renderList({ totalPages: 2, status: 'paused', beneficiaryYear: 2024 });
+  renderList({ totalPages: 2, status: 'closed', beneficiaryYear: 2024 });
   await revealSentinel();
 
   expect(mocks.loadProjectsPage).toHaveBeenCalledWith(
-    { status: 'paused', beneficiaryYear: '2024' },
+    { status: 'closed', beneficiaryYear: '2024' },
     2
   );
   expect(screen.getByText('Active project')).toBeTruthy();
@@ -439,12 +439,12 @@ test('keeps the department and topic when loading more projects', async () => {
 
 test('clears the menu filters and restores the default year while preserving status and search', async () => {
   mocks.searchParams = new URLSearchParams(
-    'departmentId=2&topicId=1&beneficiaryYear=2025&status=paused&search=Centro&page=3'
+    'departmentId=2&topicId=1&beneficiaryYear=2025&status=closed&search=Centro&page=3'
   );
-  renderList({ departmentId: 2, topicId: 1, status: 'paused', search: 'Centro' });
+  renderList({ departmentId: 2, topicId: 1, status: 'closed', search: 'Centro' });
   fireEvent.click(screen.getAllByRole('button', { name: 'Filtros de proyectos' })[0]);
   fireEvent.click(await screen.findByRole('button', { name: 'Limpiar filtros' }));
-  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects?status=paused&search=Centro', {
+  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects?status=closed&search=Centro', {
     scroll: false,
   });
 });

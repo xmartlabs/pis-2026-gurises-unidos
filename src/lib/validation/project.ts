@@ -4,7 +4,7 @@ import { MAX_INT32 } from './ids';
 export const projectSchema = z
   .object({
     name: z.string().trim().max(100, 'Máx. 100 caracteres').min(1, 'El nombre es obligatorio'),
-    status: z.enum(['active', 'paused', 'closed']),
+    status: z.enum(['active', 'closed']),
     intensity: z.enum(['high', 'medium', 'low']),
     startYear: z.coerce
       .number()
