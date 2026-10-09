@@ -1,5 +1,3 @@
-import { BENEFICIARY_FIELDS } from '../src/lib/project-display';
-
 export const ADMIN = {
   firstName: 'Ana',
   lastName: 'Admin',
@@ -24,9 +22,12 @@ export const TABLES = [
   'Department',
 ];
 
-export const BENEFICIARY_CATEGORIES = BENEFICIARY_FIELDS.map(({ key, label }, index) => ({
-  key,
-  name: label,
-  sortOrder: index + 1,
-  isSystem: true,
-}));
+export const BENEFICIARY_CATEGORIES = [
+  { key: 'directChildrenAdolescents', name: 'NNA directos' },
+  { key: 'indirectChildrenAdolescents', name: 'NNA indirectos' },
+  { key: 'youth18To29', name: 'Jóvenes (18 a 29)' },
+  { key: 'families', name: 'Familias' },
+  { key: 'coordinatedInstitutions', name: 'Instituciones coordinadas' },
+  { key: 'communityLeaders', name: 'Referentes comunitarios' },
+  { key: 'basicServiceStaff', name: 'Personal de servicios básicos' },
+].map((category, index) => ({ ...category, sortOrder: index + 1, isSystem: true }));

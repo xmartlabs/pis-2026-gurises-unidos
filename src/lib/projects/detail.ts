@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { requireUser } from '@/lib/auth/require-user';
-import { BENEFICIARY_FIELDS, FIRST_PROJECT_YEAR } from '@/lib/project-display';
+import { FIRST_PROJECT_YEAR } from '@/lib/project-display';
+import { getActiveBeneficiaryCategories } from '@/lib/beneficiary-categories';
 import {
   calculatePercentage,
   compareMetric,
@@ -92,7 +93,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
     ]),
   ].sort((a, b) => b - a);
 
-  const [currentRecord, previousRecord, nationalChildrenReached, activeProjectCount] =
+  const [currentRecord, previousRecord, nationalChildrenReached, activeProjectCount, categories] =
     await Promise.all([
       prisma.projectBeneficiary.findUnique({
         where: {
@@ -117,6 +118,7 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
         'indirectChildrenAdolescents',
       ]),
       prisma.project.count({ where: { status: 'active', deletedAt: null } }),
+      getActiveBeneficiaryCategories(),
     ]);
 
   const current = currentRecord && toBeneficiaryCounts(currentRecord.values);
@@ -154,9 +156,10 @@ export async function getProjectDetail(rawProjectId: unknown, rawYear?: unknown)
         institutions,
         annualGrowth,
       },
-      distribution: BENEFICIARY_FIELDS.map(({ key }) => ({
+      distribution: categories.map(({ key, name }) => ({
         key,
-        value: current?.[key] ?? null,
+        label: name,
+        value: current ? (current[key] ?? 0) : null,
       })),
       institutionalContribution: {
         nationalReach: {

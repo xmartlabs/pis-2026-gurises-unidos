@@ -6,7 +6,6 @@ import loginImage from '@/assets/login-image.png';
 import { version } from '@/lib/version';
 import { formatNumber } from '@/lib/format';
 import prisma from '@/lib/prisma';
-import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import { sumBeneficiaryValues } from '@/lib/projects/beneficiary-values';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { connection } from 'next/server';
@@ -30,10 +29,7 @@ async function Stats() {
         deletedAt: null,
       },
     }),
-    sumBeneficiaryValues(
-      { project: { deletedAt: null } },
-      BENEFICIARY_FIELDS.map(({ key }) => key)
-    ),
+    sumBeneficiaryValues({ project: { deletedAt: null } }),
     prisma.department.count(),
   ]);
 

@@ -3,7 +3,11 @@ import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
-import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '../src/lib/project-display';
+import {
+  formCategoryValuesWhere,
+  SYSTEM_BENEFICIARY_KEYS,
+  toBeneficiaryValuesCreate,
+} from '../src/lib/project-display';
 
 const prisma = new PrismaClient();
 
@@ -191,7 +195,7 @@ async function main() {
           const values = toBeneficiaryValuesCreate(beneficiaryCounts(index + offset));
 
           await tx.projectBeneficiaryValue.deleteMany({
-            where: formCategoryValuesWhere(project.id, year),
+            where: formCategoryValuesWhere(project.id, year, SYSTEM_BENEFICIARY_KEYS),
           });
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: project.id, year } },

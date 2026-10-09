@@ -1,10 +1,15 @@
-import { BENEFICIARY_FIELDS, ZONE_OPTIONS, PREVIEW_LOCATION_FALLBACK } from '@/lib/project-display';
+import {
+  ZONE_OPTIONS,
+  PREVIEW_LOCATION_FALLBACK,
+  type BeneficiaryCategoryOption,
+} from '@/lib/project-display';
 import type { ProjectFormValues } from './project-form-values';
 
 export function getPreviewLabels(
   values: ProjectFormValues,
   departments: { id: number; name: string }[],
-  isEditing: boolean
+  isEditing: boolean,
+  categories: BeneficiaryCategoryOption[]
 ) {
   const departmentLabel = departments.find(
     (department) => String(department.id) === values.departmentId
@@ -18,8 +23,8 @@ export function getPreviewLabels(
   const coverageLabel = [departmentLabel, values.localityNeighborhood.trim()]
     .filter(Boolean)
     .join(' • ');
-  const beneficiaryTotal = BENEFICIARY_FIELDS.reduce(
-    (total, field) => total + Math.max(0, Number(values[field.key]) || 0),
+  const beneficiaryTotal = categories.reduce(
+    (total, { key }) => total + Math.max(0, Number(values[key]) || 0),
     0
   );
 

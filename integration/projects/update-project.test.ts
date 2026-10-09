@@ -212,10 +212,14 @@ describe('updateProject (integration)', () => {
     ]);
   });
 
-  test('keeps values of categories outside the form when updating beneficiaries', async () => {
+  test('keeps values of inactive categories when updating beneficiaries', async () => {
     const projectId = await createProjectFixture();
     const category = await prisma.beneficiaryCategory.create({
-      data: { key: `customCategory${projectId}`, name: `Custom category ${projectId}` },
+      data: {
+        key: `customCategory${projectId}`,
+        name: `Custom category ${projectId}`,
+        isActive: false,
+      },
     });
     const [beneficiary] = (await loadProject(projectId)).projectBeneficiaries;
     await prisma.projectBeneficiaryValue.create({
