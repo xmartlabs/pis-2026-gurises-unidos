@@ -32,7 +32,7 @@ export function DeleteProjectSection({ projectId }: { projectId: number }) {
         return;
       }
       notify.success({ title: 'El proyecto fue eliminado con éxito' });
-      router.push('/dashboard');
+      router.push('/dashboard/projects');
     });
   }
 

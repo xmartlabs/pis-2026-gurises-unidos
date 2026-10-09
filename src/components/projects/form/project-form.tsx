@@ -59,7 +59,7 @@ export function ProjectForm({
   currentYear,
   initialValues,
   submitAction,
-  cancelHref = '/dashboard',
+  cancelHref = '/dashboard/projects',
   children,
 }: ProjectFormProps) {
   const router = useRouter();
