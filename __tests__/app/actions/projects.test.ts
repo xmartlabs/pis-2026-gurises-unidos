@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProject, deleteProject, updateProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
-import { BENEFICIARY_FIELDS } from '@/lib/project-display';
 import {
-  projectFormSchema,
+  buildProjectFormSchema,
   readProjectFormData,
   splitProjectFormData,
 } from '@/lib/validation/project-form';
-import { beneficiaryValueRows } from '../../mocks/beneficiary-values';
+import { BENEFICIARY_CATEGORY_KEYS, beneficiaryValueRows } from '../../mocks/beneficiary-values';
 import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '@/lib/project-display';
 import { BENEFICIARY_VALUES_SELECT } from '@/lib/projects/beneficiary-values';
 
@@ -39,6 +38,15 @@ vi.mock('@/lib/prisma', () => ({
 }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock('@/lib/beneficiary-categories', async () => {
+  const { BENEFICIARY_CATEGORY_OPTIONS } = await import('../../mocks/beneficiary-values');
+  return { getActiveBeneficiaryCategories: async () => BENEFICIARY_CATEGORY_OPTIONS };
+});
+
+function lockedCategoryRows(strings: TemplateStringsArray, ...values: unknown[]) {
+  if (!strings.join('').includes('"BeneficiaryCategory"')) return [];
+  return (values[0] as string[]).map((key) => ({ key }));
+}
 
 const TX = {
   $queryRaw: mocks.queryRaw,
@@ -108,7 +116,7 @@ beforeEach(() => {
   mocks.findProject.mockResolvedValue({ id: 10, leadCoordinatorId: 2, topicId: 1 });
   mocks.findTopic.mockResolvedValue({ id: 2 });
   mocks.findDuplicateProject.mockResolvedValue(null);
-  mocks.queryRaw.mockResolvedValue([]);
+  mocks.queryRaw.mockImplementation(lockedCategoryRows);
   mocks.redirect.mockImplementation((path: string) => {
     throw new Error(`Redirect: ${path}`);
   });
@@ -241,6 +249,24 @@ describe.each([
     expect(await submit(formData())).toEqual({
       formError: 'Tu sesión ya no es válida. Iniciá sesión de nuevo.',
     });
+  });
+
+  it('rejects stale beneficiary categories without writing', async () => {
+    mocks.queryRaw.mockImplementation((strings: TemplateStringsArray, ...values: unknown[]) =>
+      lockedCategoryRows(strings, ...values).slice(1)
+    );
+    expect(await submit(formData())).toEqual({
+      formError: 'Las categorías de beneficiarios cambiaron. Recargá la página e intentá de nuevo.',
+    });
+    expect(mocks.queryRaw).toHaveBeenCalledWith(expect.anything(), BENEFICIARY_CATEGORY_KEYS);
+    expect(mocks.createProject).not.toHaveBeenCalled();
+    expect(mocks.updateProject).not.toHaveBeenCalled();
+    expect(mocks.createBeneficiary).not.toHaveBeenCalled();
+    expect(mocks.upsertBeneficiary).not.toHaveBeenCalled();
+    expect(mocks.deleteBeneficiaryValues).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
   it('returns an error without redirecting or revalidating when an audit write fails', async () => {
@@ -387,7 +413,7 @@ describe('updateProject persistence', () => {
         },
       });
       expect(mocks.deleteBeneficiaryValues).toHaveBeenCalledWith({
-        where: formCategoryValuesWhere(10, 2024),
+        where: formCategoryValuesWhere(10, 2024, BENEFICIARY_CATEGORY_KEYS),
       });
       expect(mocks.deleteBeneficiaryValues.mock.invocationCallOrder[0]).toBeLessThan(
         mocks.upsertBeneficiary.mock.invocationCallOrder[0]
@@ -557,13 +583,11 @@ describe('updateProject persistence', () => {
 
 function unchangedRecords() {
   const { projectData, beneficiaryData } = splitProjectFormData(
-    projectFormSchema.parse(readProjectFormData(formData()))
+    buildProjectFormSchema(BENEFICIARY_CATEGORY_KEYS).parse(readProjectFormData(formData())),
+    BENEFICIARY_CATEGORY_KEYS
   );
   mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 1 });
-  const counts = Object.fromEntries(
-    BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
-  );
-  mocks.findBeneficiary.mockResolvedValue({ values: beneficiaryValueRows(counts) });
+  mocks.findBeneficiary.mockResolvedValue({ values: beneficiaryValueRows(beneficiaryData.counts) });
 }
 
 describe('project review regressions', () => {
@@ -740,7 +764,8 @@ describe('project review regressions', () => {
   it('preserves an unchanged topic without requiring it to be active or auditing', async () => {
     unchangedRecords();
     const { projectData } = splitProjectFormData(
-      projectFormSchema.parse(readProjectFormData(formData()))
+      buildProjectFormSchema(BENEFICIARY_CATEGORY_KEYS).parse(readProjectFormData(formData())),
+      BENEFICIARY_CATEGORY_KEYS
     );
     mocks.findProject.mockResolvedValue({ id: 10, ...projectData, topicId: 2 });
     await expect(updateProject(10, {}, formData({ topicId: '2' }))).rejects.toThrow('Redirect:');

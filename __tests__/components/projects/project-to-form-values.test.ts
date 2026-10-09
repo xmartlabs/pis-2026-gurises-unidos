@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { projectToFormValues } from '@/components/projects/form/project-to-form-values';
+import { BENEFICIARY_CATEGORY_OPTIONS } from '../../mocks/beneficiary-values';
 
 const PROJECT = {
   id: 10,
@@ -35,13 +36,12 @@ const PROJECT = {
       communityLeaders: 4,
       basicServiceStaff: 5,
       authorId: 1,
-      recordedAt: new Date('2025-01-01'),
     },
   ],
 };
 
 it('defaults to the current year without copying historical beneficiary counts', () => {
-  expect(projectToFormValues(PROJECT, 2026)).toMatchObject({
+  expect(projectToFormValues(PROJECT, 2026, BENEFICIARY_CATEGORY_OPTIONS)).toMatchObject({
     year: '2026',
     families: '0',
     directChildrenAdolescents: '0',
@@ -53,7 +53,7 @@ it('defaults to the current year without copying historical beneficiary counts',
 
 it('maps all counts from the requested year without mutating the project', () => {
   const original = structuredClone(PROJECT);
-  const values = projectToFormValues(PROJECT, 2025);
+  const values = projectToFormValues(PROJECT, 2025, BENEFICIARY_CATEGORY_OPTIONS);
   expect(values).toMatchObject({
     year: '2025',
     families: '30',

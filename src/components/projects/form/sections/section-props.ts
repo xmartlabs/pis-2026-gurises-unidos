@@ -1,4 +1,4 @@
-import type { BeneficiaryCounts } from '@/lib/project-display';
+import type { BeneficiaryCategoryOption, BeneficiaryCounts } from '@/lib/project-display';
 
 export type SectionProps = {
   isEditing: boolean;
@@ -8,4 +8,5 @@ export type SectionProps = {
   topics: { id: number; name: string }[];
   coverageLabel: string;
   beneficiaryRecords: (BeneficiaryCounts & { year: number })[];
+  beneficiaryCategories: BeneficiaryCategoryOption[];
 };

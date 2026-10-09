@@ -1,9 +1,5 @@
 import prisma from '@/lib/prisma';
-import {
-  BENEFICIARY_FIELDS,
-  sumBeneficiaries,
-  type BeneficiaryCounts,
-} from '@/lib/project-display';
+import { sumBeneficiaries, type BeneficiaryCounts } from '@/lib/project-display';
 import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 
 export async function getDepartmentBeneficiaries(year: number) {
@@ -20,11 +16,11 @@ export async function getDepartmentBeneficiaries(year: number) {
     const department = project.department.name;
     const counts = toBeneficiaryCounts(values);
     const totals = totalsByDepartment.get(department) ?? toBeneficiaryCounts([]);
-    for (const { key } of BENEFICIARY_FIELDS) totals[key] += counts[key];
+    for (const [key, value] of Object.entries(counts)) totals[key] = (totals[key] ?? 0) + value;
     totalsByDepartment.set(department, totals);
   }
 
   return [...totalsByDepartment]
-    .map(([department, totals]) => ({ department, ...totals }))
-    .sort((a, b) => sumBeneficiaries(b) - sumBeneficiaries(a));
+    .sort(([, a], [, b]) => sumBeneficiaries(b) - sumBeneficiaries(a))
+    .map(([department, totals]) => ({ department, ...totals }));
 }
