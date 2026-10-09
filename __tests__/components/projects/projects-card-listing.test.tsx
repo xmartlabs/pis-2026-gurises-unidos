@@ -91,6 +91,8 @@ type ListProps = {
   status?: StatusFilterValue;
   beneficiaryYear?: number;
   search?: string;
+  departmentId?: number;
+  topicId?: number;
 };
 
 function buildList({
@@ -101,6 +103,8 @@ function buildList({
   status = 'active',
   beneficiaryYear = 2025,
   search,
+  departmentId,
+  topicId,
 }: ListProps = {}) {
   return (
     <ProjectsCardList
@@ -112,6 +116,16 @@ function buildList({
       status={status}
       beneficiaryYear={beneficiaryYear}
       search={search}
+      departments={[
+        { id: 1, name: 'Montevideo' },
+        { id: 2, name: 'Canelones' },
+      ]}
+      topics={[
+        { id: 1, name: 'Education' },
+        { id: 2, name: 'Health' },
+      ]}
+      departmentId={departmentId}
+      topicId={topicId}
     />
   );
 }
@@ -382,4 +396,97 @@ test('restarts the loaded list when the filters change', async () => {
   expect(screen.getByText('Matching project')).toBeTruthy();
   expect(screen.queryByText('Active project')).toBeNull();
   expect(screen.queryByText('Second page project')).toBeNull();
+});
+
+test('shows the selected department and topic in the filter menu', async () => {
+  mocks.searchParams = new URLSearchParams('departmentId=2&topicId=1&beneficiaryYear=2025');
+  renderList({ departmentId: 2, topicId: 1 });
+  fireEvent.click(screen.getAllByRole('button', { name: 'Filtros de proyectos' })[0]);
+  expect(
+    (await screen.findByRole('combobox', { name: 'Filtrar por departamento' })).textContent
+  ).toContain('Canelones');
+  expect(screen.getByRole('combobox', { name: 'Filtrar por tem\u00e1tica' }).textContent).toContain(
+    'Education'
+  );
+});
+
+test('clears a department while keeping the topic, year and search', async () => {
+  mocks.searchParams = new URLSearchParams(
+    'departmentId=2&topicId=1&beneficiaryYear=2025&search=Centro&page=3'
+  );
+  renderList({ departmentId: 2, topicId: 1, search: 'Centro' });
+  fireEvent.click(screen.getAllByRole('button', { name: 'Filtros de proyectos' })[0]);
+  fireEvent.click(await screen.findByRole('combobox', { name: 'Filtrar por departamento' }));
+  const option = await screen.findByRole('option', { name: 'Todos' });
+  fireEvent.pointerDown(option);
+  fireEvent.mouseUp(option);
+  fireEvent.click(option);
+  expect(mocks.replace).toHaveBeenCalledWith(
+    '/dashboard/projects?topicId=1&beneficiaryYear=2025&search=Centro',
+    { scroll: false }
+  );
+});
+
+test('keeps the department and topic when loading more projects', async () => {
+  mocks.loadProjectsPage.mockResolvedValue(buildPage([buildProject(2, 'Second project')], 2, 2));
+  renderList({ departmentId: 2, topicId: 1, totalPages: 2 });
+  await revealSentinel();
+  expect(mocks.loadProjectsPage).toHaveBeenCalledWith(
+    expect.objectContaining({ departmentId: '2', topicId: '1', beneficiaryYear: '2025' }),
+    2
+  );
+});
+
+test('clears the menu filters and restores the default year while preserving status and search', async () => {
+  mocks.searchParams = new URLSearchParams(
+    'departmentId=2&topicId=1&beneficiaryYear=2025&status=paused&search=Centro&page=3'
+  );
+  renderList({ departmentId: 2, topicId: 1, status: 'paused', search: 'Centro' });
+  fireEvent.click(screen.getAllByRole('button', { name: 'Filtros de proyectos' })[0]);
+  fireEvent.click(await screen.findByRole('button', { name: 'Limpiar filtros' }));
+  expect(mocks.replace).toHaveBeenCalledWith('/dashboard/projects?status=paused&search=Centro', {
+    scroll: false,
+  });
+});
+
+test('counts department and topic without counting the default year', () => {
+  renderList({ departmentId: 2, topicId: 1 });
+  for (const button of screen.getAllByRole('button', { name: 'Filtros de proyectos' })) {
+    expect(button.textContent).toBe('2');
+    expect(button.getAttribute('aria-description')).toBe('2 filtros activos');
+  }
+});
+
+test('counts all years as an applied filter', () => {
+  render(
+    <ProjectsCardList
+      projects={[]}
+      total={0}
+      page={1}
+      totalPages={1}
+      years={[2025]}
+      status="all"
+      beneficiaryYear={undefined}
+      search={undefined}
+    />
+  );
+  for (const button of screen.getAllByRole('button', { name: 'Filtros de proyectos' })) {
+    expect(button.textContent).toBe('1');
+    expect(button.getAttribute('aria-description')).toBe('1 filtros activos');
+  }
+});
+
+test('hides the filter counter for the default year without other filters', () => {
+  renderList();
+  for (const button of screen.getAllByRole('button', { name: 'Filtros de proyectos' })) {
+    expect(button.textContent).toBe('');
+    expect(button.getAttribute('aria-description')).toBe('0 filtros activos');
+  }
+});
+
+test('counts a year different from the default as an applied filter', () => {
+  renderList({ beneficiaryYear: 2024 });
+  for (const button of screen.getAllByRole('button', { name: 'Filtros de proyectos' })) {
+    expect(button.textContent).toBe('1');
+  }
 });

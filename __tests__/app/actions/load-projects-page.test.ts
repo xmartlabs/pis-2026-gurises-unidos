@@ -50,3 +50,24 @@ test('requires an authenticated user before listing', async () => {
   );
   expect(mocks.listProjects).not.toHaveBeenCalled();
 });
+
+test('preserves combined filters when loading another page', async () => {
+  await loadProjectsPage(
+    {
+      status: 'active',
+      beneficiaryYear: '2025',
+      topicId: '2',
+      departmentId: '3',
+      search: 'Centro',
+    },
+    2
+  );
+  expect(mocks.listProjects).toHaveBeenCalledWith(
+    expect.objectContaining({
+      topicId: 2,
+      departmentId: 3,
+      search: 'Centro',
+      page: 2,
+    })
+  );
+});
