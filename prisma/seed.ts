@@ -5,24 +5,36 @@ import { METRIC_DEFINITIONS } from '../src/lib/metrics/constants';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
 import {
   formCategoryValuesWhere,
+  SYSTEM_BENEFICIARY_KEYS,
   toBeneficiaryValuesCreate,
   type BeneficiaryCounts,
 } from '../src/lib/project-display';
-import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
+import { ADMIN, BENEFICIARY_CATEGORIES, STRATEGIC_LINES } from './fixtures';
 
 const prisma = new PrismaClient();
 
 const REFERENCE_YEAR = 2025;
 
 const DEPARTMENTS = [
-  'Montevideo',
+  'Artigas',
   'Canelones',
-  'Maldonado',
-  'Salto',
-  'Paysandú',
-  'Rivera',
-  'Tacuarembó',
+  'Cerro Largo',
   'Colonia',
+  'Durazno',
+  'Flores',
+  'Florida',
+  'Lavalleja',
+  'Maldonado',
+  'Montevideo',
+  'Paysandú',
+  'Río Negro',
+  'Rivera',
+  'Rocha',
+  'Salto',
+  'San José',
+  'Soriano',
+  'Tacuarembó',
+  'Treinta y Tres',
 ];
 
 const TOPICS = ['Education', 'Health', 'Protection', 'Community'];
@@ -338,7 +350,12 @@ const SEED_PROJECTS: SeedProject[] = [
 type ProjectFixture = Required<
   Omit<
     Prisma.ProjectUncheckedCreateInput,
-    'id' | 'createdAt' | 'updatedAt' | 'projectCoordinators' | 'projectBeneficiaries'
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'projectCoordinators'
+    | 'projectBeneficiaries'
+    | 'strategicLines'
   >
 >;
 
@@ -371,6 +388,10 @@ async function main() {
       for (const name of TOPICS) {
         const topic = await tx.topic.upsert({ where: { name }, update: {}, create: { name } });
         topicIds.set(name, topic.id);
+      }
+
+      for (const name of STRATEGIC_LINES) {
+        await tx.strategicLine.upsert({ where: { name }, update: {}, create: { name } });
       }
 
       const admin = await tx.user.upsert({
@@ -450,7 +471,7 @@ async function main() {
 
         for (const { year, ...counts } of beneficiaries) {
           await tx.projectBeneficiaryValue.deleteMany({
-            where: formCategoryValuesWhere(saved.id, year),
+            where: formCategoryValuesWhere(saved.id, year, SYSTEM_BENEFICIARY_KEYS),
           });
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: saved.id, year } },

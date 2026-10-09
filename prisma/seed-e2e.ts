@@ -2,7 +2,7 @@ import { config as loadEnvFiles } from 'dotenv';
 import { execSync } from 'node:child_process';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { BENEFICIARY_CATEGORIES, TABLES } from './fixtures';
+import { BENEFICIARY_CATEGORIES, STRATEGIC_LINES, TABLES } from './fixtures';
 import { toBeneficiaryValuesCreate } from '../src/lib/project-display';
 import {
   E2E_ACTIVE_PROJECT,
@@ -77,6 +77,7 @@ async function main() {
         const tables = TABLES.map((table) => `"${table}"`).join(',');
         await tx.$executeRawUnsafe(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
         await tx.beneficiaryCategory.createMany({ data: BENEFICIARY_CATEGORIES });
+        await tx.strategicLine.createMany({ data: STRATEGIC_LINES.map((name) => ({ name })) });
 
         const department = await tx.department.create({ data: { name: E2E_DEPARTMENT } });
         await tx.department.create({ data: { name: E2E_SECONDARY_DEPARTMENT } });

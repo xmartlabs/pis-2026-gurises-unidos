@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { updateProject } from '@/app/actions/projects';
 import prisma from '@/lib/prisma';
-import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import { toBeneficiaryValuesCreate } from '@/lib/project-display';
 import { loadSeedData, type SeedData } from '../fixtures';
 import { signInAs } from '../session';
+import { auditLogsFor, deleteProject, loadProject } from './project-helpers';
 
 const BENEFICIARY_YEAR = 2024;
 
@@ -77,58 +77,6 @@ async function createProjectFixture(leadCoordinatorId = seed.coordinatorId) {
   });
   createdProjectIds.push(project.id);
   return project.id;
-}
-
-async function deleteProject(id: number) {
-  const beneficiaryIds = (
-    await prisma.projectBeneficiary.findMany({ where: { projectId: id }, select: { id: true } })
-  ).map((beneficiary) => beneficiary.id);
-  await prisma.$transaction([
-    prisma.auditLog.deleteMany({
-      where: {
-        OR: [
-          { entity: 'project', entityId: id },
-          { entity: 'beneficiary', entityId: { in: beneficiaryIds } },
-        ],
-      },
-    }),
-    prisma.projectBeneficiary.deleteMany({ where: { projectId: id } }),
-    prisma.project.deleteMany({ where: { id } }),
-  ]);
-}
-
-async function loadProject(id: number) {
-  const project = await prisma.project.findUniqueOrThrow({
-    where: { id },
-    include: {
-      projectBeneficiaries: {
-        orderBy: { year: 'asc' },
-        include: BENEFICIARY_VALUES_SELECT,
-      },
-    },
-  });
-  return {
-    ...project,
-    projectBeneficiaries: project.projectBeneficiaries.map(({ values, ...beneficiary }) => ({
-      ...beneficiary,
-      ...toBeneficiaryCounts(values),
-    })),
-  };
-}
-
-async function auditLogsFor(id: number) {
-  const beneficiaryIds = (
-    await prisma.projectBeneficiary.findMany({ where: { projectId: id }, select: { id: true } })
-  ).map((beneficiary) => beneficiary.id);
-  return prisma.auditLog.findMany({
-    where: {
-      OR: [
-        { entity: 'project', entityId: id },
-        { entity: 'beneficiary', entityId: { in: beneficiaryIds } },
-      ],
-    },
-    orderBy: { id: 'asc' },
-  });
 }
 
 async function expectRedirectToProject(result: Promise<unknown>, id: number) {
@@ -264,10 +212,14 @@ describe('updateProject (integration)', () => {
     ]);
   });
 
-  test('keeps values of categories outside the form when updating beneficiaries', async () => {
+  test('keeps values of inactive categories when updating beneficiaries', async () => {
     const projectId = await createProjectFixture();
     const category = await prisma.beneficiaryCategory.create({
-      data: { key: `customCategory${projectId}`, name: `Custom category ${projectId}` },
+      data: {
+        key: `customCategory${projectId}`,
+        name: `Custom category ${projectId}`,
+        isActive: false,
+      },
     });
     const [beneficiary] = (await loadProject(projectId)).projectBeneficiaries;
     await prisma.projectBeneficiaryValue.create({

@@ -15,6 +15,8 @@ export type ProjectListQuery = {
   status: string;
   beneficiaryYear: string;
   search?: string;
+  departmentId?: string;
+  topicId?: string;
 };
 
 type ProjectCardsGridProps = {

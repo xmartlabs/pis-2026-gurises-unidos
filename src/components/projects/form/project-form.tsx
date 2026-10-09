@@ -20,10 +20,14 @@ import { FormProvider, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from 'cn';
 import type { ProjectFormState } from '@/lib/validation/project';
-import { FIRST_PROJECT_YEAR, type BeneficiaryCounts } from '@/lib/project-display';
+import {
+  FIRST_PROJECT_YEAR,
+  type BeneficiaryCategoryOption,
+  type BeneficiaryCounts,
+} from '@/lib/project-display';
 import { ProjectPreview } from './project-preview';
 import type { ProjectFormValues } from './project-form-values';
-import { projectFormSchema } from '@/lib/validation/project-form';
+import { buildProjectFormSchema } from '@/lib/validation/project-form';
 import { FormActions } from '@/components/ui/forms/form-actions';
 import { getDefaultValues } from './get-default-values';
 import { getPreviewLabels } from './get-preview-labels';
@@ -39,6 +43,7 @@ type ProjectFormProps = {
   departments: { id: number; name: string }[];
   topics: { id: number; name: string }[];
   beneficiaryRecords?: (BeneficiaryCounts & { year: number })[];
+  beneficiaryCategories: BeneficiaryCategoryOption[];
   currentYear: number;
 };
 
@@ -50,6 +55,7 @@ export function ProjectForm({
   departments,
   topics,
   beneficiaryRecords = [],
+  beneficiaryCategories,
   currentYear,
   initialValues,
   submitAction,
@@ -82,13 +88,17 @@ export function ProjectForm({
       })),
     [departments]
   );
+  const schema = useMemo(
+    () => buildProjectFormSchema(beneficiaryCategories.map(({ key }) => key)),
+    [beneficiaryCategories]
+  );
   const defaultValues = {
-    ...getDefaultValues(currentYear),
+    ...getDefaultValues(currentYear, beneficiaryCategories),
     ...initialValues,
   };
   const [state, formAction, pending] = useActionState(submitAction, INITIAL_STATE);
   const form = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectFormSchema) as unknown as Resolver<ProjectFormValues>,
+    resolver: zodResolver(schema) as unknown as Resolver<ProjectFormValues>,
     defaultValues,
     mode: 'onChange',
   });
@@ -104,7 +114,8 @@ export function ProjectForm({
   const { locationLabel, coverageLabel, beneficiaryTotal } = getPreviewLabels(
     values,
     departments,
-    isEditing
+    isEditing,
+    beneficiaryCategories
   );
 
   const beneficiaryYearOptions = yearOptions.filter(
@@ -203,6 +214,7 @@ export function ProjectForm({
               isEditing={isEditing}
               yearOptions={beneficiaryYearOptions}
               beneficiaryRecords={beneficiaryRecords}
+              beneficiaryCategories={beneficiaryCategories}
             />
 
             <PublicInfoSection />

@@ -2,8 +2,12 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { PROJECT_PLACEHOLDERS } from '../src/lib/projects/project-placeholders';
-import { ADMIN, BENEFICIARY_CATEGORIES } from './fixtures';
-import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '../src/lib/project-display';
+import { ADMIN, BENEFICIARY_CATEGORIES, STRATEGIC_LINES } from './fixtures';
+import {
+  formCategoryValuesWhere,
+  SYSTEM_BENEFICIARY_KEYS,
+  toBeneficiaryValuesCreate,
+} from '../src/lib/project-display';
 
 const prisma = new PrismaClient();
 
@@ -104,6 +108,10 @@ async function main() {
         topicIds.push(topic.id);
       }
 
+      for (const name of STRATEGIC_LINES) {
+        await tx.strategicLine.upsert({ where: { name }, update: {}, create: { name } });
+      }
+
       const admin = await tx.user.upsert({
         where: { documentId: ADMIN.documentId },
         update: { ...ADMIN, passwordHash, deletedAt: null },
@@ -191,7 +199,7 @@ async function main() {
           const values = toBeneficiaryValuesCreate(beneficiaryCounts(index + offset));
 
           await tx.projectBeneficiaryValue.deleteMany({
-            where: formCategoryValuesWhere(project.id, year),
+            where: formCategoryValuesWhere(project.id, year, SYSTEM_BENEFICIARY_KEYS),
           });
           await tx.projectBeneficiary.upsert({
             where: { projectId_year: { projectId: project.id, year } },

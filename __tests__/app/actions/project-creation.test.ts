@@ -21,6 +21,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/beneficiary-categories', async () => {
+  const { BENEFICIARY_CATEGORY_OPTIONS } = await import('../../mocks/beneficiary-values');
+  return { getActiveBeneficiaryCategories: async () => BENEFICIARY_CATEGORY_OPTIONS };
+});
 
 import { createProject } from '@/app/actions/projects';
 import { Prisma } from '@/generated/prisma/client';
@@ -70,7 +74,11 @@ function setupTransaction({ projectId = 42, beneficiaryId = 9 } = {}) {
 
   transactionMock.mockImplementation(async (callback) =>
     callback({
-      $queryRaw: vi.fn().mockResolvedValue([]),
+      $queryRaw: vi.fn(async (strings: TemplateStringsArray, ...values: unknown[]) =>
+        strings.join('').includes('"BeneficiaryCategory"')
+          ? (values[0] as string[]).map((key) => ({ key }))
+          : []
+      ),
       user: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       topic: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
       project: { create: projectCreate, findFirst: vi.fn().mockResolvedValue(null) },

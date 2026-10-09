@@ -14,16 +14,13 @@ import { parseId } from '@/lib/validation/ids';
 import { logAudit } from '@/lib/audit-log';
 import type { ProjectFormState } from '@/lib/validation/project';
 import {
-  projectFormSchema,
+  buildProjectFormSchema,
   readProjectFormData,
   splitProjectFormData,
 } from '@/lib/validation/project-form';
 import type { Prisma } from '@/generated/prisma/client';
-import {
-  BENEFICIARY_FIELDS,
-  formCategoryValuesWhere,
-  toBeneficiaryValuesCreate,
-} from '@/lib/project-display';
+import { formCategoryValuesWhere, toBeneficiaryValuesCreate } from '@/lib/project-display';
+import { getActiveBeneficiaryCategories } from '@/lib/beneficiary-categories';
 import { BENEFICIARY_VALUES_SELECT, toBeneficiaryCounts } from '@/lib/projects/beneficiary-values';
 import { DUPLICATE_PROJECT_MESSAGE } from '@/lib/projects/map-project-db-error';
 import { PROJECT_LIST_PAGE_SIZE, parseProjectFilters } from '@/lib/validation/project-filters';
@@ -87,6 +84,28 @@ async function validateUniqueName(
   return duplicate ? { errors: { name: [DUPLICATE_PROJECT_MESSAGE] } } : null;
 }
 
+const STALE_CATEGORIES_MESSAGE =
+  'Las categorías de beneficiarios cambiaron. Recargá la página e intentá de nuevo.';
+
+async function lockBeneficiaryCategories(tx: Prisma.TransactionClient, keys: string[]) {
+  const active = await tx.$queryRaw<{ key: string }[]>`
+    SELECT "key" FROM "BeneficiaryCategory"
+    WHERE "key" = ANY(${keys}) AND "isActive"
+    ORDER BY "id"
+    FOR SHARE
+  `;
+  return active.length === keys.length;
+}
+
+async function parseProjectForm(formData: FormData) {
+  const keys = (await getActiveBeneficiaryCategories()).map(({ key }) => key);
+  const parsed = buildProjectFormSchema(keys).safeParse(readProjectFormData(formData));
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
+  }
+  return { keys, ...splitProjectFormData(parsed.data, keys) };
+}
+
 function changedFields<T extends object>(data: T, previous: T) {
   return (Object.keys(data) as (keyof T & string)[]).filter((key) => data[key] !== previous[key]);
 }
@@ -96,9 +115,9 @@ export async function createProject(
   formData: FormData
 ): Promise<ProjectFormState> {
   const user = await requireUser();
-  const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
-  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
-  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
+  const parsed = await parseProjectForm(formData);
+  if ('errors' in parsed) return { errors: parsed.errors };
+  const { keys, projectData, beneficiaryData } = parsed;
   const submittedPlaceholder = formData.get('projectPlaceholder');
   const coverPhoto = isProjectPlaceholder(submittedPlaceholder)
     ? submittedPlaceholder
@@ -108,6 +127,9 @@ export async function createProject(
     const result = await prisma.$transaction(
       async (tx): Promise<{ error: ProjectFormState } | { projectId: number }> => {
         await lockTopics(tx, [projectData.topicId]);
+        if (!(await lockBeneficiaryCategories(tx, keys))) {
+          return { error: { formError: STALE_CATEGORIES_MESSAGE } };
+        }
         const error = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
@@ -134,7 +156,7 @@ export async function createProject(
             year: beneficiaryData.year,
             projectId: project.id,
             authorId: user.id,
-            values: { create: toBeneficiaryValuesCreate(beneficiaryData) },
+            values: { create: toBeneficiaryValuesCreate(beneficiaryData.counts) },
           },
         });
         await logAudit(tx, {
@@ -144,9 +166,7 @@ export async function createProject(
           entityId: beneficiary.id,
           details: {
             year: beneficiaryData.year,
-            values: Object.fromEntries(
-              BENEFICIARY_FIELDS.map(({ key }) => [key, beneficiaryData[key]])
-            ),
+            values: beneficiaryData.counts,
           },
         });
         return { projectId: project.id };
@@ -172,9 +192,9 @@ export async function updateProject(
 ): Promise<ProjectFormState> {
   const user = await requireUser();
   if (!parseId(projectId)) return { formError: 'El proyecto no es válido.' };
-  const parsed = projectFormSchema.safeParse(readProjectFormData(formData));
-  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
-  const { projectData, beneficiaryData } = splitProjectFormData(parsed.data);
+  const parsed = await parseProjectForm(formData);
+  if ('errors' in parsed) return { errors: parsed.errors };
+  const { keys, projectData, beneficiaryData } = parsed;
   try {
     const error = await prisma.$transaction(
       async (tx): Promise<ProjectFormState | null> => {
@@ -186,6 +206,9 @@ export async function updateProject(
         if (!canEditProject(user, previous))
           return { formError: 'No tenés permiso para editar este proyecto.' };
         await lockTopics(tx, [previous.topicId, projectData.topicId]);
+        if (!(await lockBeneficiaryCategories(tx, keys))) {
+          return { formError: STALE_CATEGORIES_MESSAGE };
+        }
         const relationError = await validateRelations(
           tx,
           projectData.leadCoordinatorId,
@@ -237,14 +260,16 @@ export async function updateProject(
           select: BENEFICIARY_VALUES_SELECT,
         });
         const previousCounts = existing && toBeneficiaryCounts(existing.values);
-        const changes = BENEFICIARY_FIELDS.map(({ key }) => ({
-          field: key,
-          from: previousCounts?.[key] ?? 0,
-          to: beneficiaryData[key],
-        })).filter(({ from, to }) => from !== to);
+        const changes = keys
+          .map((key) => ({
+            field: key,
+            from: previousCounts?.[key] ?? 0,
+            to: beneficiaryData.counts[key],
+          }))
+          .filter(({ from, to }) => from !== to);
         if (!existing || changes.length) {
           await tx.projectBeneficiaryValue.deleteMany({
-            where: formCategoryValuesWhere(projectId, beneficiaryData.year),
+            where: formCategoryValuesWhere(projectId, beneficiaryData.year, keys),
           });
           const beneficiary = await tx.projectBeneficiary.upsert({
             where,
@@ -252,12 +277,12 @@ export async function updateProject(
               year: beneficiaryData.year,
               projectId,
               authorId: user.id,
-              values: { create: toBeneficiaryValuesCreate(beneficiaryData) },
+              values: { create: toBeneficiaryValuesCreate(beneficiaryData.counts) },
             },
             update: {
               authorId: user.id,
               recordedAt: new Date(),
-              values: { create: toBeneficiaryValuesCreate(beneficiaryData) },
+              values: { create: toBeneficiaryValuesCreate(beneficiaryData.counts) },
             },
           });
           await logAudit(tx, {
@@ -317,7 +342,13 @@ export async function deleteProject(projectId: number): Promise<{ error?: string
 }
 
 export async function loadProjectsPage(
-  filters: { status: string; beneficiaryYear: string; search?: string },
+  filters: {
+    status: string;
+    beneficiaryYear: string;
+    search?: string;
+    departmentId?: string;
+    topicId?: string;
+  },
   page: number
 ): Promise<ProjectListPage> {
   await requireUser();

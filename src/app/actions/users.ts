@@ -190,3 +190,78 @@ export async function updateUserStatus(
   revalidatePath('/management/users');
   return { success: true };
 }
+
+export type DeleteUserResult = { error?: string; success?: boolean };
+
+export async function deleteUser(userId: number): Promise<DeleteUserResult> {
+  const actor = await requireUser();
+
+  if (actor.role !== 'admin') {
+    return { error: 'No tenés permisos para realizar esta acción.' };
+  }
+
+  const targetId = parseId(userId);
+
+  if (!targetId) {
+    return { error: 'El usuario no es válido.' };
+  }
+
+  if (targetId === actor.id) {
+    return { error: 'No podés darte de baja a vos mismo.' };
+  }
+
+  try {
+    const error = await prisma.$transaction(
+      async (tx): Promise<string | null> => {
+        const target = await tx.user.findUnique({
+          where: { id: targetId },
+          select: { role: true, deletedAt: true },
+        });
+
+        if (!target || target.deletedAt) {
+          return 'El usuario no existe o ya fue dado de baja.';
+        }
+
+        if (target.role === 'admin') {
+          const remainingAdmins = await tx.user.count({
+            where: { role: 'admin', status: 'active', deletedAt: null, id: { not: targetId } },
+          });
+
+          if (remainingAdmins === 0) {
+            return 'No se puede dar de baja al último administrador activo.';
+          }
+        }
+
+        await tx.user.update({ where: { id: targetId }, data: { deletedAt: new Date() } });
+        await logAudit(tx, {
+          authorId: actor.id,
+          action: 'deletion',
+          entity: 'user',
+          entityId: targetId,
+        });
+
+        return null;
+      },
+      // Serializable so two admins removing each other at once can't leave zero admins
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        maxWait: 10_000,
+        timeout: 30_000,
+      }
+    );
+
+    if (error) {
+      return { error };
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+      return { error: 'Otra operación modificó los usuarios al mismo tiempo. Intentá de nuevo.' };
+    }
+
+    console.error('Failed to delete user', error);
+    return { error: 'No se pudo dar de baja al usuario. Intentá de nuevo.' };
+  }
+
+  revalidatePath('/management/users');
+  return { success: true };
+}

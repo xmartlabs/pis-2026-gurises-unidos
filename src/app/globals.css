@@ -17,6 +17,7 @@
   --beneficiary-families: #59bff0;
   --beneficiary-staff: #9c66ff;
   --beneficiary-institutions: #c5d900;
+  --beneficiary-custom: #94a3b8;
   --surface-highlight: #fff5e6;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -69,6 +70,7 @@
   --color-beneficiary-families: var(--beneficiary-families);
   --color-beneficiary-staff: var(--beneficiary-staff);
   --color-beneficiary-institutions: var(--beneficiary-institutions);
+  --color-beneficiary-custom: var(--beneficiary-custom);
   --color-surface-highlight: var(--surface-highlight);
   --font-sans: var(--font-mulish);
   --font-heading: var(--font-sans);

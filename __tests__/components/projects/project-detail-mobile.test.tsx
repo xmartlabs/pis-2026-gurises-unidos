@@ -5,15 +5,16 @@ import { InstitutionalContribution } from '@/components/projects/detail/institut
 import { ProjectMetrics } from '@/components/projects/detail/project-metrics';
 import { ProjectPublicCard } from '@/components/projects/detail/project-public-card';
 import { ProjectRecentActivity } from '@/components/projects/detail/project-recent-activity';
+import type { ProjectDetail } from '@/lib/projects/detail';
 
-const BENEFICIARIES = [
-  { key: 'directChildrenAdolescents' as const, value: 80 },
-  { key: 'indirectChildrenAdolescents' as const, value: 20 },
-  { key: 'youth18To29' as const, value: 10 },
-  { key: 'families' as const, value: 25 },
-  { key: 'coordinatedInstitutions' as const, value: 5 },
-  { key: 'communityLeaders' as const, value: 12 },
-  { key: 'basicServiceStaff' as const, value: 18 },
+const BENEFICIARIES: ProjectDetail['distribution'] = [
+  { key: 'directChildrenAdolescents', label: 'NNA directos', value: 80 },
+  { key: 'indirectChildrenAdolescents', label: 'NNA indirectos', value: 20 },
+  { key: 'youth18To29', label: 'Jóvenes (18 a 29)', value: 10 },
+  { key: 'families', label: 'Familias', value: 25 },
+  { key: 'coordinatedInstitutions', label: 'Instituciones coordinadas', value: 5 },
+  { key: 'communityLeaders', label: 'Referentes comunitarios', value: 12 },
+  { key: 'basicServiceStaff', label: 'Personal de servicios básicos', value: 18 },
 ];
 
 test('uses a two-column metric grid on mobile', () => {
@@ -55,6 +56,26 @@ test('shows distribution values without bar tracks on mobile', () => {
 
   expect(screen.getByRole('meter', { name: 'NNA directos' }).className).toContain('hidden h-1.5');
   expect(screen.getByRole('meter', { name: 'NNA directos' }).className).toContain('sm:block');
+});
+
+test('shows custom beneficiary categories after the system rows', () => {
+  render(
+    <BeneficiaryDistribution
+      data={[
+        ...BENEFICIARIES,
+        { key: 'customVolunteers' as const, label: 'Voluntarios', value: 7 },
+      ]}
+      year={2026}
+    />
+  );
+
+  const rows = screen.getAllByRole('listitem');
+  expect(rows).toHaveLength(5);
+  expect(rows[4].textContent).toBe('Voluntarios7');
+  expect(screen.getByRole('meter', { name: 'Voluntarios' }).getAttribute('aria-valuenow')).toBe(
+    '7'
+  );
+  expect(screen.queryByText('Referentes comunitarios')).toBeNull();
 });
 
 test('keeps the public card horizontal and separates contribution rows on mobile', () => {

@@ -349,19 +349,49 @@ describe('listBeneficiaryYears', () => {
 });
 
 describe('listProjectFilterOptions', () => {
-  test('returns coordinators and departments that lead or host projects', async () => {
-    prismaMock.user.findMany.mockResolvedValue([CARLOS]);
+  test('returns all departments and only active topics, including those without projects', async () => {
     prismaMock.department.findMany.mockResolvedValue([MONTEVIDEO]);
+    prismaMock.topic.findMany.mockResolvedValue([{ id: 1, name: 'Education' }]);
 
     expect(await listProjectFilterOptions()).toEqual({
-      coordinators: [CARLOS],
       departments: [MONTEVIDEO],
+      topics: [{ id: 1, name: 'Education' }],
     });
-    expect(prismaMock.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { ledProjects: { some: { deletedAt: null } } } })
-    );
-    expect(prismaMock.department.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { projects: { some: { deletedAt: null } } } })
-    );
+    expect(prismaMock.department.findMany).toHaveBeenCalledWith({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    expect(prismaMock.topic.findMany).toHaveBeenCalledWith({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  });
+});
+
+test('combines topic and department with the other project filters', async () => {
+  await listWith({
+    topicId: '2',
+    departmentId: '3',
+    beneficiaryYear: '2025',
+    status: 'active',
+    intensity: 'high',
+    search: 'Centro',
+  });
+  expect(findManyArgs().where).toEqual({
+    deletedAt: null,
+    topicId: 2,
+    departmentId: 3,
+    projectBeneficiaries: { some: { year: 2025 } },
+    status: 'active',
+    intensity: 'high',
+    name: { contains: 'Centro', mode: 'insensitive' },
+  });
+});
+
+test('ignores invalid topic and department IDs', () => {
+  expect(parseProjectFilters({ topicId: '-1', departmentId: 'invalid' })).toMatchObject({
+    topicId: undefined,
+    departmentId: undefined,
   });
 });
