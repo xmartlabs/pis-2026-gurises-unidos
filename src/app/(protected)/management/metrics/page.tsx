@@ -9,6 +9,7 @@ import {
 } from '@/lib/metrics/queries';
 import { getCurrentYear, resolveYearParam } from '@/lib/metrics/year';
 import { MetricsYearSelect } from '@/components/metrics/metrics-year-select';
+import { ErrorScreen } from '@/components/error-screen';
 
 export default async function MetricsPage({
   searchParams,
@@ -17,7 +18,7 @@ export default async function MetricsPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
-  if (session.user.role !== 'admin') redirect('/dashboard/projects');
+  if (session.user.role !== 'admin') return <ErrorScreen code={403} />;
 
   const currentYear = getCurrentYear();
   const [years, referenceYear] = await Promise.all([
