@@ -87,7 +87,7 @@ export function StrategicLinesManagement({ lines }: StrategicLinesManagementProp
             onChange={(event) => setName(event.target.value)}
             placeholder="Nueva línea estratégica..."
             required
-            maxLength={30}
+            maxLength={100}
             className="border-border placeholder:text-muted-foreground h-9 min-w-0 flex-1 rounded-md border bg-white px-3 py-1 font-sans text-base leading-6 font-normal tracking-normal shadow-[0_1px_2px_0_rgb(0_0_0/0.1)]"
           />
           <Button type="submit" disabled={pending} className="h-9 rounded-lg px-4 py-2 shadow">

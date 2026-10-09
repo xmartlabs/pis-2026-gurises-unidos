@@ -45,13 +45,27 @@ export async function createStrategicLine(
 
   try {
     const reactivated = await prisma.strategicLine.updateMany({
-      where: { name: parsed.data.name, isActive: false },
+      where: {
+        name: { equals: parsed.data.name, mode: 'insensitive' },
+        isActive: false,
+      },
       data: { isActive: true },
     });
 
     if (reactivated.count > 0) {
       revalidateStrategicLines();
       return { success: true };
+    }
+
+    const existing = await prisma.strategicLine.findFirst({
+      where: { name: { equals: parsed.data.name, mode: 'insensitive' } },
+    });
+
+    if (existing) {
+      return {
+        formError: 'Ya existe una línea estratégica con ese nombre.',
+        values: { name },
+      };
     }
 
     await prisma.strategicLine.create({

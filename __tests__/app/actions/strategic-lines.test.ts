@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   createStrategicLine: vi.fn(),
+  findStrategicLine: vi.fn(),
   reactivateStrategicLine: vi.fn(),
   updateStrategicLine: vi.fn(),
   countProjects: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock('@/lib/prisma', () => ({
     $transaction: mocks.transaction,
     strategicLine: {
       create: mocks.createStrategicLine,
+      findFirst: mocks.findStrategicLine,
       update: mocks.updateStrategicLine,
       updateMany: mocks.reactivateStrategicLine,
     },
@@ -34,6 +36,7 @@ beforeEach(() => {
   mocks.requireUser.mockResolvedValue({ id: 1, role: 'admin' });
   mocks.countProjects.mockResolvedValue(0);
   mocks.createStrategicLine.mockResolvedValue({ id: 1 });
+  mocks.findStrategicLine.mockResolvedValue(null);
   mocks.reactivateStrategicLine.mockResolvedValue({ count: 0 });
   mocks.updateStrategicLine.mockResolvedValue({ id: 1 });
   mocks.queryRaw.mockResolvedValue([]);
@@ -63,12 +66,15 @@ describe('createStrategicLine', () => {
   test('reactivates an inactive strategic line with the same name', async () => {
     mocks.reactivateStrategicLine.mockResolvedValue({ count: 1 });
     const data = new FormData();
-    data.set('name', 'Community Development');
+    data.set('name', 'community development');
 
     await expect(createStrategicLine(EMPTY_STATE, data)).resolves.toEqual({ success: true });
 
     expect(mocks.reactivateStrategicLine).toHaveBeenCalledWith({
-      where: { name: 'Community Development', isActive: false },
+      where: {
+        name: { equals: 'community development', mode: 'insensitive' },
+        isActive: false,
+      },
       data: { isActive: true },
     });
     expect(mocks.createStrategicLine).not.toHaveBeenCalled();
