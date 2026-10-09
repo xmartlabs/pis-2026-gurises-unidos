@@ -54,16 +54,16 @@ export function AppSidebar({ user }: Props) {
                   <span className="truncate font-semibold">Gurises Unidos</span>
                   <span className="text-xs">ONG Uruguay</span>
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="ml-auto md:hidden"
-                  onClick={() => setOpenMobile(false)}
-                >
-                  <XIcon />
-                  <span className="sr-only">Cerrar menú</span>
-                </Button>
               </Link>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="ml-auto md:hidden"
+                onClick={() => setOpenMobile(false)}
+              >
+                <XIcon />
+                <span className="sr-only">Cerrar menú</span>
+              </Button>
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
