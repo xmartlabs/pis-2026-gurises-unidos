@@ -10,6 +10,7 @@ import {
   type BeneficiaryCounts,
 } from '../src/lib/project-display';
 import { ADMIN, BENEFICIARY_CATEGORIES, STRATEGIC_LINES } from './fixtures';
+import { CounterpartyType } from '../src/generated/prisma/enums';
 
 const prisma = new PrismaClient();
 
@@ -37,7 +38,7 @@ const DEPARTMENTS = [
   'Treinta y Tres',
 ];
 
-const COUNTERPARTY_TYPES = ['publicSector', 'privateSector', 'internationalCooperation'] as const;
+const COUNTERPARTY_TYPES = Object.values(CounterpartyType);
 
 const TOPICS = ['Education', 'Health', 'Protection', 'Community'];
 

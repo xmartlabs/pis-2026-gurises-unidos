@@ -9,6 +9,8 @@ import {
   toBeneficiaryValuesCreate,
 } from '../src/lib/project-display';
 
+import { CounterpartyType } from '../src/generated/prisma/enums';
+
 const prisma = new PrismaClient();
 
 const DEPARTMENTS = [
@@ -33,7 +35,7 @@ const DEPARTMENTS = [
   'Treinta y Tres',
 ];
 
-const COUNTERPARTY_TYPES = ['publicSector', 'privateSector', 'internationalCooperation'] as const;
+const COUNTERPARTY_TYPES = Object.values(CounterpartyType);
 
 const TOPICS = ['Education', 'Health', 'Protection', 'Community', 'Employment'];
 

@@ -1,4 +1,4 @@
-import { ProjectStatus, Intensity } from '@/generated/prisma/enums';
+import { CounterpartyType, ProjectStatus, Intensity } from '@/generated/prisma/enums';
 
 export const STATUS_LABEL: Record<ProjectStatus, string> = {
   active: 'Activo',
@@ -9,6 +9,12 @@ export const INTENSITY_LABEL: Record<Intensity, string> = {
   high: 'Alta',
   medium: 'Media',
   low: 'Baja',
+};
+
+export const COUNTERPARTY_LABEL: Record<CounterpartyType, string> = {
+  publicSector: 'Sector Público',
+  privateSector: 'Sector Privado',
+  internationalCooperation: 'Cooperación Internacional',
 };
 
 export const STATUS_OPTIONS = [
@@ -23,9 +29,9 @@ export const INTENSITY_OPTIONS = [
 ] as const;
 
 export const COUNTERPARTY_OPTIONS = [
-  { value: 'publicSector', label: 'Sector Público' },
-  { value: 'privateSector', label: 'Sector Privado' },
-  { value: 'internationalCooperation', label: 'Cooperación Internacional' },
+  { value: 'publicSector', label: COUNTERPARTY_LABEL.publicSector },
+  { value: 'privateSector', label: COUNTERPARTY_LABEL.privateSector },
+  { value: 'internationalCooperation', label: COUNTERPARTY_LABEL.internationalCooperation },
 ] as const;
 
 export const SYSTEM_BENEFICIARY_KEYS = [
