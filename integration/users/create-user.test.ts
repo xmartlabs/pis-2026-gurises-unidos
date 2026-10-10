@@ -161,13 +161,11 @@ describe('createUser (integration)', () => {
     expect(await countRows()).toEqual(before);
   });
 
-  test('redirects a coordinator to the projects dashboard', async () => {
+  test('redirects a coordinator to the dashboard', async () => {
     signInAs(seed.coordinatorId, 'coordinator');
     const before = await countRows();
 
-    await expect(createUser({}, buildFormData())).rejects.toThrow(
-      /^NEXT_REDIRECT:\/dashboard\/projects$/
-    );
+    await expect(createUser({}, buildFormData())).rejects.toThrow(/^NEXT_REDIRECT:\/dashboard$/);
     expect(await countRows()).toEqual(before);
   });
 
