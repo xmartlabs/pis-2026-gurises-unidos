@@ -88,7 +88,7 @@ describe('createUser', () => {
     authMock.mockResolvedValue({ user: { id: '8', role: 'coordinator' } });
 
     await expect(createUser(EMPTY_STATE, buildFormData())).rejects.toThrow(
-      'NEXT_REDIRECT:/dashboard/projects'
+      'NEXT_REDIRECT:/dashboard'
     );
     expect(transactionMock).not.toHaveBeenCalled();
   });

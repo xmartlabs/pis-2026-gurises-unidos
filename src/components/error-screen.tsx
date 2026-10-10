@@ -55,7 +55,7 @@ export function ErrorScreen({ code, title, description, reference, actions }: Er
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         {actions}
         <Link
-          href="/dashboard/projects"
+          href="/dashboard"
           className={buttonVariants({ variant: actions ? 'outline' : 'default', size: 'lg' })}
         >
           Volver al inicio

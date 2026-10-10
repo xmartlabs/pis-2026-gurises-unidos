@@ -53,7 +53,7 @@ export async function login(
     redirect('/password-reset');
   }
 
-  redirect('/dashboard/projects');
+  redirect('/dashboard');
 }
 
 export async function logout() {

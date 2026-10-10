@@ -74,7 +74,7 @@ function loadUser(id: number) {
 }
 
 async function expectRedirectToDashboard(result: Promise<unknown>) {
-  await expect(result).rejects.toThrow(/^NEXT_REDIRECT:\/dashboard\/projects$/);
+  await expect(result).rejects.toThrow(/^NEXT_REDIRECT:\/dashboard$/);
 }
 
 async function decodeSessionCookie() {
