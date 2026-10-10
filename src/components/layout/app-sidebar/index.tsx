@@ -46,7 +46,7 @@ export function AppSidebar({ user }: Props) {
                 <Image
                   className="size-8 shrink-0 rounded-md"
                   src={logo}
-                  alt="Gurises Unidos"
+                  alt=""
                   width={32}
                   height={32}
                 />
