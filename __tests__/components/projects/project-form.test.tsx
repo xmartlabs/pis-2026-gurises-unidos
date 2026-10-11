@@ -30,6 +30,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
   const { container } = render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       mode="edit"
@@ -37,6 +38,7 @@ it('submits prefilled values and the recorded year, preserves edits on failure, 
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Existing project',
+        strategicLineIds: ['1'],
         topicId: '1',
         status: 'active',
         leadCoordinatorId: '2',
@@ -89,6 +91,7 @@ it('keeps the original creation appearance separate from edit styling', () => {
   const { container } = render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       topics={[]}
       currentYear={2026}
       coordinators={[]}
@@ -116,6 +119,7 @@ it('shows and submits the selected project placeholder during creation', () => {
   const { container } = render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       topics={[]}
       currentYear={2026}
       coordinators={[]}
@@ -138,6 +142,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
   const { container } = render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       currentYear={2026}
       topics={[
         { id: 1, name: 'Education' },
@@ -147,6 +152,7 @@ it('sends one selected topic and preserves it after a failed save', async () => 
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Project',
+        strategicLineIds: ['1'],
         leadCoordinatorId: '2',
         departmentId: '3',
         topicId: '1',
@@ -174,12 +180,14 @@ function renderFormWith(initialValues: Record<string, string>) {
   return render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       topics={[]}
       currentYear={2026}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Project',
+        strategicLineIds: ['1'],
         leadCoordinatorId: '2',
         departmentId: '3',
         ...initialValues,
@@ -204,12 +212,14 @@ it('submits the end year of a closed project', async () => {
   const { container } = render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Project',
+        strategicLineIds: ['1'],
         leadCoordinatorId: '2',
         departmentId: '3',
         status: 'closed',
@@ -233,12 +243,14 @@ it('refreshes the topic list after a selected topic becomes invalid', async () =
   const { container } = render(
     <ProjectForm
       beneficiaryCategories={BENEFICIARY_CATEGORY_OPTIONS}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       currentYear={2026}
       topics={[{ id: 1, name: 'Education' }]}
       coordinators={[{ id: 2, firstName: 'Test', lastName: 'Coordinator' }]}
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Project',
+        strategicLineIds: ['1'],
         leadCoordinatorId: '2',
         departmentId: '3',
         topicId: '1',
@@ -332,6 +344,7 @@ function renderWithManyCategories(
   return render(
     <ProjectForm
       beneficiaryCategories={MANY_CATEGORIES}
+      strategicLines={[{ id: 1, name: 'Community Support' }]}
       topics={[{ id: 1, name: 'Education' }]}
       currentYear={2026}
       mode="edit"
@@ -339,6 +352,7 @@ function renderWithManyCategories(
       departments={[{ id: 3, name: 'Montevideo' }]}
       initialValues={{
         name: 'Existing project',
+        strategicLineIds: ['1'],
         topicId: '1',
         leadCoordinatorId: '2',
         departmentId: '3',
